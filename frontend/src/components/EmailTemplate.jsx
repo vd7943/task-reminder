@@ -19,7 +19,7 @@ const EmailTemplate = () => {
 
     try {
       const res = await axios.post(
-        "http://localhost:3000/email/set-template",
+        "https://task-reminder-4sqz.onrender.com/email/set-template",
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },
