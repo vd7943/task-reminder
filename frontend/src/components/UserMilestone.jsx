@@ -14,7 +14,7 @@ const UserMilestone = () => {
     const fetchMilestones = async () => {
       try {
         const milestoneRes = await axios.get(
-          `http://localhost:3000/plan/milestones/${authUser._id}`,
+          `https://task-reminder-4sqz.onrender.com/plan/milestones/${authUser._id}`,
           { withCredentials: true }
         );
         setMilestones(milestoneRes.data.milestones || []);
@@ -26,7 +26,7 @@ const UserMilestone = () => {
     const fetchRemarks = async () => {
       try {
         const remarkRes = await axios.get(
-          `http://localhost:3000/remark/${authUser._id}`,
+          `https://task-reminder-4sqz.onrender.com/remark/${authUser._id}`,
           { withCredentials: true }
         );
         setRemarks(remarkRes.data.remarks || []);
