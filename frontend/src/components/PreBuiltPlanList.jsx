@@ -13,7 +13,7 @@ const PreBuiltPlanList = () => {
 
   useEffect(() => {
     const role = authUser.userType === "Manage" ? "Admin" : authUser.role;
-    const url = `http://localhost:3000/plan/get-plan/${role}/${authUser.userType}`;
+    const url = `https://task-reminder-4sqz.onrender.com/plan/get-plan/${role}/${authUser.userType}`;
 
     axios
       .get(
@@ -31,7 +31,7 @@ const PreBuiltPlanList = () => {
   const handleOptPlan = async (planId) => {
     try {
       const response = await axios.post(
-        "http://localhost:3000/plan/opt-plan",
+        "https://task-reminder-4sqz.onrender.com/plan/opt-plan",
         {
           userId: authUser._id,
           planId,
