@@ -14,7 +14,7 @@ const CoinSetting = () => {
 
   const fetchRules = async () => {
     try {
-      const res = await axios.get("http://localhost:3000/coins/coin-rules");
+      const res = await axios.get("https://task-reminder-4sqz.onrender.com/coins/coin-rules");
       setRules(res.data.rules);
     } catch (error) {
       toast.error("Failed to fetch rules");
@@ -28,7 +28,7 @@ const CoinSetting = () => {
     }
 
     try {
-      const res = await axios.post("http://localhost:3000/coins/coin-rules", {
+      const res = await axios.post("https://task-reminder-4sqz.onrender.com/coins/coin-rules", {
         minDuration: parseInt(minDuration),
         coins: parseInt(coins),
         freeSubsCoins: parseInt(freeSubsCoins),
