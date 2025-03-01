@@ -26,12 +26,12 @@ const Remark = () => {
       try {
         const [plansResponse, tasksResponse] = await Promise.all([
           axios.get(
-            `http://localhost:3000/plan/get-user-plan/${authUser._id}`,
+            `https://task-reminder-4sqz.onrender.com/plan/get-user-plan/${authUser._id}`,
             {
               withCredentials: true,
             }
           ),
-          axios.get(`http://localhost:3000/task/${authUser._id}`, {
+          axios.get(`https://task-reminder-4sqz.onrender.com/task/${authUser._id}`, {
             withCredentials: true,
           }),
         ]);
@@ -63,13 +63,13 @@ const Remark = () => {
 
   const checkForFreePlan = async () => {
     const rulesResponse = await axios.get(
-      "http://localhost:3000/coins/coin-rules"
+      "https://task-reminder-4sqz.onrender.com/coins/coin-rules"
     );
     const rules = rulesResponse.data.rules;
     const requiredCoins = rules[0].customPlanCoins;
 
     if (authUser.coins >= requiredCoins) {
-      await axios.post("http://localhost:3000/user/award-free-plan", {
+      await axios.post("https://task-reminder-4sqz.onrender.com/user/award-free-plan", {
         userId: authUser._id,
       });
 
@@ -82,7 +82,7 @@ const Remark = () => {
   const onSubmit = async (data) => {
     try {
       const response = await axios.post(
-        "http://localhost:3000/remark/set-remark",
+        "https://task-reminder-4sqz.onrender.com/remark/set-remark",
         { ...data, userId },
         {
           headers: { "Content-Type": "multipart/form-data" },
