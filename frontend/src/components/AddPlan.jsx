@@ -35,7 +35,7 @@ const AddPlan = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:3000/plan/add-plan",
+        "https://task-reminder-4sqz.onrender.com/plan/add-plan",
         {
           userId: authUser._id,
           userRole: authUser.role,
