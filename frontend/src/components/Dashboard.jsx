@@ -13,7 +13,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     axios
-      .get("http://localhost:3000/admin/get-user-data", {
+      .get("https://task-reminder-4sqz.onrender.com/admin/get-user-data", {
         withCredentials: true,
       })
       .then((response) => {
