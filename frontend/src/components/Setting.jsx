@@ -55,7 +55,7 @@ const Setting = () => {
 
     try {
       const res = await axios.put(
-        `http://localhost:3000/user/edit/${authUser._id}`,
+        `https://task-reminder-4sqz.onrender.com/user/edit/${authUser._id}`,
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },
