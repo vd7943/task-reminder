@@ -19,7 +19,7 @@ const TaskReminder = () => {
   const onSubmit = async (data) => {
     try {
       const response = await axios.post(
-        "http://localhost:3000/task/task-reminder",
+        "https://task-reminder-4sqz.onrender.com/task/task-reminder",
         { ...data, userId },
         {
           headers: { "Content-Type": "multipart/form-data" },
