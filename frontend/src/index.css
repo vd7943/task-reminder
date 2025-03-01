@@ -1,0 +1,82 @@
+@import "tailwindcss";
+
+body {
+  background: radial-gradient(circle at 80.2734375% 100%, #151025 0%, 17.5%, rgba(21, 16, 37, 0) 35%), radial-gradient(circle at 98.46028645833333% 68.671875%, #490094 0%, 20%, rgba(73, 0, 148, 0) 40%), radial-gradient(circle at 0% 0%, rgba(73, 0, 148, 0.99) 0%, 25%, rgba(73, 0, 148, 0) 50%), radial-gradient(circle at 48.9013671875% 49.521484375%, #151025 0%, 100%, rgba(21, 16, 37, 0) 100%);
+  color: #FFFFFF;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(50%) sepia(100%) saturate(500%) hue-rotate(200deg);
+  cursor: pointer;
+}
+
+.rbc-today {
+  background-color: transparent !important;
+}
+
+.rbc-time-slot {
+  flex: 0 0 0 !important;
+}
+
+.rbc-btn-group>button:first-child:not(:last-child),
+.rbc-btn-group>button:not(:first-child):not(:last-child),
+.rbc-btn-group>button:last-child:not(:first-child) {
+  color: grey;
+}
+
+.rbc-btn-group>button:first-child:not(:last-child):hover,
+.rbc-btn-group>button:not(:first-child):not(:last-child):hover,
+.rbc-btn-group>button:last-child:not(:first-child):hover,
+.rbc-btn-group>button:first-child:not(:last-child):active,
+.rbc-btn-group>button:not(:first-child):not(:last-child):active,
+.rbc-btn-group>button:last-child:not(:first-child):active,
+.rbc-btn-group>button:first-child:not(:last-child):focus,
+.rbc-btn-group>button:not(:first-child):not(:last-child):focus,
+.rbc-btn-group>button:last-child:not(:first-child):focus,
+.rbc-btn-group>button.rbc-active {
+  color: #151025;
+}
+
+.rbc-off-range-bg {
+  background: transparent !important;
+}
+
+.rbc-active {
+  color: #151025;
+}
+
+.rbc-btn-group>button {
+  color: #151025;
+}
+
+.react-calendar__navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 1rem;
+}
+
+.react-calendar__navigation button {
+  margin: 0 8px;
+}
+
+.react-calendar__month-view__weekdays {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+}
+
+.react-calendar__month-view__weekdays__weekday {
+  flex: 1;
+  text-align: center;
+}
+
+.fc .fc-list-sticky .fc-list-day>* {
+  background-color: transparent;
+}
+
+.fc .fc-list-event:hover td {
+  background-color: transparent;
+}
