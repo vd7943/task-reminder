@@ -8,7 +8,7 @@ const TaskList = () => {
   const [authUser, setAuthUser] = useAuth();
   useEffect(() => {
     axios
-      .get(`http://localhost:3000/task/${authUser._id}`, {
+      .get(`https://task-reminder-4sqz.onrender.com/task/${authUser._id}`, {
         withCredentials: true,
       })
       .then((response) => {
