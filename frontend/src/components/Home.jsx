@@ -21,7 +21,7 @@ const Home = () => {
 
   useEffect(() => {
     axios
-      .get(`http://localhost:3000/user/notifications/${authUser._id}`, {
+      .get(`https://task-reminder-4sqz.onrender.com/user/notifications/${authUser._id}`, {
         withCredentials: true,
       })
       .then((response) => {
