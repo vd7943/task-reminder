@@ -9,7 +9,7 @@ const AuthSuccess = () => {
   useEffect(() => {
     const fetchAuthUser = async () => {
       try {
-        const res = await axios.get("http://localhost:3000/user/auth/success", {
+        const res = await axios.get("https://task-reminder-4sqz.onrender.com/user/auth/success", {
           withCredentials: true,
         });
 
