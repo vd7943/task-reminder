@@ -9,7 +9,7 @@ const AppreciationList = () => {
     const fetchTopUsers = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:3000/api/user/appreciations"
+          "https://task-reminder-4sqz.onrender.com/api/user/appreciations"
         );
         setAppreciation(response.data.topUsers);
       } catch (error) {
