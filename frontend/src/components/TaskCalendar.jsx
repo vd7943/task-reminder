@@ -75,7 +75,7 @@ const TaskCalendar = () => {
 
         // Fetch plans
         const planResponse = await axios.get(
-          `http://localhost:3000/plan/get-user-plan/${authUser._id}`,
+          `https://task-reminder-4sqz.onrender.com/plan/get-user-plan/${authUser._id}`,
           { withCredentials: true }
         );
 
@@ -120,7 +120,7 @@ const TaskCalendar = () => {
           JSON.parse(localStorage.getItem("milestones")) || [];
 
         const milestoneRes = await axios.get(
-          `http://localhost:3000/plan/milestones/${authUser._id}`,
+          `https://task-reminder-4sqz.onrender.com/plan/milestones/${authUser._id}`,
           { withCredentials: true }
         );
 
@@ -144,7 +144,7 @@ const TaskCalendar = () => {
   const handleMilestoneClick = async (event) => {
     try {
       const response = await axios.post(
-        `http://localhost:3000/plan/milestones`,
+        `https://task-reminder-4sqz.onrender.com/plan/milestones`,
         { userId: authUser._id, planName: event.title },
         { withCredentials: true }
       );
@@ -186,7 +186,7 @@ const TaskCalendar = () => {
       };
 
       const response = await axios.post(
-        "http://localhost:3000/remark/set-remark",
+        "https://task-reminder-4sqz.onrender.com/remark/set-remark",
         remarkData,
         {
           headers: { "Content-Type": "multipart/form-data" },
@@ -195,7 +195,7 @@ const TaskCalendar = () => {
       if (response.data.success) {
         toast.success(response.data.message);
         const updatedUserRes = await axios.get(
-          `http://localhost:3000/user/${authUser._id}`,
+          `https://task-reminder-4sqz.onrender.com/user/${authUser._id}`,
           { withCredentials: true }
         );
         if (updatedUserRes.data.user) {
