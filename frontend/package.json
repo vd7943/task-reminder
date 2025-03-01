@@ -8,7 +8,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "postbuild": "cp public/_redirects build/_redirects"
+    
   },
   "dependencies": {
     "@babel/preset-react": "^7.26.3",
