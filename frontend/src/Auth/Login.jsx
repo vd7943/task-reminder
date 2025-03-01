@@ -23,7 +23,7 @@ const Login = () => {
 
     try {
       const res = await axios.post(
-        "http://localhost:3000/user/login",
+        "https://task-reminder-4sqz.onrender.com/user/login",
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },
@@ -45,11 +45,11 @@ const Login = () => {
     }
   };
   const handleGitHubLogIn = () => {
-    window.location.href = "http://localhost:3000/user/auth/github";
+    window.location.href = "https://task-reminder-4sqz.onrender.com/user/auth/github";
   };
 
   const handleGoogleLogIn = () => {
-    window.location.href = "http://localhost:3000/user/auth/google";
+    window.location.href = "https://task-reminder-4sqz.onrender.com/user/auth/google";
   };
 
   return (
