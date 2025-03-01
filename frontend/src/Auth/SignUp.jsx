@@ -5,11 +5,11 @@ import { FaGoogle } from "react-icons/fa";
 
 const SignUp = () => {
   const handleGitHubSignUp = () => {
-    window.location.href = "http://localhost:3000/user/auth/github";
+    window.location.href = "https://task-reminder-4sqz.onrender.com/user/auth/github";
   };
 
   const handleGoogleSignUp = () => {
-    window.location.href = "http://localhost:3000/user/auth/google";
+    window.location.href = "https://task-reminder-4sqz.onrender.com/user/auth/google";
   };
   return (
     <div className="flex w-screen h-screen items-center justify-center py-4">
