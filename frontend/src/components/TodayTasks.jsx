@@ -13,7 +13,7 @@ const TodayTasks = () => {
         const today = dayjs().format("YYYY-MM-DD");
 
         const plansResponse = await axios.get(
-          `http://localhost:3000/plan/get-today-plan/${authUser._id}`,
+          `https://task-reminder-4sqz.onrender.com/plan/get-today-plan/${authUser._id}`,
           { withCredentials: true }
         );
 
@@ -32,7 +32,7 @@ const TodayTasks = () => {
           );
 
         const tasksResponse = await axios.get(
-          `http://localhost:3000/task/${authUser._id}`,
+          `https://task-reminder-4sqz.onrender.com/task/${authUser._id}`,
           { withCredentials: true }
         );
 
