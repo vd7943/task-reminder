@@ -9,7 +9,7 @@ const UserNotification = () => {
 
   useEffect(() => {
     axios
-      .get(`http://localhost:3000/user/notifications/${authUser._id}`, {
+      .get(`https://task-reminder-4sqz.onrender.com/user/notifications/${authUser._id}`, {
         withCredentials: true,
       })
       .then((response) => {
@@ -20,7 +20,7 @@ const UserNotification = () => {
 
         axios
           .put(
-            `http://localhost:3000/user/notifications/read/${authUser._id}`,
+            `https://task-reminder-4sqz.onrender.com/user/notifications/read/${authUser._id}`,
             {},
             {
               withCredentials: true,
