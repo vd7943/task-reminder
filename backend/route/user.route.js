@@ -14,6 +14,7 @@ import {
   markNotificationsAsRead,
 } from "../controller/user.controller.js";
 import { config } from "dotenv";
+import { verifyToken } from "../Middlewares/auth.js";
 
 const router = express.Router();
 config();
@@ -40,6 +41,6 @@ router.get(
 );
 
 // API endpoint to send authenticated user data
-router.get("/auth/success", authSuccess);
+router.get("/auth/success", verifyToken, authSuccess);
 
 export default router;
