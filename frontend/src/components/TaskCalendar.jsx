@@ -116,23 +116,17 @@ const TaskCalendar = () => {
   useEffect(() => {
     const fetchMilestones = async () => {
       try {
-        const storedMilestones =
-          JSON.parse(localStorage.getItem("milestones")) || [];
-
         const milestoneRes = await axios.get(
           `https://task-reminder-4sqz.onrender.com/plan/milestones/${authUser._id}`,
           { withCredentials: true }
         );
 
-        const fetchedMilestones = milestoneRes.data.milestones || [];
+        const fetchedMilestones = milestoneRes.data.milestones.map(
+          (milestone) => milestone.planName
+        );
 
-        // Merge local and backend data (ensure no duplicates)
-        const mergedMilestones = [
-          ...new Set([...storedMilestones, ...fetchedMilestones]),
-        ];
-
-        setMilestones(mergedMilestones);
-        localStorage.setItem("milestones", JSON.stringify(mergedMilestones));
+        setMilestones(fetchedMilestones);
+        localStorage.setItem("milestones", JSON.stringify(fetchedMilestones));
       } catch (error) {
         console.error("Error fetching milestones:", error);
       }
@@ -143,6 +137,8 @@ const TaskCalendar = () => {
 
   const handleMilestoneClick = async (event) => {
     try {
+      if (milestones.includes(event.title)) return;
+
       const response = await axios.post(
         `https://task-reminder-4sqz.onrender.com/plan/milestones`,
         { userId: authUser._id, planName: event.title },
@@ -151,8 +147,6 @@ const TaskCalendar = () => {
 
       if (response.data) {
         toast.success(response.data.message);
-
-        // Update both state and local storage
         const updatedMilestones = [...milestones, event.title];
         setMilestones(updatedMilestones);
         localStorage.setItem("milestones", JSON.stringify(updatedMilestones));
@@ -285,11 +279,11 @@ const TaskCalendar = () => {
                   <button
                     onClick={() => handleMilestoneClick(event)}
                     className={`p-1 rounded-md transition duration-200 cursor-pointer shadow-sm 
-                      ${
-                        milestones.includes(event.title)
-                          ? "bg-yellow-500 text-white"
-                          : "border border-white text-white bg-transparent"
-                      }`}
+                ${
+                  milestones.includes(event.title)
+                    ? "bg-yellow-500 text-white"
+                    : "border border-white text-white bg-transparent"
+                }`}
                   >
                     {milestones.includes(event.title) ? (
                       <IoMdStar size={16} />
@@ -321,24 +315,24 @@ const TaskCalendar = () => {
                   <BiCommentDetail size={14} />
                 </button>
               )}
-              {(authUser.userType === "Custom" ||
-                authUser.userType === "Manage") && (
-                <button
-                  onClick={() => handleMilestoneClick(event)}
-                  className={`p-1 rounded-md transition duration-200 cursor-pointer shadow-sm 
-                    ${
-                      milestones.includes(event.title)
-                        ? "bg-yellow-500 text-white"
-                        : "border border-white text-white bg-transparent"
-                    }`}
-                >
-                  {milestones.includes(event.title) ? (
-                    <IoMdStar size={16} />
-                  ) : (
-                    <IoMdStarOutline size={16} />
-                  )}
-                </button>
-              )}
+             {(authUser.userType === "Custom" ||
+                  authUser.userType === "Manage") && (
+                  <button
+                    onClick={() => handleMilestoneClick(event)}
+                    className={`p-1 rounded-md transition duration-200 cursor-pointer shadow-sm 
+                ${
+                  milestones.includes(event.title)
+                    ? "bg-yellow-500 text-white"
+                    : "border border-white text-white bg-transparent"
+                }`}
+                  >
+                    {milestones.includes(event.title) ? (
+                      <IoMdStar size={16} />
+                    ) : (
+                      <IoMdStarOutline size={16} />
+                    )}
+                  </button>
+                )}
             </div>
           </div>
         )}
