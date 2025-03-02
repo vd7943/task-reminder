@@ -14,7 +14,10 @@ export const addOrUpdateCoinRule = async (req, res) => {
       await existingRule.save();
 
       if (freeSubsCoins) {
-        const usersToUpdate = await User.find({ coins: freeSubsCoins });
+        const usersToUpdate = await User.find({
+          coins: freeSubsCoins,
+          userType: { $in: ["Custom", "Manage"] },
+        });
 
         for (const user of usersToUpdate) {
           user.coins = 0;
@@ -34,7 +37,9 @@ export const addOrUpdateCoinRule = async (req, res) => {
       }
 
       if (freeSubsCoinsChanged) {
-        const allUsers = await User.find({});
+        const allUsers = await User.find({
+          userType: { $in: ["Custom", "Manage"] },
+        });
         for (const user of allUsers) {
           user.notifications.push({
             message: `🔔 New Update: Collect ${freeSubsCoins} coins to earn 1 month of free subscription!`,
@@ -52,7 +57,10 @@ export const addOrUpdateCoinRule = async (req, res) => {
     await newRule.save();
 
     if (freeSubsCoins) {
-      const usersToUpdate = await User.find({ coins: freeSubsCoins });
+      const usersToUpdate = await User.find({
+        coins: freeSubsCoins,
+        userType: { $in: ["Custom", "Manage"] },
+      });
 
       for (const user of usersToUpdate) {
         user.coins = 0;
@@ -71,7 +79,9 @@ export const addOrUpdateCoinRule = async (req, res) => {
       }
     }
 
-    const allUsers = await User.find({});
+    const allUsers = await User.find({
+      userType: { $in: ["Custom", "Manage"] },
+    });
     for (const user of allUsers) {
       user.notifications.push({
         message: `🔔 New Update: Collect ${freeSubsCoins} coins to earn 1 month of free subscription!`,
