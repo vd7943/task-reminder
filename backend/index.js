@@ -60,7 +60,7 @@ app.use(
   session({
     secret: process.env.SESSION_SECRET || "yourSecretKey",
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: true,
     store: MongoStore.create({
       mongoUrl: URI,
       ttl: 14 * 24 * 60 * 60, // Session expiration time (14 days)
