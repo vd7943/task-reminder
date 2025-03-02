@@ -5,15 +5,19 @@ import { config } from "dotenv";
 config();
 
 export const sendEmail = async ({ email, userType, taskName }) => {
-  const transporter = nodeMailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: process.env.SMTP_PORT,
-    service: process.env.SMTP_SERVICE,
-    auth: {
-      user: process.env.SMTP_MAIL,
-      pass: process.env.SMTP_PASSWORD,
-    },
-  });
+const transporter = nodeMailer.createTransport({
+  host: "smtp.gmail.com",
+  port: 587, // Use 587 for TLS
+  secure: false, // Must be false for TLS
+  auth: {
+    user: process.env.SMTP_MAIL,
+    pass: process.env.SMTP_PASSWORD,
+  },
+  tls: {
+    rejectUnauthorized: false, // Prevents SSL issues
+  },
+});
+
 
   const template = await EmailTemplate.findOne({ userType });
 
