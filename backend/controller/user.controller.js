@@ -231,23 +231,34 @@ export const googleAuth = passport.authenticate("google", {
   scope: ["profile", "email"],
 });
 
-export const githubCallback = (req, res) => {
-  const frontendURL = process.env.FRONTEND_URL;
+export const googleCallback = (req, res) => {
+  console.log("Authenticated User:", req.user);
+
+  if (!req.user) {
+    return res.redirect(`${process.env.FRONTEND_URL}/login?error=auth_failed`);
+  }
+
   res.redirect(
-    `${frontendURL}/auth-success?user=${encodeURIComponent(
+    `${process.env.FRONTEND_URL}/auth-success?user=${encodeURIComponent(
       JSON.stringify(req.user)
     )}`
   );
 };
 
-export const googleCallback = (req, res) => {
-  const frontendURL = process.env.FRONTEND_URL;
+export const githubCallback = (req, res) => {
+  console.log("Authenticated User:", req.user);
+
+  if (!req.user) {
+    return res.redirect(`${process.env.FRONTEND_URL}/login?error=auth_failed`);
+  }
+
   res.redirect(
-    `${frontendURL}/auth-success?user=${encodeURIComponent(
+    `${process.env.FRONTEND_URL}/auth-success?user=${encodeURIComponent(
       JSON.stringify(req.user)
     )}`
   );
 };
+
 
 export const authSuccess = (req, res) => {
   if (!req.user) {
