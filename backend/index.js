@@ -42,7 +42,7 @@ cloudinary.v2.config({
 
 app.use(
   cors({
-    origin: [process.env.FRONTEND_URL],
+    origin: process.env.FRONTEND_URL,
     methods: ["POST", "GET", "PUT", "DELETE"],
     credentials: true,
   })
@@ -60,13 +60,19 @@ app.use(
   session({
     secret: process.env.SESSION_SECRET || "yourSecretKey",
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false,
     store: MongoStore.create({
       mongoUrl: URI,
-      ttl: 14 * 24 * 60 * 60, // Session expiration time (14 days)
+      ttl: 14 * 24 * 60 * 60, 
     }),
+    cookie: {
+      secure: true, 
+      httpOnly: true,
+      sameSite: "None", 
+    },
   })
 );
+
 app.use(passport.initialize());
 app.use(passport.session());
 app.use("/user", userRoute);
