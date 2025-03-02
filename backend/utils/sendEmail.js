@@ -46,7 +46,7 @@ const transporter = nodemailer.createTransport({
   const emailSubject = `${template.subject} - ${taskName}`;
 
   const options = {
-    from: stephon.schneider@ethereal.email,
+    from: process.env.SMTP_MAIL,
     to: email,
     subject: emailSubject,
     html: emailBody,
