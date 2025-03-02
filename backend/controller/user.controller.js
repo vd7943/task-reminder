@@ -221,6 +221,8 @@ export const markNotificationsAsRead = async (req, res) => {
       notif.read = true;
     });
 
+     user.notifications = user.notifications.filter((notif) => !notif.read);
+
     await user.save();
 
     res.status(200).json({ success: true, notifications: user.notifications });
