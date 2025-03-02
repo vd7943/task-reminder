@@ -3,6 +3,13 @@ import bcryptjs from "bcryptjs";
 import { v2 as cloudinary } from "cloudinary";
 import "../config/passport.js";
 import passport from "passport";
+import jwt from "jsonwebtoken";
+
+const generateToken = (userId) => {
+  return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRY || "7d",
+  });
+};
 
 export const signup = async (req, res) => {
   try {
@@ -231,39 +238,43 @@ export const googleAuth = passport.authenticate("google", {
   scope: ["profile", "email"],
 });
 
-export const googleCallback = (req, res) => {
-  console.log("Authenticated User:", req.user);
-
-  if (!req.user) {
-    return res.redirect(`${process.env.FRONTEND_URL}/login?error=auth_failed`);
-  }
-
-  res.redirect(
-    `${process.env.FRONTEND_URL}/auth-success?user=${encodeURIComponent(
-      JSON.stringify(req.user)
-    )}`
-  );
-};
-
 export const githubCallback = (req, res) => {
-  console.log("Authenticated User:", req.user);
-
   if (!req.user) {
-    return res.redirect(`${process.env.FRONTEND_URL}/login?error=auth_failed`);
+    return res.redirect(`${process.env.FRONTEND_URL}/login?error=Unauthorized`);
   }
 
-  res.redirect(
-    `${process.env.FRONTEND_URL}/auth-success?user=${encodeURIComponent(
-      JSON.stringify(req.user)
-    )}`
-  );
+  const token = generateToken(req.user._id);
+
+  // Set token in a secure HTTP-only cookie
+  res.cookie("userToken", token, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "None",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+
+  res.redirect(`${process.env.FRONTEND_URL}/auth-success`);
 };
 
+export const googleCallback = githubCallback; // Same logic for Google
 
-export const authSuccess = (req, res) => {
-  if (!req.user) {
-    return res.status(401).json({ message: "Not authenticated" });
+export const authSuccess = async (req, res) => {
+  try {
+    const token = req.cookies?.userToken;
+    if (!token) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    const decoded = await jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id).select("-password");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({ user });
+  } catch (error) {
+    console.error("Auth Success Error:", error);
+    res.status(401).json({ message: "Invalid or expired token" });
   }
-
-  res.status(200).json({ user: req.user });
 };
