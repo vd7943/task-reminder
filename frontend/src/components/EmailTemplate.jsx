@@ -1,18 +1,36 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { useAuth } from "../context/AuthProvider";
 
 const EmailTemplate = () => {
+  const [plans, setPlans] = useState([]);
+  const [authUser] = useAuth();
+
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm();
 
+  useEffect(() => {
+    axios
+      .get(
+        `https://task-reminder-4sqz.onrender.com/plan/get-plan/${authUser.role}/${authUser.userType}`,
+        {
+          withCredentials: true,
+        }
+      )
+      .then((response) => {
+        setPlans(response.data.plans || []);
+      })
+      .catch((error) => console.error(error));
+  }, []);
+
   const onSubmit = async (data) => {
     const formData = new FormData();
-    formData.append("userType", data.userType);
+    formData.append("planName", data.planName);
     formData.append("subject", data.subject);
     formData.append("body", data.body);
     formData.append("taskLink", data.taskLink);
@@ -49,23 +67,26 @@ const EmailTemplate = () => {
           className="flex flex-col gap-3 w-full "
         >
           <label className="text-xl py-1">
-            User Type
+            Plan Name
             <select
               className="w-full mt-1 p-2 border rounded-md outline-none"
-              {...register("userType", { required: true })}
+              {...register("planName", { required: true })}
             >
               <option value="" className="text-black">
-                Select user type
+                Select a plan
               </option>
-              <option value="Custom" className="text-black">
-                Custom
-              </option>
-              <option value="Manage" className="text-black">
-                Manage
-              </option>
+              {plans.map((plan) => (
+                <option
+                  key={plan._id}
+                  value={plan.planName}
+                  className="text-black"
+                >
+                  {plan.planName}
+                </option>
+              ))}
             </select>
           </label>
-          {errors.userType && (
+          {errors.planName && (
             <span className="text-sm text-red-500">
               This field is required!
             </span>
