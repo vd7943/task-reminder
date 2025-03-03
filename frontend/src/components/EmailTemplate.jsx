@@ -15,9 +15,10 @@ const EmailTemplate = () => {
   } = useForm();
 
   useEffect(() => {
+    const url = `http://localhost:3000/plan/get-plan/${authUser.role}/${authUser.userType}`;
     axios
       .get(
-        `https://task-reminder-4sqz.onrender.com/plan/get-plan/${authUser.role}/${authUser.userType}`,
+        authUser.userType === "Custom" ? `${url}?userId=${authUser._id}` : url,
         {
           withCredentials: true,
         }
@@ -28,16 +29,19 @@ const EmailTemplate = () => {
       .catch((error) => console.error(error));
   }, []);
 
+  const createdBy = authUser.userType === "Custom" ? "Custom" : "Admin";
+
   const onSubmit = async (data) => {
     const formData = new FormData();
     formData.append("planName", data.planName);
+    formData.append("createdBy", createdBy);
     formData.append("subject", data.subject);
     formData.append("body", data.body);
     formData.append("taskLink", data.taskLink);
 
     try {
       const res = await axios.post(
-        "https://task-reminder-4sqz.onrender.com/email/set-template",
+        "http://localhost:3000/email/set-template",
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },
