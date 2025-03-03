@@ -31,6 +31,7 @@ export const planNotificationCron = () => {
             await sendEmail({
               email: user.email,
               planName: plan.planName,
+              userType: user.userType,
             });
           }
         }
