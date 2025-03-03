@@ -175,9 +175,13 @@ function App() {
           path="/add-user"
           element={authUser?.role === "Admin" && <AddUser />}
         />
-        <Route
+       <Route
           path="/email-template"
-          element={authUser?.role === "Admin" && <EmailTemplate />}
+          element={
+            (authUser?.role === "Admin" || authUser?.userType === "Custom") && (
+              <EmailTemplate />
+            )
+          }
         />
         <Route
           path="/pre-built-plans"
