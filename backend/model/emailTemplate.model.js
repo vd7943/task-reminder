@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 
 const emailTemplateSchema = new mongoose.Schema({
   planName: { type: String, required: true, unique: true },
+  createdBy: { type: String, required: true, enum: ["Admin", "Custom"] },
   subject: { type: String, required: true },
   body: { type: String, required: true },
   taskLink: { type: String, required: true },
