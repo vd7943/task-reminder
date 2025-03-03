@@ -4,20 +4,18 @@ import { config } from "dotenv";
 
 config();
 
-export const sendEmail = async ({ email, userType, taskName }) => {
-const transporter = nodeMailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.SMTP_MAIL,
-    pass: process.env.SMTP_PASSWORD, // Use an App Password, not your Gmail password!
-  },
-});
+export const sendEmail = async ({ email, planName }) => {
+  const transporter = nodeMailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: process.env.SMTP_PORT,
+    service: process.env.SMTP_SERVICE,
+    auth: {
+      user: process.env.SMTP_MAIL,
+      pass: process.env.SMTP_PASSWORD,
+    },
+  });
 
-
-
-  const template = await EmailTemplate.findOne({ userType });
+  const template = await EmailTemplate.findOne({ planName });
 
   if (!template) {
     console.error(`No email template found for userType: ${userType}`);
@@ -29,7 +27,7 @@ const transporter = nodeMailer.createTransport({
 
   let emailBody = `
     <p>${template.body}</p>  
-    <p><strong>Task Name:</strong> ${taskName}</p>  
+    <p><strong>Task Name:</strong> ${planName}</p>  
     <p><strong>Task Link:</strong> <a href="${taskLink}" target="_blank">${taskLink}</a></p>
   `;
 
@@ -45,7 +43,7 @@ const transporter = nodeMailer.createTransport({
 
   emailBody += `<br><br>${completedButton} &nbsp; ${notCompletedButton}`;
 
-  const emailSubject = `${template.subject} - ${taskName}`;
+  const emailSubject = `${template.subject} - ${planName}`;
 
   const options = {
     from: process.env.SMTP_MAIL,
