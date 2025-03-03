@@ -30,8 +30,7 @@ export const planNotificationCron = () => {
           for (const schedule of matchingSchedules) {
             await sendEmail({
               email: user.email,
-              userType: user.userType,
-              taskName: plan.planName,
+              planName: plan.planName,
             });
           }
         }
