@@ -15,7 +15,7 @@ const EmailTemplate = () => {
   } = useForm();
 
   useEffect(() => {
-    const url = `http://localhost:3000/plan/get-plan/${authUser.role}/${authUser.userType}`;
+    const url = `https://task-reminder-4sqz.onrender.com/plan/get-plan/${authUser.role}/${authUser.userType}`;
     axios
       .get(
         authUser.userType === "Custom" ? `${url}?userId=${authUser._id}` : url,
@@ -41,7 +41,7 @@ const EmailTemplate = () => {
 
     try {
       const res = await axios.post(
-        "http://localhost:3000/email/set-template",
+        "https://task-reminder-4sqz.onrender.com/email/set-template",
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },
