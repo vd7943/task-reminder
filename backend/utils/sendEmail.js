@@ -4,7 +4,7 @@ import { config } from "dotenv";
 
 config();
 
-export const sendEmail = async ({ email, planName }) => {
+export const sendEmail = async ({ email, planName, userType }) => {
   const transporter = nodeMailer.createTransport({
     host: process.env.SMTP_HOST,
     port: process.env.SMTP_PORT,
@@ -15,10 +15,13 @@ export const sendEmail = async ({ email, planName }) => {
     },
   });
 
-  const template = await EmailTemplate.findOne({ planName });
+  const createdBy = userType === "Manage" ? "Admin" : "Custom";
+  const template = await EmailTemplate.findOne({ planName, createdBy });
 
   if (!template) {
-    console.error(`No email template found for userType: ${userType}`);
+    console.error(
+      `No email template found for plan: ${planName}, set by: ${createdBy}`
+    );
     return;
   }
 
