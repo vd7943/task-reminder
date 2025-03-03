@@ -334,7 +334,7 @@ const Sidebar = () => {
               </li>
             </Link>
           )}
-          {authUser?.role === "Admin" && (
+           {(authUser?.role === "Admin" || authUser?.userType === "Custom") && (
             <Link
               to="/email-template"
               className="pb-10"
