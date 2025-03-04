@@ -13,17 +13,16 @@ export const planNotificationCron = () => {
       const currentDate = now.toISOString().slice(0, 10); // YYYY-MM-DD
       const currentTime = now.toTimeString().slice(0, 5); // HH:MM format
 
-      // Fetch all plans
       const plans = await Plan.find();
 
       for (const plan of plans) {
-        if (plan.userRole === "Admin") continue; // Skip admin users
+        if (plan.userRole === "Admin") continue;
+
         const user = await User.findById(plan.userId);
         if (!user || !user.email) continue;
 
-        for (const reminder of plan.reminders) {
-          // Check each schedule within the reminder
-          const matchingSchedules = reminder.schedule.filter(
+        for (const task of plan.tasks) {
+          const matchingSchedules = task.schedule.filter(
             (sched) => sched.date === currentDate && sched.time === currentTime
           );
 
@@ -31,6 +30,7 @@ export const planNotificationCron = () => {
             await sendEmail({
               email: user.email,
               planName: plan.planName,
+              taskName: task.taskName,
               userType: user.userType,
             });
           }
