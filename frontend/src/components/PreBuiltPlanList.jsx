@@ -49,14 +49,6 @@ const PreBuiltPlanList = () => {
     }
   };
 
-  // const formatTime = (timeString) => {
-  //   if (!timeString) return "N/A";
-  //   const [hour, minute] = timeString.split(":").map(Number);
-  //   const amPm = hour >= 12 ? "PM" : "AM";
-  //   const formattedHour = hour % 12 === 0 ? 12 : hour % 12;
-  //   return `${formattedHour}:${String(minute).padStart(2, "0")} ${amPm}`;
-  // };
-
   return (
     <div className="p-6 lg:mx-auto h-full pt-16 md:pt-4 w-full xl:w-[960px]">
       <div className="flex justify-between items-center mb-6">
@@ -77,37 +69,58 @@ const PreBuiltPlanList = () => {
           {plans.map((plan) => (
             <div
               key={plan._id}
-              className="bg-[#FFFFFF2B] text-white p-6 rounded-lg shadow-lg"
+              className="relative bg-white/10 backdrop-blur-md text-white p-6 rounded-lg shadow-lg border border-white/10 hover:shadow-2xl transition-all duration-300"
             >
-              <h3 className="text-2xl font-semibold mb-4">{plan.planName}</h3>
-              <div className="flex flex-row justify-evenly items-center">
-                <div className="flex justify-center gap-4">
-                  <div className="border rounded-lg p-2">
-                    <DatePicker
-                      inline
-                      highlightDates={plan.reminders.flatMap((reminder) =>
-                        reminder.schedule.map((sched) => new Date(sched.date))
-                      )}
-                    />
-                  </div>
-                </div>
+              <h3 className="text-3xl font-bold text-white mb-4 drop-shadow-md">
+                {plan.planName}
+              </h3>
 
-                <div className="text-center mt-4">
-                  <Link to="/task-calendar">
-                    <button className="text-blue-300 underline cursor-pointer pb-12">
-                      Tap to see full calendar
-                    </button>
-                  </Link>
-                </div>
-                {authUser.userType === "Manage" && (
-                  <div className="mt-4 text-center pb-12">
-                    <button
-                      onClick={() => handleOptPlan(plan._id)}
-                      className="bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-all duration-300 cursor-pointer"
+              {plan.tasks.length > 0 ? (
+                <div className="overflow-x-auto flex space-x-6 p-2">
+                  {plan.tasks.map((task) => (
+                    <div
+                      key={task._id}
+                      className="bg-white/10 p-4 rounded-lg shadow-md"
                     >
-                      Opt this Plan
-                    </button>
-                  </div>
+                      <h4 className="text-xl font-semibold text-purple-400 mb-2">
+                        📝 {task.taskName}
+                      </h4>
+                      <div className="border border-white/20 rounded-lg p-2 shadow-lg bg-white/5">
+                        <DatePicker
+                          inline
+                          highlightDates={task.schedule.map(
+                            (sched) => new Date(sched.date)
+                          )}
+                          calendarClassName="custom-calendar"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-300">No tasks available</p>
+              )}
+
+              <div
+                className={`flex ${
+                  authUser.userType === "Manage"
+                    ? "justify-evenly"
+                    : "justify-center"
+                } items-center mt-6`}
+              >
+                <Link to="/task-calendar">
+                  <button className="text-blue-300 cursor-pointer font-semibold transition-all hover:text-blue-400">
+                    📅 View Full Calendar
+                  </button>
+                </Link>
+
+                {authUser.userType === "Manage" && (
+                  <button
+                    onClick={() => handleOptPlan(plan._id)}
+                    className="bg-green-500 text-white py-3 px-6 rounded-lg font-semibold shadow-lg hover:bg-green-600 transition-all duration-300 cursor-pointer"
+                  >
+                    ✅ Opt-in Plan
+                  </button>
                 )}
               </div>
             </div>
@@ -115,8 +128,7 @@ const PreBuiltPlanList = () => {
         </div>
       ) : (
         <div className="p-6 lg:mx-auto h-screen md:pt-4 w-full">
-          <div className="bg-[#FFFFFF2B] h-18 text-white p-6 rounded-lg shadow-lg">
-            {" "}
+          <div className="bg-white/10 text-white p-6 rounded-lg shadow-lg border border-white/10">
             <p className="text-center text-gray-300">No Plans found.</p>
           </div>
         </div>
