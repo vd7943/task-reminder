@@ -1,12 +1,13 @@
 import mongoose from "mongoose";
 
-const ScheduleSchema = new mongoose.Schema({
-  date: { type: String, required: true },
-  time: { type: String, required: true },
-});
-
-const reminderSchema = new mongoose.Schema({
-  schedule: [ScheduleSchema],
+const TaskSchema = new mongoose.Schema({
+  taskName: { type: String, required: true },
+  schedule: [
+    {
+      date: { type: String, required: true },
+      time: { type: String, required: true, default: "00:01" },
+    },
+  ],
 });
 
 const planSchema = new mongoose.Schema({
@@ -17,7 +18,7 @@ const planSchema = new mongoose.Schema({
   },
   userRole: { type: String, required: true },
   planName: { type: String, required: true },
-  reminders: [reminderSchema],
+  tasks: [TaskSchema],
   createdAt: { type: Date, default: Date.now },
 });
 
