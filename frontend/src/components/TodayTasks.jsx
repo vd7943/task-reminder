@@ -16,35 +16,23 @@ const TodayTasks = () => {
           `https://task-reminder-4sqz.onrender.com/plan/get-today-plan/${authUser._id}`,
           { withCredentials: true }
         );
-
         const todayPlans = plansResponse.data
           .map((plan) => ({
             ...plan,
-            reminders: plan.reminders.map((reminder) => ({
-              ...reminder,
-              schedule: reminder.schedule.filter(
-                (sched) => sched.date === today
-              ),
-            })),
+            tasks: plan.tasks
+              .map((task) => ({
+                ...task,
+                schedule: task.schedule.filter((sched) => sched.date === today),
+              }))
+              .filter((task) => task.schedule.length > 0),
           }))
-          .filter((plan) =>
-            plan.reminders.some((reminder) => reminder.schedule.length > 0)
-          );
-
-        const tasksResponse = await axios.get(
-          `https://task-reminder-4sqz.onrender.com/task/${authUser._id}`,
-          { withCredentials: true }
-        );
-
-        const todayTasks = tasksResponse.data.filter(
-          (task) => dayjs(task.scheduleDateTime).format("YYYY-MM-DD") === today
-        );
+          .filter((plan) => plan.tasks.length > 0);
 
         const mergedTasksMap = {};
 
         todayPlans.forEach((plan) => {
-          plan.reminders.forEach((reminder) => {
-            reminder.schedule.forEach((sched) => {
+          plan.tasks.forEach((task) => {
+            task.schedule.forEach((sched) => {
               const key = `${sched.date} ${sched.time}`;
               if (!mergedTasksMap[key]) {
                 mergedTasksMap[key] = {
@@ -53,25 +41,11 @@ const TodayTasks = () => {
                   tasks: [],
                 };
               }
-              mergedTasksMap[key].tasks.push(plan.planName);
+              mergedTasksMap[key].tasks.push(
+                `${task.taskName} (${plan.planName})`
+              );
             });
           });
-        });
-
-        todayTasks.forEach((task) => {
-          const taskTime = dayjs(task.scheduleDateTime).format("HH:mm");
-          const taskDate = dayjs(task.scheduleDateTime).format("YYYY-MM-DD");
-          const key = `${taskDate} ${taskTime}`;
-
-          if (!mergedTasksMap[key]) {
-            mergedTasksMap[key] = {
-              time: taskTime,
-              date: taskDate,
-              tasks: [],
-            };
-          }
-
-          mergedTasksMap[key].tasks.push(task.taskName);
         });
 
         const mergedTasksArray = Object.values(mergedTasksMap).sort((a, b) =>
@@ -107,9 +81,6 @@ const TodayTasks = () => {
               </h3>
               <ul>
                 <li className="p-4 bg-gray-900/50 border border-gray-400 rounded-lg mt-3 flex justify-between items-center shadow-md">
-                  <span className="text-xl font-semibold text-blue-400">
-                    ⏰ {task.time}
-                  </span>
                   <strong className="text-white text-lg">
                     {task.tasks.join(", ")}
                   </strong>
