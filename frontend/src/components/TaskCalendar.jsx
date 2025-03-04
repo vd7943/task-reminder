@@ -54,41 +54,23 @@ const TaskCalendar = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch tasks
-        // const taskResponse = await axios.get(
-        //   `http://localhost:3000/task/${authUser._id}`,
-        //   { withCredentials: true }
-        // );
-        // const taskEvents = taskResponse.data.map((task) => ({
-        //   id: task._id,
-        //   title: task.taskName,
-        //   category: task.category,
-        //   reminder: task.reminderDateTime,
-        //   start: new Date(task.scheduleDateTime),
-        //   end: new Date(
-        //     new Date(task.scheduleDateTime).getTime() +
-        //       task.taskDuration * 60000
-        //   ),
-        //   color: getRandomColor(),
-        //   type: "task", // Differentiate tasks from plans
-        // }));
-
-        // Fetch plans
         const planResponse = await axios.get(
           `https://task-reminder-4sqz.onrender.com/plan/get-user-plan/${authUser._id}`,
           { withCredentials: true }
         );
 
         const planEvents = planResponse.data.flatMap((plan) =>
-          plan.reminders.flatMap((reminder) =>
-            reminder.schedule.map((scheduleItem) => {
+          plan.tasks.flatMap((task) =>
+            task.schedule.map((scheduleItem) => {
               const startTime = new Date(
                 `${scheduleItem.date}T${scheduleItem.time}:00`
               );
-              const endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // Add 1 hour to start time
+              const endTime = new Date(
+                startTime.getTime() + 23.9 * 60 * 60 * 1000
+              );
 
               return {
-                id: reminder._id,
+                id: task._id,
                 title: `${plan.planName}`, // Distinguish plan activities
                 start: startTime,
                 end: endTime,
@@ -137,8 +119,7 @@ const TaskCalendar = () => {
 
   const handleMilestoneClick = async (event) => {
     try {
-      if (milestones.includes(event.title)) return;
-
+      console.log(planName);
       const response = await axios.post(
         `https://task-reminder-4sqz.onrender.com/plan/milestones`,
         { userId: authUser._id, planName: event.title },
@@ -189,7 +170,7 @@ const TaskCalendar = () => {
       if (response.data.success) {
         toast.success(response.data.message);
         const updatedUserRes = await axios.get(
-          `https://task-reminder-4sqz.onrender.com/user/${authUser._id}`,
+          `http://localhost:3000/user/${authUser._id}`,
           { withCredentials: true }
         );
         if (updatedUserRes.data.user) {
@@ -261,10 +242,6 @@ const TaskCalendar = () => {
             </span>
 
             <div className="flex justify-between items-center w-full">
-              <span className="text-[9px] lg:text-xs text-gray-100">
-                {moment(event.start).format("hh:mm A")}
-              </span>
-
               <div className="flex gap-1">
                 {authUser.userType === "Custom" && (
                   <button
@@ -301,9 +278,6 @@ const TaskCalendar = () => {
               <span className="font-semibold text-[11px] lg:text-sm text-white truncate">
                 {event.title}
               </span>
-              <span className="text-[9px] lg:text-xs text-gray-100 opacity-80">
-                {moment(event.start).format("hh:mm A")}
-              </span>
             </div>
 
             <div className="flex gap-2">
@@ -315,24 +289,24 @@ const TaskCalendar = () => {
                   <BiCommentDetail size={14} />
                 </button>
               )}
-             {(authUser.userType === "Custom" ||
-                  authUser.userType === "Manage") && (
-                  <button
-                    onClick={() => handleMilestoneClick(event)}
-                    className={`p-1 rounded-md transition duration-200 cursor-pointer shadow-sm 
+              {(authUser.userType === "Custom" ||
+                authUser.userType === "Manage") && (
+                <button
+                  onClick={() => handleMilestoneClick(event)}
+                  className={`p-1 rounded-md transition duration-200 cursor-pointer shadow-sm 
                 ${
                   milestones.includes(event.title)
                     ? "bg-yellow-500 text-white"
                     : "border border-white text-white bg-transparent"
                 }`}
-                  >
-                    {milestones.includes(event.title) ? (
-                      <IoMdStar size={16} />
-                    ) : (
-                      <IoMdStarOutline size={16} />
-                    )}
-                  </button>
-                )}
+                >
+                  {milestones.includes(event.title) ? (
+                    <IoMdStar size={16} />
+                  ) : (
+                    <IoMdStarOutline size={16} />
+                  )}
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -351,7 +325,11 @@ const TaskCalendar = () => {
             center: "title",
             right: "dayGridMonth,listWeek",
           }}
-          events={events.filter((event) => new Date(event.start) >= new Date())}
+          events={events.filter((event) => {
+            const eventDate = new Date(event.start).setHours(0, 0, 0, 0);
+            const today = new Date().setHours(0, 0, 0, 0);
+            return eventDate >= today;
+          })}
           eventContent={(eventInfo) => (
             <CustomEvent
               event={eventInfo.event}
