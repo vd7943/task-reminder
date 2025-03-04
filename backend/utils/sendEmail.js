@@ -4,7 +4,7 @@ import { config } from "dotenv";
 
 config();
 
-export const sendEmail = async ({ email, planName, userType }) => {
+export const sendEmail = async ({ email, planName, taskName, userType }) => {
   const transporter = nodeMailer.createTransport({
     host: process.env.SMTP_HOST,
     port: process.env.SMTP_PORT,
@@ -30,7 +30,7 @@ export const sendEmail = async ({ email, planName, userType }) => {
 
   let emailBody = `
     <p>${template.body}</p>  
-    <p><strong>Task Name:</strong> ${planName}</p>  
+    <p><strong>Task Name:</strong> ${taskName}</p>  
     <p><strong>Task Link:</strong> <a href="${taskLink}" target="_blank">${taskLink}</a></p>
   `;
 
