@@ -2,7 +2,7 @@ import Plan from "../model/plan.model.js";
 import User from "../model/user.model.js";
 
 export const addNewPlan = async (req, res) => {
-  const { userId, userRole, planName, reminders } = req.body;
+  const { userId, userRole, planName, tasks } = req.body;
 
   try {
     const user = await User.findById(userId);
@@ -23,11 +23,39 @@ export const addNewPlan = async (req, res) => {
         .json({ success: false, message: "Plan already exists" });
     }
 
+    const createdAt = new Date();
+
+    const getValidDate = (startDate, dayOffset) => {
+      let newDate = new Date(startDate);
+      newDate.setDate(newDate.getDate() + 1); // Start from the next day
+      let daysAdded = 0;
+
+      while (daysAdded < dayOffset) {
+        if (newDate.getDay() !== 0) {
+          daysAdded++;
+        }
+        if (daysAdded < dayOffset) {
+          newDate.setDate(newDate.getDate() + 1);
+        }
+      }
+
+      return newDate.toISOString().slice(0, 10); // Format as YYYY-MM-DD
+    };
+
+    const formattedTasks = tasks.map((task) => ({
+      taskName: task.taskName,
+      schedule: task.schedule.map((sched) => ({
+        date: getValidDate(createdAt, Number(sched.day)), // Convert `day` to `date`
+        time: "00:01",
+      })),
+    }));
+
     const newPlan = new Plan({
       userId,
       userRole,
       planName,
-      reminders,
+      tasks: formattedTasks,
+      createdAt,
     });
 
     await newPlan.save();
@@ -89,7 +117,7 @@ export const optForPlan = async (req, res) => {
       userId,
       userRole: "User",
       planName: existingPlan.planName,
-      reminders: existingPlan.reminders,
+      tasks: existingPlan.tasks,
     });
 
     await newPlan.save();
@@ -124,11 +152,18 @@ export const getTodayPlans = async (req, res) => {
   try {
     const plans = await Plan.find({ userId });
 
-    const todayPlans = plans.filter((plan) =>
-      plan.reminders.some((reminder) =>
-        reminder.schedule.some((sched) => sched.date === today)
-      )
-    );
+    const todayPlans = plans
+      .map((plan) => {
+        const todayTasks = plan.tasks.filter((task) =>
+          task.schedule.some((sched) => sched.date === today)
+        );
+
+        return {
+          ...plan._doc,
+          tasks: todayTasks,
+        };
+      })
+      .filter((plan) => plan.tasks.length > 0);
 
     res.status(200).json(todayPlans);
   } catch (error) {
@@ -143,13 +178,11 @@ export const addMilestone = async (req, res) => {
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    // Find the plan based on planName
     const plan = await Plan.findOne({ planName });
     if (!plan) return res.status(404).json({ message: "Plan not found" });
 
-    const planId = plan._id.toString(); // Get the actual planId
+    const planId = plan._id.toString();
 
-    // Check if the milestone already exists
     const milestoneExists = user.milestones.some(
       (milestone) => milestone.planId.toString() === planId
     );
@@ -176,7 +209,7 @@ export const addMilestone = async (req, res) => {
 };
 
 export const getMilestones = async (req, res) => {
-  const { userId, planName } = req.params; // Accept planName as a parameter
+  const { userId, planName } = req.params;
 
   try {
     const user = await User.findById(userId).select("milestones");
