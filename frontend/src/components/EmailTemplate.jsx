@@ -37,7 +37,6 @@ const EmailTemplate = () => {
     formData.append("createdBy", createdBy);
     formData.append("subject", data.subject);
     formData.append("body", data.body);
-    formData.append("taskLink", data.taskLink);
 
     try {
       const res = await axios.post(
@@ -115,19 +114,6 @@ const EmailTemplate = () => {
             {...register("body", { required: true })}
           />
           {errors.body && (
-            <span className="text-sm text-red-500">
-              This field is required!
-            </span>
-          )}
-
-          <label className="text-xl pt-1">Task Link</label>
-          <input
-            type="text"
-            placeholder="Enter your password"
-            className="w-full mt-1 p-2 border rounded-md outline-none"
-            {...register("taskLink", { required: true })}
-          />
-          {errors.taskLink && (
             <span className="text-sm text-red-500">
               This field is required!
             </span>
