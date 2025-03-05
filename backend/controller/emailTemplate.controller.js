@@ -2,7 +2,7 @@ import EmailTemplate from "../model/emailTemplate.model.js";
 
 export const setEmailTemplate = async (req, res) => {
   try {
-    const { planName, createdBy, subject, body, taskLink } = req.body;
+    const { planName, createdBy, subject, body } = req.body;
 
     const existingTemplate = await EmailTemplate.findOne({
       planName,
@@ -20,7 +20,6 @@ export const setEmailTemplate = async (req, res) => {
       createdBy,
       subject,
       body,
-      taskLink,
     });
 
     await template.save();
