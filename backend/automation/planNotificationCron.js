@@ -31,6 +31,8 @@ export const planNotificationCron = () => {
               email: user.email,
               planName: plan.planName,
               taskName: task.taskName,
+              taskDescription: task.taskDescription,
+              taskLink: task.taskLink,
               userType: user.userType,
             });
           }
