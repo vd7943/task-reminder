@@ -5,7 +5,6 @@ const emailTemplateSchema = new mongoose.Schema({
   createdBy: { type: String, required: true, enum: ["Admin", "Custom"] },
   subject: { type: String, required: true },
   body: { type: String, required: true },
-  taskLink: { type: String, required: true },
 });
 
 const EmailTemplate = mongoose.model("EmailTemplate", emailTemplateSchema);
