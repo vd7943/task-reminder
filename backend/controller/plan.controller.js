@@ -190,7 +190,7 @@ export const addMilestone = async (req, res) => {
     );
 
     if (milestoneExists) {
-      return res.status(400).json({ message: "Milestone already added" });
+      return res.status(400).json({success: false, message: "Milestone already added" });
     }
 
     user.milestones.push({
