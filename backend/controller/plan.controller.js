@@ -44,6 +44,8 @@ export const addNewPlan = async (req, res) => {
 
     const formattedTasks = tasks.map((task) => ({
       taskName: task.taskName,
+      taskDescription: task.taskDescription,
+      taskLink: task.taskLink,
       schedule: task.schedule.map((sched) => ({
         date: getValidDate(createdAt, Number(sched.day)), // Convert `day` to `date`
         time: "00:01",
