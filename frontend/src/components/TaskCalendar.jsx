@@ -243,7 +243,8 @@ const TaskCalendar = () => {
 
             <div className="flex justify-between items-center w-full">
               <div className="flex gap-1">
-                {authUser.userType === "Custom" && (
+                {(authUser.userType === "Custom" ||
+                authUser.userType === "Manage") && (
                   <button
                     onClick={() => handleRemarkClick(event)}
                     className="text-white bg-gray-500 hover:bg-gray-600 p-1 rounded-md transition duration-200 cursor-pointer shadow-sm"
