@@ -62,7 +62,7 @@ const TodayTasks = () => {
   }, []);
 
   return (
-    <div className="flex flex-col items-center bg-[#FFFFFF2B] p-6 rounded-xl shadow-2xl w-full max-w-4xl mx-auto relative border border-gray-700 mb-6">
+    <div className="flex flex-col items-center bg-[#FFFFFF2B] p-6 rounded-xl shadow-2xl w-full max-w-4xl mx-auto relative border border-gray-700 mb-4">
       <h2 className="text-3xl text-white mb-6">Today's Tasks</h2>
 
       {mergedTasks.length === 0 ? (
