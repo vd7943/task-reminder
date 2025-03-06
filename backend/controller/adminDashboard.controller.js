@@ -18,3 +18,34 @@ export const getDashboardStats = async (req, res) => {
     res.status(500).json({ message: "Server Error", error });
   }
 };
+
+export const toggleUserActivation = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.isDeactivated) {
+      user.userType = user.previousUserType;
+      user.isDeactivated = false;
+    } else {
+      user.previousUserType = user.userType;
+      user.userType = "Regular";
+      user.isDeactivated = true;
+    }
+
+    await user.save();
+    res
+      .status(200)
+      .json({
+        message: `User ${
+          user.isDeactivated ? "deactivated" : "activated"
+        } successfully`,
+      });
+  } catch (error) {
+    res.status(500).json({ message: "Server Error", error });
+  }
+};
