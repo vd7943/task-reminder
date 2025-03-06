@@ -14,6 +14,7 @@ const Home = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const notificationRef = useRef(null);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [coins, setCoins] = useState(0);
 
   const toggleNotifications = () => {
     setShowNotifications(!showNotifications);
@@ -48,13 +49,24 @@ const Home = () => {
     };
   }, []);
 
+    useEffect(() => {
+    axios
+      .get(`https://task-reminder-4sqz.onrender.com/user/${authUser._id}`, {
+        withCredentials: true,
+      })
+      .then((response) => {
+        setCoins(response?.data?.user?.coins);
+      })
+      .catch((error) => console.error(error));
+  }, []);
+
   return (
     <>
       {authUser.role === "User" && (
         <div className="relative flex-1 p-6 mt-8 lg:mt-0 lg:p-8 h-auto">
           <div className="absolute top-0 lg:top-4 right-18 flex items-center bg-gradient-to-r from-yellow-400 to-yellow-600 text-white px-4 lg:px-6 py-2 rounded-full shadow-lg">
             <PiCoinBold className="text-lg font-semibold mr-2" />
-            <span className="text-lg font-bold">{authUser.coins}</span>
+            <span className="text-lg font-bold">{coins}</span>
           </div>
           <div
             className="absolute top-2 lg:top-6 right-6 flex items-center cursor-pointer"
