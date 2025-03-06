@@ -1,4 +1,5 @@
 import Plan from "../model/plan.model.js";
+import Remark from "../model/remark.model.js";
 import User from "../model/user.model.js";
 
 export const addNewPlan = async (req, res) => {
@@ -154,6 +155,7 @@ export const getTodayPlans = async (req, res) => {
   try {
     const plans = await Plan.find({ userId });
     const user = await User.findById(userId);
+    const remarks = await Remark.find({ userId });
 
     if (!user) {
       return res
@@ -170,9 +172,15 @@ export const getTodayPlans = async (req, res) => {
 
     const todayPlans = plans
       .map((plan) => {
-        const todayTasks = plan.tasks.filter((task) =>
-          task.schedule.some((sched) => sched.date === today)
-        );
+        const todayTasks = plan.tasks.filter((task) => {
+          return (
+            task.schedule.some((sched) => sched.date === today) &&
+            !remarks.some(
+              (remark) =>
+                remark.taskName === task.taskName && remark.taskDate === today
+            )
+          );
+        });
 
         return {
           ...plan._doc,
@@ -188,30 +196,43 @@ export const getTodayPlans = async (req, res) => {
 };
 
 export const addMilestone = async (req, res) => {
-  const { userId, planName } = req.body;
+  const { userId, taskName, taskDate } = req.body;
 
   try {
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    const plan = await Plan.findOne({ planName });
-    if (!plan) return res.status(404).json({ message: "Plan not found" });
+    const plan = await Plan.findOne({ "tasks.taskName": taskName });
+    if (!plan)
+      return res.status(404).json({ message: "Task not found in any plan" });
 
-    const planId = plan._id.toString();
+    const task = plan.tasks.find((task) => task.taskName === taskName);
+    if (!task) return res.status(404).json({ message: "Task not found" });
+
+    const taskScheduled = task.schedule.some(
+      (schedule) => schedule.date === taskDate
+    );
+    if (!taskScheduled) {
+      return res
+        .status(400)
+        .json({ message: "Task is not scheduled on this date" });
+    }
 
     const milestoneExists = user.milestones.some(
-      (milestone) => milestone.planId.toString() === planId
+      (milestone) =>
+        milestone.taskName === taskName && milestone.taskDate === taskDate
     );
 
     if (milestoneExists) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Milestone already added" });
+      return res.status(400).json({
+        success: false,
+        message: "Milestone is already added for this task on the given date",
+      });
     }
 
     user.milestones.push({
-      planId,
-      planName: plan.planName,
+      taskName,
+      taskDate,
       createdAt: new Date(),
     });
 
@@ -227,7 +248,7 @@ export const addMilestone = async (req, res) => {
 };
 
 export const getMilestones = async (req, res) => {
-  const { userId, planName } = req.params;
+  const { userId, taskName, taskDate } = req.params;
 
   try {
     const user = await User.findById(userId).select("milestones");
@@ -240,9 +261,19 @@ export const getMilestones = async (req, res) => {
       });
     }
 
-    const filteredMilestones = planName
-      ? user.milestones.filter((milestone) => milestone.planName === planName)
-      : user.milestones;
+    let filteredMilestones = user.milestones;
+
+    if (taskName) {
+      filteredMilestones = filteredMilestones.filter(
+        (milestone) => milestone.taskName === taskName
+      );
+    }
+
+    if (taskDate) {
+      filteredMilestones = filteredMilestones.filter(
+        (milestone) => milestone.taskDate === taskDate
+      );
+    }
 
     res.json({ milestones: filteredMilestones });
   } catch (error) {
