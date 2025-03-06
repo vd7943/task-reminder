@@ -1,6 +1,7 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthProvider";
+import { FaStar } from "react-icons/fa";
 
 const RemarkList = () => {
   const [remarks, setRemarks] = useState([]);
@@ -52,7 +53,10 @@ const RemarkList = () => {
                     className="border-b border-gray-200 hover:bg-gray-800 transition-all duration-200"
                   >
                     <td className="p-4">{remark.taskName}</td>
-                    <td className="p-4">{remark.taskReview}</td>
+                     <td className="p-4 flex flex-row items-center gap-1">
+                      {remark.taskReview}
+                      <FaStar color="yellow" size={12} />
+                    </td>
                     <td className="p-4">{remark.taskDuration}</td>
                     <td className="p-4">{remark.taskSummary}</td>
                     <td className="p-4">{remark.taskDate}</td>
