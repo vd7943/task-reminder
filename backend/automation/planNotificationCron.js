@@ -19,7 +19,7 @@ export const planNotificationCron = () => {
         if (plan.userRole === "Admin") continue;
 
         const user = await User.findById(plan.userId);
-         if (!user || !user.email || user.isDeactivated) continue;
+        if (!user || !user.email || user.isDeactivated) continue;
 
         for (const task of plan.tasks) {
           const matchingSchedules = task.schedule.filter(
@@ -34,6 +34,7 @@ export const planNotificationCron = () => {
               taskDescription: task.taskDescription,
               taskLink: task.taskLink,
               userType: user.userType,
+              userId: user.userId,
             });
           }
         }
