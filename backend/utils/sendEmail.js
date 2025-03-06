@@ -1,6 +1,7 @@
 import nodeMailer from "nodemailer";
 import EmailTemplate from "../model/emailTemplate.model.js";
 import { config } from "dotenv";
+import User from "../model/user.model.js";
 
 config();
 
@@ -11,7 +12,24 @@ export const sendEmail = async ({
   taskDescription,
   taskLink,
   userType,
+  userId,
 }) => {
+  const user = await User.findById(userId);
+
+  if (!user) {
+    console.error(`User not found: ${userId}`);
+    return;
+  }
+
+  if (user.emailBlocked) {
+    user.notifications.push({
+      message: `You have not added remark for a task in the last 5 days. Email notifications have been paused until you add a remark.`,
+    });
+    await user.save();
+
+    return;
+  }
+
   const transporter = nodeMailer.createTransport({
     host: process.env.SMTP_HOST,
     port: process.env.SMTP_PORT,
