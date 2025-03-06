@@ -86,13 +86,13 @@ const Setting = () => {
           className="flex flex-col gap-6 w-full"
         >
           <div className="relative flex justify-center items-center">
-            <img
+             <img
               src={profileImagePreview || authUser?.profileImage?.url}
               alt="profileImagePreview"
-              className="w-52 h-46 rounded-full border-4 border-[#9D60EC]"
+              className="w-46 h-46 rounded-full border-4 border-[#9D60EC]"
             />
             <FaEdit
-              className="absolute text-gray-300 top-0 right-0 lg:right-[33%] text-4xl cursor-pointer rounded-full p-2"
+              className="absolute text-gray-300 bottom-0 right-0 lg:right-[35%] text-4xl cursor-pointer rounded-full p-2"
               onClick={() => document.getElementById("file-input").click()}
             />
           </div>
