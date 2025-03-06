@@ -1,6 +1,7 @@
 import User from "../model/user.model.js";
 import Remark from "../model/remark.model.js";
 import CoinRule from "../model/coinRule.model.js";
+import Plan from "../model/plan.model.js";
 
 const calculateCoins = async (taskDuration) => {
   const rules = await CoinRule.find({});
@@ -15,7 +16,8 @@ const calculateCoins = async (taskDuration) => {
 };
 
 export const addRemark = async (req, res) => {
-  const { taskName, taskDuration, taskReview, taskSummary, userId } = req.body;
+  const { taskName, taskDate, taskDuration, taskReview, taskSummary, userId } =
+    req.body;
 
   const user = await User.findById(userId);
   if (!user) {
@@ -23,11 +25,31 @@ export const addRemark = async (req, res) => {
   }
 
   try {
-    const existingRemark = await Remark.findOne({ taskName, userId });
+    const todayDate = new Date().toISOString().split("T")[0];
+    const userPlan = await Plan.findOne({ userId, "tasks.taskName": taskName });
+
+    if (!userPlan) {
+      return res.status(404).json({
+        success: false,
+        message: "Task not found in user's plan.",
+      });
+    }
+    const task = userPlan.tasks.find((t) => t.taskName === taskName);
+    const scheduledTask = task.schedule.find((s) => s.date === taskDate);
+
+    // Ensure user is adding remark on or after the scheduled date
+    if (todayDate < scheduledTask.date) {
+      return res.status(400).json({
+        success: false,
+        message: `You can only add remarks on or after the scheduled date (${scheduledTask.date}).`,
+      });
+    }
+
+    const existingRemark = await Remark.findOne({ taskName, taskDate, userId });
     if (existingRemark) {
       return res.status(400).json({
         success: false,
-        message: "Remark already added for this task",
+        message: "Remark already added for this task and date",
       });
     }
     const rules = await CoinRule.find({});
@@ -43,6 +65,7 @@ export const addRemark = async (req, res) => {
     const remark = new Remark({
       userId: user._id,
       taskName,
+      taskDate,
       taskDuration,
       taskReview,
       taskSummary,
@@ -50,12 +73,40 @@ export const addRemark = async (req, res) => {
     await remark.save();
 
     const coinsToAdd = await calculateCoins(taskDuration);
-    if (coinsToAdd > 0) {
-      await User.findByIdAndUpdate(userId, { $inc: { coins: coinsToAdd } });
+    await User.findByIdAndUpdate(userId, { $inc: { coins: coinsToAdd } });
+
+    const updatedUser = await User.findById(userId);
+    const freeSubsCoins = rules[0]?.freeSubsCoins;
+
+    let subscriptionMessage = null;
+    if (updatedUser.coins >= freeSubsCoins && freeSubsCoins > 0) {
+      const monthsEarned = Math.floor(updatedUser.coins / freeSubsCoins);
+      const remainingCoins = updatedUser.coins % freeSubsCoins;
+
+      updatedUser.coins = remainingCoins;
+      updatedUser.userType = "Custom";
+
+      const currentEndDate = updatedUser.subscriptionEndDate
+        ? new Date(updatedUser.subscriptionEndDate)
+        : new Date();
+      updatedUser.subscriptionEndDate = new Date(
+        new Date(currentEndDate).setMonth(
+          currentEndDate.getMonth() + monthsEarned
+        )
+      );
+
+      subscriptionMessage = `🎉 Congratulations! You've earned ${monthsEarned} month of free subscription for collecting ${freeSubsCoins} coins. You now have ${remainingCoins} coins left.`;
+
+      updatedUser.notifications.push({ message: subscriptionMessage });
+      await updatedUser.save();
     }
-    res
-      .status(201)
-      .json({ success: true, message: "Remark added successfully", remark });
+
+    res.status(201).json({
+      success: true,
+      message: "Remark added successfully",
+      coinsEarned: coinsToAdd,
+      subscriptionMessage,
+    });
   } catch (error) {
     res.status(500).json({ message: "Server Error", error });
   }
