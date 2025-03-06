@@ -12,12 +12,29 @@ const razorpayInstance = new Razorpay({
 });
 
 export const buySubscription = async (req, res) => {
+  const { userId, amount } = req.body;
+
   try {
-    if (!req.body.amount) {
+    if (!amount) {
       return res
         .status(400)
         .json({ success: false, message: "Amount is required" });
     }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    if (user.isDeactivated) {
+      return res.status(403).json({
+        success: false,
+        message: "Your account is deactivated. Contact admin.",
+      });
+    }
+
     const options = {
       amount: req.body.amount * 100, // Convert to paisa
       currency: "INR",
@@ -57,6 +74,14 @@ export const verifyPayment = async (req, res) => {
       return res
         .status(404)
         .json({ success: false, message: "User not found" });
+    }
+    if (user.isDeactivated) {
+      return res
+        .status(403)
+        .json({
+          success: false,
+          message: "Your account is deactivated. Contact admin.",
+        });
     }
 
     const nowIST = new Date();
