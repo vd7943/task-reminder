@@ -19,24 +19,36 @@ import { MdEmail } from "react-icons/md";
 import { MdNavigateNext } from "react-icons/md";
 import { MdNavigateBefore } from "react-icons/md";
 import { LuHandCoins } from "react-icons/lu";
+import axios from "axios";
 
 const Sidebar = () => {
   const [date, setDate] = useState(new Date());
   const [authUser, setAuthUser] = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [timeLeft, setTimeLeft] = useState(null);
+  const [subscription, setSubscription] = useState(null);
   const sidebarRef = useRef(null);
   const location = useLocation();
 
   useEffect(() => {
-    if (authUser?.subscriptionEndDate) {
-      calculateTimeLeft(authUser.subscriptionEndDate);
-    }
+    axios
+      .get(`https://task-reminder-4sqz.onrender.com/user/${authUser._id}`, {
+        withCredentials: true,
+      })
+      .then((response) => {
+        if (response?.data?.user?.subscriptionEndDate) {
+          setSubscription(response?.data?.user?.subscriptionEndDate);
+        }
+      })
+      .catch((error) => console.error(error));
   }, []);
 
-  const calculateTimeLeft = (subscriptionEndDate) => {
-    const expiryDate = new Date(subscriptionEndDate);
-
+  const calculateTimeLeft = (subscription) => {
+    if (!subscription) {
+      setTimeLeft("Plz subscribe !");
+      return;
+    }
+    const expiryDate = new Date(subscription);
     expiryDate.setHours(expiryDate.getHours() - 5);
     expiryDate.setMinutes(expiryDate.getMinutes() - 30);
 
@@ -52,9 +64,13 @@ const Sidebar = () => {
     setTimeLeft(`${days} Days !`);
   };
 
-  const subscriptionEndDate = authUser.subscriptionEndDate
-    ? new Date(authUser.subscriptionEndDate)
-    : null;
+  useEffect(() => {
+    if (subscription) {
+      calculateTimeLeft(subscription);
+    }
+  }, [subscription]);
+
+  const subscriptionEndDate = subscription ? new Date(subscription) : null;
 
   if (subscriptionEndDate) {
     subscriptionEndDate.setHours(subscriptionEndDate.getHours() - 5);
@@ -291,20 +307,20 @@ const Sidebar = () => {
           {(authUser?.userType === "Custom" ||
             authUser?.userType === "Manage") && (
             <Link
-              to="/remark"
+              to="/remark-list"
               className="pb-10"
               onClick={() => setIsOpen(false)}
             >
               <li
                 className={`flex items-center space-x-3 p-2 rounded-lg cursor-pointer transition-all hover:bg-[#FFFFFF2B]
-                ${isActive("/remark") ? "bg-[#FFFFFF2B]" : ""}`}
+                ${isActive("/remark-list") ? "bg-[#FFFFFF2B]" : ""}`}
               >
                 <div className="flex items-center justify-center gap-4">
                   <div className="rounded-full text-yellow-400">
                     <FaUserCog />
                   </div>
                   <div className="text-xl font-medium flex items-center gap-2">
-                    Remark
+                    Remarks
                   </div>
                 </div>
               </li>
@@ -334,7 +350,7 @@ const Sidebar = () => {
               </li>
             </Link>
           )}
-           {(authUser?.role === "Admin" || authUser?.userType === "Custom") && (
+          {(authUser?.role === "Admin" || authUser?.userType === "Custom") && (
             <Link
               to="/email-template"
               className="pb-10"
