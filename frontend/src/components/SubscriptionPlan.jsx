@@ -61,6 +61,7 @@ const SubscriptionPlan = () => {
       const { data } = await axios.post(
         "https://task-reminder-4sqz.onrender.com/plan/buy-subscription",
         {
+          userId,
           amount,
         },
         { withCredentials: true }
