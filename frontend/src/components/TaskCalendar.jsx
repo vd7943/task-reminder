@@ -400,11 +400,7 @@ const TaskCalendar = () => {
             center: "title",
             right: "dayGridMonth,listWeek",
           }}
-          events={events.filter((event) => {
-            const eventDate = new Date(event.start).setHours(0, 0, 0, 0);
-            const today = new Date().setHours(0, 0, 0, 0);
-            return eventDate >= today;
-          })}
+          events={events}
           eventContent={(eventInfo) => (
             <CustomEvent
               event={eventInfo.event}
