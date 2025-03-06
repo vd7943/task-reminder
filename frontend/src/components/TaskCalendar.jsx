@@ -317,7 +317,7 @@ const TaskCalendar = () => {
   };
 
   return (
-     <div className="flex flex-col my-auto items-center justify-center w-full min-h-screen h-full lg:w-[960px] p-1 lg:p-4">
+     <div className="flex flex-col m-auto items-center justify-center w-full min-h-screen h-full lg:w-[960px] p-1 lg:p-4">
       <div className="w-full lg:w-[950px] max-w-6xl shadow-2xl rounded-2xl bg-[#FFFFFF2B] p-2 lg:p-6">
         <FullCalendar
           plugins={[dayGridPlugin, timeGridPlugin, listPlugin]}
