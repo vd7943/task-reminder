@@ -8,7 +8,7 @@ const RemarkList = () => {
 
   useEffect(() => {
     axios
-      .get(`http://localhost:3000/remark/${authUser._id}`, {
+      .get(`https://task-reminder-4sqz.onrender.com/remark/${authUser._id}`, {
         withCredentials: true,
       })
       .then((response) => {
