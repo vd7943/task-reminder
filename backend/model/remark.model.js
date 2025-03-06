@@ -7,6 +7,7 @@ const remarkSchema = new mongoose.Schema({
     required: true,
   },
   taskName: { type: String, required: true },
+  taskDate: { type: String, required: true },
   taskDuration: { type: Number, required: true },
   taskReview: { type: Number, required: true },
   taskSummary: { type: String, required: true },
