@@ -92,8 +92,8 @@ const Remark = () => {
         toast.success(response.data.message);
         await checkForFreePlan();
         setTimeout(() => {
-          navigate("/");
           window.location.reload();
+          navigate("/");
         }, 1000);
       } else {
         toast.error(response.data.message);
