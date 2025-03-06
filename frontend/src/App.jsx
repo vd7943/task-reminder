@@ -7,12 +7,8 @@ import Login from "./Auth/Login";
 import SignUp from "./Auth/SignUp";
 import AuthSuccess from "./Auth/AuthSuccess";
 import SubscriptionPlan from "./components/SubscriptionPlan";
-import TaskReminder from "./components/TaskReminder";
 import Dashboard from "./components/Dashboard";
 import UserList from "./components/UserList";
-import { useEffect } from "react";
-import Remark from "./components/Remark";
-import TaskList from "./components/TaskList";
 import TaskCalendar from "./components/TaskCalendar";
 import AddPlan from "./components/AddPlan";
 import Setting from "./components/Setting";
@@ -23,6 +19,7 @@ import CustomUserList from "./components/CustomUserList";
 import ManageUserList from "./components/ManageUserList";
 import CoinSetting from "./components/CoinSetting";
 import UserNotification from "./components/UserNotification";
+import RemarkList from "./components/RemarkList";
 
 function App() {
   const [authUser, setAuthUser] = useAuth();
@@ -137,11 +134,11 @@ function App() {
         /> */}
         <Route path="*" element={<Home />} />
         <Route
-          path="/remark"
+          path="/remark-list"
           element={
             authUser?.userType === "Manage" ||
             authUser?.userType === "Custom" ? (
-              <Remark />
+              <RemarkList />
             ) : (
               <Navigate to="/" />
             )
@@ -175,7 +172,7 @@ function App() {
           path="/add-user"
           element={authUser?.role === "Admin" && <AddUser />}
         />
-       <Route
+        <Route
           path="/email-template"
           element={
             (authUser?.role === "Admin" || authUser?.userType === "Custom") && (
