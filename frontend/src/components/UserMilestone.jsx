@@ -17,7 +17,7 @@ const UserMilestone = () => {
           `https://task-reminder-4sqz.onrender.com/plan/milestones/${authUser._id}`,
           { withCredentials: true }
         );
-        setMilestones(milestoneRes.data.milestones || []);
+        setMilestones(milestoneRes.data.milestones);
       } catch (error) {
         console.error("Error fetching milestones:", error);
       }
@@ -29,7 +29,7 @@ const UserMilestone = () => {
           `https://task-reminder-4sqz.onrender.com/remark/${authUser._id}`,
           { withCredentials: true }
         );
-        setRemarks(remarkRes.data.remarks || []);
+        setRemarks(remarkRes.data.remarks);
       } catch (error) {
         console.error("Error fetching remarks:", error);
       }
@@ -39,8 +39,11 @@ const UserMilestone = () => {
     fetchRemarks();
   }, []);
 
-  const isMilestoneAchieved = (planName) => {
-    return remarks.some((remark) => remark.taskName === planName);
+  const getCompletionDate = (taskName, taskDate) => {
+    const remark = remarks.find(
+      (remark) => remark.taskName === taskName && remark.taskDate === taskDate
+    );
+    return remark ? remark.createdAt : null;
   };
 
   return (
@@ -63,7 +66,11 @@ const UserMilestone = () => {
         <div className="absolute left-1/2 transform -translate-x-1/2 w-[2px] sm:w-1 bg-gradient-to-b from-[#a56cef] to-[#6a1b9a] rounded-full h-full"></div>
 
         {milestones.map((milestone, index) => {
-          const achieved = isMilestoneAchieved(milestone.planName);
+          const completionDate = getCompletionDate(
+            milestone.taskName,
+            milestone.taskDate
+          );
+          const achieved = !!completionDate;
           const isLeft = index % 2 === 0;
 
           return (
@@ -91,21 +98,20 @@ const UserMilestone = () => {
                     <MdOutlineCancel size={22} className="text-red-500" />
                   )}
                   <h3 className="text-lg sm:text-xl font-bold">
-                    {milestone.planName}
+                    {milestone.taskName}
                   </h3>
                 </div>
                 <p className="mt-2 text-sm">
                   {achieved ? "✔️ Completed" : "❌ Not Completed"}
                 </p>
                 <span className="text-xs text-gray-100">
-                  {remarks.find(
-                    (remark) => remark.taskName === milestone.planName
-                  )
-                    ? new Date(
-                        remarks.find(
-                          (remark) => remark.taskName === milestone.planName
-                        ).createdAt
-                      ).toLocaleDateString()
+                  Task Date: {milestone.taskDate}
+                </span>
+                <br />
+                <span className="text-xs text-gray-100">
+                  Task Completion Date:{" "}
+                  {completionDate
+                    ? new Date(completionDate).toISOString().split("T")[0]
                     : "N/A"}
                 </span>
               </div>
@@ -117,7 +123,10 @@ const UserMilestone = () => {
       <p className="text-md sm:text-lg text-[#ab7beb] font-medium text-center mt-6 sm:mt-10">
         ✅{" "}
         <span className="text-green-400 text-xl sm:text-2xl font-bold">
-          {milestones.filter((m) => isMilestoneAchieved(m.planName)).length}
+          {
+            milestones.filter((m) => getCompletionDate(m.taskName, m.taskDate))
+              .length
+          }
         </span>{" "}
         Milestones Completed!
       </p>
