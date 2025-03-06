@@ -101,6 +101,20 @@ export const addRemark = async (req, res) => {
       await updatedUser.save();
     }
 
+    if (user.emailBlocked) {
+      const hasPendingUnremarkedTasks = await checkUnremarkedTasks(user._id);
+
+      if (!hasPendingUnremarkedTasks) {
+        user.emailBlocked = false;
+        user.notifications.push({
+          message:
+            "You've added the remark for the task! Email notifications have resumed.",
+        });
+
+        await user.save();
+      }
+    }
+
     res.status(201).json({
       success: true,
       message: "Remark added successfully",
@@ -110,6 +124,31 @@ export const addRemark = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: "Server Error", error });
   }
+};
+
+const checkUnremarkedTasks = async (userId) => {
+  const userPlans = await Plan.find({ userId });
+
+  for (const plan of userPlans) {
+    for (const task of plan.tasks) {
+      for (const schedule of task.schedule) {
+        const scheduledDateObj = new Date(schedule.date); // Convert string to Date object
+        const fiveDaysAgo = new Date();
+        fiveDaysAgo.setDate(new Date().getDate() - 5);
+
+        if (scheduledDateObj <= fiveDaysAgo) {
+          const remarkExists = await Remark.findOne({
+            userId,
+            taskName: task.taskName,
+            taskDate: schedule.date,
+          });
+
+          if (!remarkExists) return true;
+        }
+      }
+    }
+  }
+  return false;
 };
 
 export const getRemark = async (req, res) => {
