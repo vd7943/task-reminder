@@ -20,6 +20,7 @@ import appreciationRoute from "./route/appreciation.route.js";
 import emailTemplateRoute from "./route/emailTemplate.route.js";
 import coinRuleRoute from "./route/coinRule.route.js";
 import cookieParser from "cookie-parser";
+import { checkRemarkDelaysCron } from "./automation/checkRemarkDelaysCron.js";
 
 const app = express();
 config();
@@ -88,6 +89,7 @@ app.use("/coins", coinRuleRoute);
 reminderNotificationCron();
 planNotificationCron();
 checkSubscriptions();
+checkRemarkDelaysCron();
 
 app.listen(PORT, () => {
   console.log(`server is listening on port ${PORT}`);
