@@ -52,8 +52,8 @@ const userSchema = mongoose.Schema({
   ],
   milestones: [
     {
-      planId: { type: mongoose.Schema.Types.ObjectId, ref: "Plan" },
-      planName: String,
+      taskName: { type: String, required: false },
+      taskDate: { type: String, required: false },
       createdAt: { type: Date, default: Date.now },
     },
   ],
