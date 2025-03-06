@@ -153,6 +153,20 @@ export const getTodayPlans = async (req, res) => {
 
   try {
     const plans = await Plan.find({ userId });
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    if (user.isDeactivated) {
+      return res.status(403).json({
+        success: false,
+        message: "Your account is deactivated. Contact admin.",
+      });
+    }
 
     const todayPlans = plans
       .map((plan) => {
@@ -190,7 +204,9 @@ export const addMilestone = async (req, res) => {
     );
 
     if (milestoneExists) {
-      return res.status(400).json({success: false, message: "Milestone already added" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Milestone already added" });
     }
 
     user.milestones.push({
@@ -216,6 +232,13 @@ export const getMilestones = async (req, res) => {
   try {
     const user = await User.findById(userId).select("milestones");
     if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (user.isDeactivated) {
+      return res.status(403).json({
+        success: false,
+        message: "Your account is deactivated. Contact admin.",
+      });
+    }
 
     const filteredMilestones = planName
       ? user.milestones.filter((milestone) => milestone.planName === planName)
