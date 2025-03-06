@@ -57,6 +57,8 @@ const userSchema = mongoose.Schema({
       createdAt: { type: Date, default: Date.now },
     },
   ],
+  isDeactivated: { type: Boolean, default: false },
+  previousUserType: { type: String, default: "Regular" },
   createdAt: {
     type: Date,
     default: () => {
