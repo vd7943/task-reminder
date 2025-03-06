@@ -3,7 +3,6 @@ import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import listPlugin from "@fullcalendar/list";
-import moment from "moment";
 import { useAuth } from "../context/AuthProvider";
 import axios from "axios";
 import { useForm } from "react-hook-form";
@@ -48,6 +47,9 @@ const TaskCalendar = () => {
   const [isRemarkModalOpen, setIsRemarkModalOpen] = useState(false);
   const [selectedRemarkTask, setSelectedRemarkTask] = useState(null);
   const [milestones, setMilestones] = useState([]);
+  const [selectedTasks, setSelectedTasks] = useState([]);
+  const [tasksForDay, setTasksForDay] = useState([]);
+  const [selectedDate, setSelectedDate] = useState(null);
 
   const navigate = useNavigate();
 
@@ -66,12 +68,12 @@ const TaskCalendar = () => {
                 `${scheduleItem.date}T${scheduleItem.time}:00`
               );
               const endTime = new Date(
-                startTime.getTime() + 23.9 * 60 * 60 * 1000
+                startTime.getTime() + 23.98 * 60 * 60 * 1000
               );
 
               return {
                 id: task._id,
-                title: `${plan.planName}`, // Distinguish plan activities
+                title: `${task.taskName}`,
                 start: startTime,
                 end: endTime,
                 color: getRandomColor(),
@@ -92,6 +94,14 @@ const TaskCalendar = () => {
 
   const handleRemarkClick = (task) => {
     setSelectedRemarkTask(task);
+    setSelectedDate(task.start);
+    setTasksForDay(
+      events.filter(
+        (e) =>
+          new Date(e.start).toDateString() ===
+          new Date(task.start).toDateString()
+      )
+    );
     setIsRemarkModalOpen(true);
   };
 
@@ -104,7 +114,12 @@ const TaskCalendar = () => {
         );
 
         const fetchedMilestones = milestoneRes.data.milestones.map(
-          (milestone) => milestone.planName
+          (milestone) => ({
+            taskName: milestone.taskName,
+            taskDate: milestone.taskDate
+              ? new Date(milestone.taskDate).toLocaleDateString("en-CA")
+              : "N/A",
+          })
         );
 
         setMilestones(fetchedMilestones);
@@ -118,11 +133,16 @@ const TaskCalendar = () => {
   }, [authUser._id]);
 
   const handleMilestoneClick = async (event) => {
+    const formattedDate = event.start.toLocaleDateString("en-CA"); // 'YYYY-MM-DD'
+
     try {
-      console.log(planName);
       const response = await axios.post(
         `https://task-reminder-4sqz.onrender.com/plan/milestones`,
-        { userId: authUser._id, planName: event.title },
+        {
+          userId: authUser._id,
+          taskName: event.title,
+          taskDate: formattedDate,
+        },
         { withCredentials: true }
       );
 
@@ -130,7 +150,9 @@ const TaskCalendar = () => {
         toast.success(response.data.message);
         const updatedMilestones = [...milestones, event.title];
         setMilestones(updatedMilestones);
-        localStorage.setItem("milestones", JSON.stringify(updatedMilestones));
+        setTimeout(() => {
+          navigate("/");
+        }, 2000);
       }
     } catch (error) {
       console.error("Error adding milestone:", error.response?.data?.message);
@@ -145,51 +167,82 @@ const TaskCalendar = () => {
     reset: resetRemarkForm,
   } = useForm();
 
+  useEffect(() => {
+    if (tasksForDay.length === 1) {
+      setSelectedTasks([tasksForDay[0].title]);
+    }
+  }, [tasksForDay]);
+
+  const handleTaskSelection = (taskTitle) => {
+    setSelectedTasks((prevTasks) =>
+      prevTasks.includes(taskTitle)
+        ? prevTasks.filter((task) => task !== taskTitle)
+        : [...prevTasks, taskTitle]
+    );
+  };
+
   const handleStarClick = (star) => {
     setRating(star);
     setValue("taskReview", star);
   };
 
   const onRemarkSubmit = async (data) => {
-    try {
-      const remarkData = {
-        taskName: selectedRemarkTask.title,
-        taskDuration: data.taskDuration,
-        taskReview: data.taskReview,
-        taskSummary: data.taskSummary,
-        userId: authUser._id,
-      };
+    if (selectedTasks.length === 0) {
+      toast.error("Please select at least one task to give a remark.");
+      return;
+    }
 
-      const response = await axios.post(
-        "https://task-reminder-4sqz.onrender.com/remark/set-remark",
-        remarkData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-        }
+    if (!selectedRemarkTask) {
+      toast.error("Invalid task selection.");
+      return;
+    }
+
+    try {
+      // ✅ Fetch today's plans BEFORE setting remarks
+      const { data: todayPlans } = await axios.get(
+        `https://task-reminder-4sqz.onrender.com/plan/get-today-plan/${authUser._id}`
       );
-      if (response.data.success) {
-        toast.success(response.data.message);
-        const updatedUserRes = await axios.get(
-          `http://localhost:3000/user/${authUser._id}`,
-          { withCredentials: true }
+
+      // ✅ Calculate total tasks before filtering occurs
+      const totalTasksToday = todayPlans.reduce(
+        (acc, plan) => acc + plan.tasks.length,
+        0
+      );
+
+      const remarkPromises = selectedTasks.map(async (taskTitle) => {
+        const remarkData = {
+          taskName: taskTitle,
+          taskDuration: data.taskDuration,
+          taskReview: data.taskReview,
+          taskSummary: data.taskSummary,
+          userId: authUser._id,
+          taskDate: selectedRemarkTask.start.toLocaleDateString("en-CA"),
+        };
+
+        return await axios.post(
+          "https://task-reminder-4sqz.onrender.com/remark/set-remark",
+          remarkData,
+          { headers: { "Content-Type": "application/json" } }
         );
-        if (updatedUserRes.data.user) {
-          setAuthUser(updatedUserRes.data.user);
-          localStorage.setItem(
-            "User",
-            JSON.stringify(updatedUserRes.data.user)
-          );
-        }
-        setIsRemarkModalOpen(false);
-        resetRemarkForm();
-        setTimeout(() => {
-          navigate("/");
-          window.location.reload();
-        }, 1000);
+      });
+
+      const responses = await Promise.all(remarkPromises);
+
+      if (selectedTasks.length === totalTasksToday) {
+        const totalCoinsEarned = responses.reduce((acc, res) => {
+          return acc + (res.data.coinsEarned || 0);
+        }, 0);
+        toast.success(
+          `🎉 Congratulations! You've completed all tasks for today and earned ${totalCoinsEarned} coins!`
+        );
       } else {
-        toast.error("Error");
+        toast.success("Remark added successfully");
       }
+
+      setIsRemarkModalOpen(false);
+      resetRemarkForm();
     } catch (error) {
+      console.error("Error:", error);
       toast.error(error.response?.data?.message || "Something went wrong");
     }
   };
@@ -197,7 +250,7 @@ const TaskCalendar = () => {
   const eventStyleGetter = (event, viewType) => {
     return {
       style: {
-        backgroundColor: event.color || "#3B82F6", // Default to blue if no color is provided
+        backgroundColor: event.color || "#3B82F6",
         borderRadius: "6px",
         padding: viewType === "dayGridMonth" ? "2px 6px" : "4px",
         border: "none",
@@ -242,9 +295,9 @@ const TaskCalendar = () => {
             </span>
 
             <div className="flex justify-between items-center w-full">
-              <div className="flex gap-1">
+              <div className="flex gap-2">
                 {(authUser.userType === "Custom" ||
-                authUser.userType === "Manage") && (
+                  authUser.userType === "Manage") && (
                   <button
                     onClick={() => handleRemarkClick(event)}
                     className="text-white bg-gray-500 hover:bg-gray-600 p-1 rounded-md transition duration-200 cursor-pointer shadow-sm"
@@ -257,13 +310,23 @@ const TaskCalendar = () => {
                   <button
                     onClick={() => handleMilestoneClick(event)}
                     className={`p-1 rounded-md transition duration-200 cursor-pointer shadow-sm 
-                ${
-                  milestones.includes(event.title)
-                    ? "bg-yellow-500 text-white"
-                    : "border border-white text-white bg-transparent"
-                }`}
+                    ${
+                      milestones.some(
+                        (milestone) =>
+                          milestone.taskName === event.title &&
+                          milestone.taskDate ===
+                            event.start.toLocaleDateString("en-CA") // Matching title & date
+                      )
+                        ? "bg-yellow-500 text-white"
+                        : "border border-white text-white bg-transparent"
+                    }`}
                   >
-                    {milestones.includes(event.title) ? (
+                    {milestones.some(
+                      (milestone) =>
+                        milestone.taskName === event.title &&
+                        milestone.taskDate ===
+                          event.start.toISOString().split("T")[0]
+                    ) ? (
                       <IoMdStar size={16} />
                     ) : (
                       <IoMdStarOutline size={16} />
@@ -282,7 +345,7 @@ const TaskCalendar = () => {
             </div>
 
             <div className="flex gap-2">
-               {(authUser.userType === "Custom" ||
+              {(authUser.userType === "Custom" ||
                 authUser.userType === "Manage") && (
                 <button
                   onClick={() => handleRemarkClick(event)}
@@ -296,13 +359,23 @@ const TaskCalendar = () => {
                 <button
                   onClick={() => handleMilestoneClick(event)}
                   className={`p-1 rounded-md transition duration-200 cursor-pointer shadow-sm 
-                ${
-                  milestones.includes(event.title)
-                    ? "bg-yellow-500 text-white"
-                    : "border border-white text-white bg-transparent"
-                }`}
+                  ${
+                    milestones.some(
+                      (milestone) =>
+                        milestone.taskName === event.title &&
+                        milestone.taskDate ===
+                          event.start.toLocaleDateString("en-CA")
+                    )
+                      ? "bg-yellow-500 text-white"
+                      : "border border-white text-white bg-transparent"
+                  }`}
                 >
-                  {milestones.includes(event.title) ? (
+                  {milestones.some(
+                    (milestone) =>
+                      milestone.taskName === event.title &&
+                      milestone.taskDate ===
+                        event.start.toISOString().split("T")[0]
+                  ) ? (
                     <IoMdStar size={16} />
                   ) : (
                     <IoMdStarOutline size={16} />
@@ -317,7 +390,7 @@ const TaskCalendar = () => {
   };
 
   return (
-     <div className="flex flex-col m-auto items-center justify-center w-full min-h-screen h-full lg:w-[960px] p-1 lg:p-4">
+    <div className="flex flex-col m-auto items-center justify-center w-full min-h-screen h-full lg:w-[960px] p-1 lg:p-4">
       <div className="w-full lg:w-[950px] max-w-6xl shadow-2xl rounded-2xl bg-[#FFFFFF2B] p-2 lg:p-6">
         <FullCalendar
           plugins={[dayGridPlugin, timeGridPlugin, listPlugin]}
@@ -361,13 +434,20 @@ const TaskCalendar = () => {
               className="space-y-4"
             >
               <div>
-                <label className="block mb-1 text-gray-300">Task Name</label>
-                <input
-                  type="text"
-                  className="border border-gray-600 bg-gray-700 p-2 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={selectedRemarkTask?.title}
-                  readOnly
-                />
+                <label className="block text-lg mb-1 text-gray-300">
+                  Select Tasks
+                </label>
+                {tasksForDay.map((task) => (
+                  <div key={task.title} className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={selectedTasks.includes(task.title)}
+                      onChange={() => handleTaskSelection(task.title)}
+                      className="cursor-pointer"
+                    />
+                    <span>{task.title}</span>
+                  </div>
+                ))}
               </div>
 
               <div>
