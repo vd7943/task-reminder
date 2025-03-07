@@ -41,19 +41,20 @@ export const sendEmail = async ({
   });
 
   const createdBy = userType === "Manage" ? "Admin" : "Custom";
-  const template = await EmailTemplate.findOne({ planName, createdBy });
+  const templates = await EmailTemplate.find({ planName, createdBy });
 
-  if (!template) {
+  if (!templates.length) {
     console.error(
-      `No email template found for plan: ${planName}, set by: ${createdBy}`
+      `No email templates found for plan: ${planName}, set by: ${createdBy}`
     );
     return;
   }
-
+  const randomTemplate =
+    templates[Math.floor(Math.random() * templates.length)];
   const frontendUrl = process.env.FRONTEND_URL;
 
   let emailBody = `
-    <p>${template.body}</p>  
+    <p>${randomTemplate.body}</p>  
     <p><strong>Task Name:</strong> ${taskName}</p>  
     <p><strong>Task Description:</strong> ${taskDescription}</p>
     <p><strong>Task Link:</strong> <a href="${taskLink}" target="_blank">${taskLink}</a></p>
@@ -71,7 +72,7 @@ export const sendEmail = async ({
 
   emailBody += `<br><br>${completedButton} &nbsp; ${notCompletedButton}`;
 
-  const emailSubject = `${template.subject} - ${planName}`;
+  const emailSubject = `${randomTemplate.subject} - ${planName}`;
 
   const options = {
     from: process.env.SMTP_MAIL,
