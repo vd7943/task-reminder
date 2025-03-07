@@ -20,6 +20,7 @@ import ManageUserList from "./components/ManageUserList";
 import CoinSetting from "./components/CoinSetting";
 import UserNotification from "./components/UserNotification";
 import RemarkList from "./components/RemarkList";
+import EditViewTemplate from "./components/EditViewTemplate";
 
 function App() {
   const [authUser, setAuthUser] = useAuth();
@@ -177,6 +178,14 @@ function App() {
           element={
             (authUser?.role === "Admin" || authUser?.userType === "Custom") && (
               <EmailTemplate />
+            )
+          }
+        />
+        <Route
+          path="/edit-view-template"
+          element={
+            (authUser?.role === "Admin" || authUser?.userType === "Custom") && (
+              <EditViewTemplate />
             )
           }
         />
