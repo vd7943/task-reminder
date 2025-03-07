@@ -13,7 +13,7 @@ const EditViewTemplate = () => {
   useEffect(() => {
     axios
       .get(
-        `http://localhost:3000/email/templates/${
+        `https://task-reminder-4sqz.onrender.com/email/templates/${
           authUser.userType === "Custom" ? "Custom" : "Admin"
         }`
       )
@@ -30,7 +30,7 @@ const EditViewTemplate = () => {
   const handleUpdate = async () => {
     try {
       await axios.put(
-        `http://localhost:3000/email/update-template/${editingTemplate}`,
+        `https://task-reminder-4sqz.onrender.com/email/update-template/${editingTemplate}`,
         {
           subject: updatedSubject,
           body: updatedBody,
