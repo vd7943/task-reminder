@@ -3,6 +3,7 @@ import { Calendar } from "react-calendar";
 import { useAuth } from "../context/AuthProvider";
 import { FaBars, FaCalendarAlt, FaTimes } from "react-icons/fa";
 import { MdDashboard, MdHome } from "react-icons/md";
+import { HiTemplate } from "react-icons/hi";
 import {
   FaList,
   FaUserCog,
@@ -365,12 +366,35 @@ const Sidebar = () => {
                     <MdEmail />
                   </div>
                   <div className="text-xl font-medium flex items-center gap-2">
-                    Email Template
+                    Set Email Template
                   </div>
                 </div>
               </li>
             </Link>
           )}
+
+          {(authUser?.role === "Admin" || authUser?.userType === "Custom") && (
+            <Link
+              to="/edit-view-template"
+              className="pb-10"
+              onClick={() => setIsOpen(false)}
+            >
+              <li
+                className={`flex items-center space-x-3 p-2 rounded-lg cursor-pointer transition-all hover:bg-[#FFFFFF2B]
+                ${isActive("/edit-view-template") ? "bg-[#FFFFFF2B]" : ""}`}
+              >
+                <div className="flex items-center justify-center gap-4">
+                  <div className="rounded-full text-red-400">
+                    <HiTemplate />
+                  </div>
+                  <div className="text-xl font-medium flex items-center gap-2">
+                    View Templates
+                  </div>
+                </div>
+              </li>
+            </Link>
+          )}
+
           {authUser?.role === "Admin" && (
             <Link
               to="/coin-setting"
@@ -406,7 +430,7 @@ const Sidebar = () => {
                   <FaCog />
                 </div>
                 <div className="text-xl font-medium flex items-center gap-2">
-                  Setting
+                  Profile Setting
                 </div>
               </div>
             </li>
