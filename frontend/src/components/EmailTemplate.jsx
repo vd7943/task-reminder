@@ -11,6 +11,7 @@ const EmailTemplate = () => {
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm();
 
@@ -19,9 +20,7 @@ const EmailTemplate = () => {
     axios
       .get(
         authUser.userType === "Custom" ? `${url}?userId=${authUser._id}` : url,
-        {
-          withCredentials: true,
-        }
+        { withCredentials: true }
       )
       .then((response) => {
         setPlans(response.data.plans || []);
@@ -32,42 +31,33 @@ const EmailTemplate = () => {
   const createdBy = authUser.userType === "Custom" ? "Custom" : "Admin";
 
   const onSubmit = async (data) => {
-    const formData = new FormData();
-    formData.append("planName", data.planName);
-    formData.append("createdBy", createdBy);
-    formData.append("subject", data.subject);
-    formData.append("body", data.body);
-
     try {
       const res = await axios.post(
-        "https://task-reminder-4sqz.onrender.com/email/set-template",
-        formData,
+        "https://task-reminder-4sqz.onrender.com/email/template/set-template",
         {
-          headers: { "Content-Type": "multipart/form-data" },
+          planName: data.planName,
+          createdBy,
+          subject: data.subject,
+          body: data.body,
         }
       );
 
       if (res.data) {
         toast.success(res.data.message);
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
+        reset();
       }
     } catch (error) {
-      if (error.response) {
-        toast.error("Error: " + error.response.data.message);
-      }
+      toast.error(error.response?.data?.message || "Failed to save template");
     }
   };
 
   return (
-    <div className="flex flex-col h-screen lg:h-full pt-10 lg:pt-2 items-start ml-[2%] xl:ml-[11%] my-8">
+    <div className="flex flex-col h-screen lg:h-full pt-10 lg:pt-2 items-start mx-auto my-8">
       <h2 className="text-2xl lg:text-3xl">Set Email Template</h2>
       <div className="flex flex-col bg-[#FFFFFF2B] items-start p-8 rounded-lg lg:w-[700px] mx-auto mt-4 shadow-lg">
         <form
-          action=""
           onSubmit={handleSubmit(onSubmit)}
-          className="flex flex-col gap-3 w-full "
+          className="flex flex-col gap-3 w-full"
         >
           <label className="text-xl py-1">
             Plan Name
@@ -94,10 +84,10 @@ const EmailTemplate = () => {
               This field is required!
             </span>
           )}
+
           <label className="text-xl pt-1">Subject</label>
           <input
             type="text"
-            placeholder="Enter your fullname"
             className="w-full mt-1 p-2 border rounded-md outline-none"
             {...register("subject", { required: true })}
           />
@@ -106,10 +96,10 @@ const EmailTemplate = () => {
               This field is required!
             </span>
           )}
+
           <label className="text-xl pt-1">Body</label>
           <textarea
             rows={5}
-            placeholder="Enter your email"
             className="w-full mt-1 p-2 border rounded-md outline-none"
             {...register("body", { required: true })}
           />
@@ -119,14 +109,9 @@ const EmailTemplate = () => {
             </span>
           )}
 
-          <div className="pt-4 flex flex-col gap-4 items-center">
-            <button
-              className="bg-[#9D60EC] text-[#151025] py-3 text-lg px-8 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 hover:bg-[#c095f8] duration-300 cursor-pointer"
-              type="submit"
-            >
-              Add Template
-            </button>
-          </div>
+          <button className="bg-[#9D60EC] text-[#151025] py-3 text-lg px-8 rounded-xl shadow-lg hover:bg-[#c095f8] duration-300 cursor-pointer">
+            Add Template
+          </button>
         </form>
       </div>
     </div>
