@@ -1,128 +1,118 @@
-import React from "react";
-import { useForm } from "react-hook-form";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { useAuth } from "../context/AuthProvider";
-import { useNavigate } from "react-router-dom";
 
-const TaskReminder = () => {
-  const [authUser, setAuthUser] = useAuth();
-  const navigate = useNavigate();
-  const userId = authUser._id;
+const CoinSetting = () => {
+  const [rules, setRules] = useState([]);
+  const [minDuration, setMinDuration] = useState("");
+  const [coins, setCoins] = useState("");
+  const [freeSubsCoins, setFreeSubsCoins] = useState(0);
+  const [planRestartCoins, setPlanRestartCoins] = useState(0);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm();
+  useEffect(() => {
+    fetchRules();
+  }, []);
 
-  const onSubmit = async (data) => {
+  const fetchRules = async () => {
     try {
-      const response = await axios.post(
-        "https://task-reminder-4sqz.onrender.com/task/task-reminder",
-        { ...data, userId },
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-        }
-      );
-      toast.success(response.data.message);
-      setTimeout(() => {
-        navigate("/task-list");
-      }, 1000);
+      const res = await axios.get("https://task-reminder-4sqz.onrender.com/coins/coin-rules");
+      setRules(res.data.rules);
     } catch (error) {
-      toast.error(error.response?.data?.message || "Something went wrong");
+      toast.error("Failed to fetch rules");
     }
   };
 
+  const handleAddOrUpdate = async () => {
+    if (!minDuration || !coins) {
+      toast.error("Please fill all fields");
+      return;
+    }
+
+    try {
+      const res = await axios.post("https://task-reminder-4sqz.onrender.com/coins/coin-rules", {
+        minDuration: parseInt(minDuration),
+        coins: parseInt(coins),
+        freeSubsCoins: parseInt(freeSubsCoins),
+        planRestartCoins: parseInt(planRestartCoins),
+      });
+      toast.success(res.data.message);
+      fetchRules();
+      setMinDuration("");
+      setCoins("");
+      setFreeSubsCoins("");
+      setPlanRestartCoins("");
+    } catch (error) {
+      toast.error("Failed to update rules");
+    }
+  };
   return (
-    <div className="flex flex-col pt-10 md:pt-0 h-screen md:h-full items-start ml-2 xl:ml-[10%] my-8">
-      <h2 className="text-2xl lg:text-3xl">Task Reminder</h2>
-      <div className="flex flex-col bg-[#FFFFFF2B] items-start p-8 rounded-lg lg:w-[700px] mx-auto mt-4 shadow-lg">
-        <form
-          action=""
-          onSubmit={handleSubmit(onSubmit)}
-          className="flex flex-col gap-3 w-full "
-        >
-          <label className="text-xl py-1">
-            Task Name
-            <input
-              type="text"
-              className="w-full mt-1 p-2 border rounded-md outline-none"
-              {...register("taskName", { required: true })}
-            />
+    <div className="flex flex-col h-screen items-start pt-10 md:pt-0 mx-auto mt-10 xl:mt-20">
+      <h2 className="text-2xl lg:text-3xl">Coin Settings</h2>
+      <div className="flex flex-col bg-[#FFFFFF2B] items-center w-full justify-center p-8 rounded-lg lg:w-[700px] mx-auto mt-4 shadow-lg">
+        <div className="flex flex-col gap-3 w-full ">
+          <label className="block font-medium text-lg">Minimum Duration:</label>
+          <input
+            type="number"
+            placeholder="Minimum Duration (minutes)"
+            value={minDuration}
+            onChange={(e) => setMinDuration(e.target.value)}
+            className="w-full p-2 border rounded-md outline-none"
+          />
+          <label className="block font-medium text-lg">Coins Awarded:</label>
+          <input
+            type="number"
+            placeholder="Coins Awarded"
+            value={coins}
+            onChange={(e) => setCoins(e.target.value)}
+            className="w-full p-2 border rounded-md outline-none"
+          />
+          <label className="block font-medium text-lg">
+            Free Subscription Coins:
           </label>
-
-          <label className="text-xl py-1">
-            Category
-            <select
-              className="w-full mt-1 p-2 border rounded-md outline-none"
-              {...register("category", { required: true })}
-            >
-              <option value="" className="text-black">
-                Select a category
-              </option>
-              <option value="Meeting" className="text-black">
-                Meeting
-              </option>
-              <option value="Gym" className="text-black">
-                Gym
-              </option>
-              <option value="Diet" className="text-black">
-                Diet
-              </option>
-              <option value="Medical" className="text-black">
-                Medical
-              </option>
-              <option value="Other" className="text-black">
-                Other
-              </option>
-            </select>
+          <input
+            type="number"
+            placeholder="Free Subscription Coins"
+            value={freeSubsCoins}
+            onChange={(e) => setFreeSubsCoins(e.target.value)}
+            className="w-full p-2 border rounded-md outline-none"
+          />
+          <label className="block font-medium text-lg">
+            Coins Needed to Restart Plan:
           </label>
-
-          <label className="text-xl py-1">
-            Reminder Date & Time
-            <input
-              type="datetime-local"
-              className="w-full mt-1 p-2 border rounded-md outline-none"
-              {...register("reminderDateTime", { required: true })}
-            />
-          </label>
-
-          <label className="text-xl py-1">
-            Schedule Date & Time
-            <input
-              type="datetime-local"
-              className="w-full mt-1 p-2 border rounded-md outline-none"
-              {...register("scheduleDateTime", { required: true })}
-            />
-          </label>
-
-          <label className="text-xl py-1">
-            Task Duration (mins)
-            <input
-              type="number"
-              className="w-full mt-1 p-2 border rounded-md outline-none"
-              {...register("taskDuration", { required: true })}
-            />
-          </label>
-
-          <label className="text-xl py-1">
-            Task Description
-            <textarea
-              className="w-full mt-1 p-2 border rounded-md outline-none h-24"
-              {...register("taskDescription", { required: true })}
-            ></textarea>
-          </label>
+          <input
+            type="number"
+            placeholder="Plan Restart Coins"
+            value={planRestartCoins}
+            onChange={(e) => setPlanRestartCoins(e.target.value)}
+            className="w-full p-2 border rounded-md outline-none"
+          />
           <button
-            type="submit"
-            className="mt-4 py-2 bg-[#9D60EC] text-[#151025] text-lg rounded-md hover:shadow-xl transform hover:scale-101 hover:bg-[#c095f8] duration-300 cursor-pointer"
+            onClick={handleAddOrUpdate}
+            className="mt-4 px-4 py-2 bg-[#9D60EC] text-[#151025] text-lg rounded-md hover:shadow-xl transform hover:scale-101 hover:bg-[#c095f8] duration-300 cursor-pointer"
           >
-            Add
+            Add/Update Rule
           </button>
-        </form>
+        </div>
+      </div>
+      <div className="mt-6 rounded-md shadow w-full">
+        <h4 className="text-xl font-semibold mb-2">Existing Rule</h4>
+        <ul className="mt-2">
+          {rules.map((rule, index) => (
+            <li
+              key={index}
+              className="border p-4 text-lg rounded-md bg-gray-800 flex items-center justify-between"
+            >
+              <span>
+                {rule.minDuration} minutes = {rule.coins} coins
+              </span>
+              <span>Free Subscription: {rule.freeSubsCoins} coins</span>
+              <span>Restart Plan: {rule.planRestartCoins} coins</span>
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );
 };
 
-export default TaskReminder;
+export default CoinSetting;
