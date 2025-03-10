@@ -2,7 +2,7 @@ import CoinRule from "../model/coinRule.model.js";
 import User from "../model/user.model.js";
 
 export const addOrUpdateCoinRule = async (req, res) => {
-  const { minDuration, coins, freeSubsCoins } = req.body;
+  const { minDuration, coins, freeSubsCoins, planRestartCoins } = req.body;
 
   try {
     let existingRule = await CoinRule.findOne({ minDuration });
@@ -11,32 +11,42 @@ export const addOrUpdateCoinRule = async (req, res) => {
       const freeSubsCoinsChanged =
         existingRule.freeSubsCoins !== freeSubsCoins &&
         freeSubsCoins !== undefined;
+      const planRestartCoinsChanged =
+        existingRule.planRestartCoins !== planRestartCoins &&
+        planRestartCoins !== undefined;
 
       existingRule.coins = coins;
       existingRule.freeSubsCoins = freeSubsCoins;
+      existingRule.planRestartCoins = planRestartCoins;
       await existingRule.save();
 
       const allUsers = await User.find({
         userType: { $in: ["Custom", "Manage"] },
       });
 
-      await Promise.all(
-        allUsers.map(async (user) => {
-          user.notifications.push({
-            message: `🔔 New Update: Collect ${freeSubsCoins} coins to earn 1 month of free subscription!`,
-          });
-          await user.save();
-        })
-      );
+      if (freeSubsCoinsChanged) {
+        await Promise.all(
+          allUsers.map(async (user) => {
+            user.notifications.push({
+              message: `🔔 New Update: Collect ${freeSubsCoins} coins to earn 1 month of free custom subscription!`,
+            });
+            await user.save();
+          })
+        );
+      }
 
       return res
         .status(200)
         .json({ success: true, message: "Rule updated successfully" });
     }
 
-    // ✅ If no rule exists, delete all and create a new one
     await CoinRule.deleteMany({});
-    const newRule = new CoinRule({ minDuration, coins, freeSubsCoins });
+    const newRule = new CoinRule({
+      minDuration,
+      coins,
+      freeSubsCoins,
+      planRestartCoins,
+    });
     await newRule.save();
 
     const allUsers = await User.find({
