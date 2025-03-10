@@ -173,14 +173,14 @@ function App() {
           path="/add-user"
           element={authUser?.role === "Admin" && <AddUser />}
         />
-        <Route
+{/*         <Route
           path="/email-template"
           element={
             (authUser?.role === "Admin" || authUser?.userType === "Custom") && (
               <EmailTemplate />
             )
           }
-        />
+        /> */}
         <Route
           path="/edit-view-template"
           element={
