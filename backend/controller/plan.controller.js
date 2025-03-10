@@ -3,7 +3,7 @@ import Remark from "../model/remark.model.js";
 import User from "../model/user.model.js";
 
 export const addNewPlan = async (req, res) => {
-  const { userId, userRole, planName, tasks } = req.body;
+  const { userId, userRole, planName, planStart, tasks } = req.body;
 
   try {
     const user = await User.findById(userId);
@@ -24,41 +24,79 @@ export const addNewPlan = async (req, res) => {
         .json({ success: false, message: "Plan already exists" });
     }
 
-    const createdAt = new Date();
+    let currentDate = new Date();
+    if (planStart === "tomorrow") {
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
 
-    const getValidDate = (startDate, dayOffset) => {
-      let newDate = new Date(startDate);
-      newDate.setDate(newDate.getDate() + 1); // Start from the next day
+    const skipSunday = (date) => {
+      while (date.getDay() === 0) {
+        date.setDate(date.getDate() + 1);
+      }
+      return date;
+    };
+
+    const getTaskStartDate = (baseDate, srNo) => {
+      let startDate = new Date(baseDate);
       let daysAdded = 0;
 
-      while (daysAdded < dayOffset) {
-        if (newDate.getDay() !== 0) {
+      while (daysAdded < srNo - 1) {
+        startDate.setDate(startDate.getDate() + 1);
+        if (startDate.getDay() !== 0) {
           daysAdded++;
-        }
-        if (daysAdded < dayOffset) {
-          newDate.setDate(newDate.getDate() + 1);
         }
       }
 
-      return newDate.toISOString().slice(0, 10); // Format as YYYY-MM-DD
+      return skipSunday(startDate);
     };
 
-    const formattedTasks = tasks.map((task) => ({
-      taskName: task.taskName,
-      taskDescription: task.taskDescription,
-      taskLink: task.taskLink,
-      schedule: task.schedule.map((sched) => ({
-        date: getValidDate(createdAt, Number(sched.day)), // Convert `day` to `date`
-        time: "00:01",
-      })),
-    }));
+    const getScheduleDates = (taskStartDate, days) => {
+      let scheduleDates = [];
+      days.sort((a, b) => a - b);
+
+      days.forEach((dayOffset) => {
+        let scheduledDate = new Date(taskStartDate);
+        let daysAdded = 0;
+
+        while (daysAdded < dayOffset - 1) {
+          scheduledDate.setDate(scheduledDate.getDate() + 1);
+          if (scheduledDate.getDay() !== 0) {
+            daysAdded++;
+          }
+        }
+
+        scheduleDates.push({
+          date: scheduledDate.toISOString().slice(0, 10),
+          time: "00:01",
+        });
+      });
+
+      return scheduleDates;
+    };
+
+    const formattedTasks = tasks.map((task) => {
+      const taskStartDate = getTaskStartDate(currentDate, task.srNo);
+      const schedule = getScheduleDates(
+        taskStartDate,
+        task.schedule.map((sched) => Number(sched.day))
+      );
+
+      return {
+        taskName: task.taskName,
+        taskDescription: task.taskDescription,
+        taskLink: task.taskLink,
+        srNo: task.srNo,
+        schedule,
+      };
+    });
 
     const newPlan = new Plan({
       userId,
       userRole,
       planName,
+      planStart,
       tasks: formattedTasks,
-      createdAt,
+      createdAt: new Date(),
     });
 
     await newPlan.save();
