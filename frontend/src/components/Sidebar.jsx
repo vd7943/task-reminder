@@ -351,7 +351,7 @@ const Sidebar = () => {
               </li>
             </Link>
           )}
-          {(authUser?.role === "Admin" || authUser?.userType === "Custom") && (
+{/*           {(authUser?.role === "Admin" || authUser?.userType === "Custom") && (
             <Link
               to="/email-template"
               className="pb-10"
@@ -371,7 +371,7 @@ const Sidebar = () => {
                 </div>
               </li>
             </Link>
-          )}
+          )} */}
 
           {(authUser?.role === "Admin" || authUser?.userType === "Custom") && (
             <Link
