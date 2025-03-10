@@ -4,6 +4,7 @@ const TaskSchema = new mongoose.Schema({
   taskName: { type: String, required: true },
   taskDescription: String,
   taskLink: String,
+  srNo: Number,
   schedule: [
     {
       date: { type: String, required: true },
@@ -20,6 +21,7 @@ const planSchema = new mongoose.Schema({
   },
   userRole: { type: String, required: true },
   planName: { type: String, required: true },
+  planStart: String,
   tasks: [TaskSchema],
   createdAt: { type: Date, default: Date.now },
 });
