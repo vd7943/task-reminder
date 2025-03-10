@@ -7,6 +7,7 @@ const CoinSetting = () => {
   const [minDuration, setMinDuration] = useState("");
   const [coins, setCoins] = useState("");
   const [freeSubsCoins, setFreeSubsCoins] = useState(0);
+  const [planRestartCoins, setPlanRestartCoins] = useState(0);
 
   useEffect(() => {
     fetchRules();
@@ -32,12 +33,14 @@ const CoinSetting = () => {
         minDuration: parseInt(minDuration),
         coins: parseInt(coins),
         freeSubsCoins: parseInt(freeSubsCoins),
+        planRestartCoins: parseInt(planRestartCoins),
       });
       toast.success(res.data.message);
       fetchRules();
       setMinDuration("");
       setCoins("");
       setFreeSubsCoins("");
+      setPlanRestartCoins("");
     } catch (error) {
       toast.error("Failed to update rules");
     }
@@ -63,12 +66,24 @@ const CoinSetting = () => {
             onChange={(e) => setCoins(e.target.value)}
             className="w-full p-2 border rounded-md outline-none"
           />
-          <label className="block font-medium text-lg">Free Subscription</label>
+          <label className="block font-medium text-lg">
+            Free Subscription Coins:
+          </label>
           <input
             type="number"
             placeholder="Free Subscription Coins"
             value={freeSubsCoins}
             onChange={(e) => setFreeSubsCoins(e.target.value)}
+            className="w-full p-2 border rounded-md outline-none"
+          />
+          <label className="block font-medium text-lg">
+            Coins Needed to Restart Plan:
+          </label>
+          <input
+            type="number"
+            placeholder="Plan Restart Coins"
+            value={planRestartCoins}
+            onChange={(e) => setPlanRestartCoins(e.target.value)}
             className="w-full p-2 border rounded-md outline-none"
           />
           <button
@@ -91,6 +106,7 @@ const CoinSetting = () => {
                 {rule.minDuration} minutes = {rule.coins} coins
               </span>
               <span>Free Subscription: {rule.freeSubsCoins} coins</span>
+              <span>Restart Plan: {rule.planRestartCoins} coins</span>
             </li>
           ))}
         </ul>
