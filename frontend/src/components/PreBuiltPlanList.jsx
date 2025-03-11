@@ -3,13 +3,12 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthProvider";
 import axios from "axios";
 import toast from "react-hot-toast";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
 
 const PreBuiltPlanList = () => {
   const [plans, setPlans] = useState([]);
+  const [filteredPlans, setFilteredPlans] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [authUser] = useAuth();
-  const navigate = useNavigate();
 
   useEffect(() => {
     const role = authUser.userType === "Manage" ? "Admin" : authUser.role;
@@ -24,9 +23,34 @@ const PreBuiltPlanList = () => {
       )
       .then((response) => {
         setPlans(response.data.plans);
+        setFilteredPlans(response.data.plans);
       })
       .catch((error) => console.error(error));
   }, []);
+
+  useEffect(() => {
+    const filtered = plans.filter((plan) =>
+      plan.planName.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    setFilteredPlans(filtered);
+  }, [searchQuery, plans]);
+
+  const handleTogglePlanStatus = async (planId, status) => {
+    try {
+      const newStatus = status === "Active" ? "Paused" : "Active";
+      await axios.put(`https://task-reminder-4sqz.onrender.com/plan/update-status/${planId}`, {
+        status: newStatus,
+      });
+      setPlans((prevPlans) =>
+        prevPlans.map((plan) =>
+          plan._id === planId ? { ...plan, status: newStatus } : plan
+        )
+      );
+      toast.success(`Plan ${newStatus}`);
+    } catch (error) {
+      toast.error("Failed to update status");
+    }
+  };
 
   const handleOptPlan = async (planId) => {
     try {
@@ -40,10 +64,6 @@ const PreBuiltPlanList = () => {
       );
 
       toast.success(response.data.message);
-      setTimeout(() => {
-        navigate("/");
-        window.location.reload();
-      }, 1000);
     } catch (error) {
       toast.error(error.response.data.message);
     }
@@ -64,75 +84,80 @@ const PreBuiltPlanList = () => {
         )}
       </div>
 
-      {plans.length > 0 ? (
-        <div className="grid grid-cols-1 gap-6">
-          {plans.map((plan) => (
-            <div
-              key={plan._id}
-              className="relative bg-white/10 backdrop-blur-md text-white p-6 rounded-lg shadow-lg border border-white/10 hover:shadow-2xl transition-all duration-300"
-            >
-              <h3 className="text-3xl font-bold text-white mb-4 drop-shadow-md">
-                {plan.planName}
-              </h3>
+      <div className="mb-4">
+        <input
+          type="text"
+          placeholder="Search by Plan Name..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full p-3 rounded-lg bg-[FFFFFF2B] text-white border border-gray-500 focus:outline-none focus:ring-2 focus:ring-[#9D60EC]"
+        />
+      </div>
 
-              {plan.tasks.length > 0 ? (
-                <div className="overflow-x-auto flex space-x-6 p-2">
-                  {plan.tasks.map((task) => (
-                    <div
-                      key={task._id}
-                      className="bg-white/10 p-4 rounded-lg shadow-md"
-                    >
-                      <h4 className="text-xl font-semibold text-purple-400 mb-2">
-                        📝 {task.taskName}
-                      </h4>
-                      <div className="border border-white/20 rounded-lg p-2 shadow-lg bg-white/5">
-                        <DatePicker
-                          inline
-                          highlightDates={task.schedule.map(
-                            (sched) => new Date(sched.date)
-                          )}
-                          calendarClassName="custom-calendar"
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-300">No tasks available</p>
-              )}
-
-              <div
-                className={`flex ${
-                  authUser.userType === "Manage"
-                    ? "justify-evenly"
-                    : "justify-center"
-                } items-center mt-6`}
-              >
-                <Link to="/task-calendar">
-                  <button className="text-blue-300 cursor-pointer font-semibold transition-all hover:text-blue-400">
-                    📅 View Full Calendar
-                  </button>
-                </Link>
-
-                {authUser.userType === "Manage" && (
-                  <button
-                    onClick={() => handleOptPlan(plan._id)}
-                    className="bg-green-500 text-white py-3 px-6 rounded-lg font-semibold shadow-lg hover:bg-green-600 transition-all duration-300 cursor-pointer"
+      <div className="bg-[#FFFFFF2B] shadow-xl rounded-lg overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead className="bg-[#151025] text-white">
+              <tr>
+                <th className="p-4 text-left text-lg font-semibold">
+                  Plan Name
+                </th>
+                <th className="p-4 text-left text-lg font-semibold">
+                  Task Count
+                </th>
+                <th className="p-4 text-left text-lg font-semibold">Status</th>
+                <th className="p-4 text-center text-lg font-semibold">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="text-start">
+              {filteredPlans.length > 0 ? (
+                filteredPlans.map((plan) => (
+                  <tr
+                    key={plan._id}
+                    className="border-b border-gray-200 hover:bg-gray-800 transition-all duration-200"
                   >
-                    ✅ Opt-in Plan
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
+                    <Link to={`/plan-detail/${plan._id}`}>
+                      <td className="p-4 cursor-pointer">{plan.planName}</td>
+                    </Link>
+                    <td className="p-4">{plan.tasks.length}</td>
+                    <td className="p-4">{plan.status}</td>
+                    <td className="p-4 text-center">
+                      <button
+                        onClick={() =>
+                          handleTogglePlanStatus(plan._id, plan.status)
+                        }
+                        className={`px-4 py-2 rounded-lg ${
+                          plan.status === "Active"
+                            ? "bg-red-500"
+                            : "bg-green-500"
+                        } text-white`}
+                      >
+                        {plan.status === "Active" ? "Pause" : "Activate"}
+                      </button>
+                    </td>
+                    {authUser.userType === "Manage" && (
+                      <td className="p-4">
+                        <button
+                          onClick={() => handleOptPlan(plan._id)}
+                          className="bg-green-500 px-4 py-2 rounded-lg text-white"
+                        >
+                          Opt Plan
+                        </button>
+                      </td>
+                    )}
+                  </tr>
+                ))
+              ) : (
+                <td colSpan="4" className="text-center p-4">
+                  No Plan found.
+                </td>
+              )}
+            </tbody>
+          </table>
         </div>
-      ) : (
-        <div className="p-6 lg:mx-auto h-screen md:pt-4 w-full">
-          <div className="bg-white/10 text-white p-6 rounded-lg shadow-lg border border-white/10">
-            <p className="text-center text-gray-300">No Plans found.</p>
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 };
