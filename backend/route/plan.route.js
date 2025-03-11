@@ -4,9 +4,14 @@ import {
   addNewPlan,
   getAllPlans,
   getMilestones,
+  getPlanById,
   getPlans,
   getTodayPlans,
   optForPlan,
+  updatePlanStart,
+  updateTask,
+  updatePlanStatus,
+  getCoinsEarnedForPlan,
 } from "../controller/plan.controller.js";
 
 const router = express.Router();
@@ -18,5 +23,10 @@ router.get("/get-user-plan/:id", getPlans);
 router.get("/get-today-plan/:id", getTodayPlans);
 router.post("/milestones", addMilestone);
 router.get("/milestones/:userId", getMilestones);
+router.get("/:id", getPlanById);
+router.get("/coins-earned/:id", getCoinsEarnedForPlan);
+router.put("/update-plan-start/:id", updatePlanStart);
+router.put("/update-task/:planId/:taskId", updateTask);
+router.put("/update-plan-status/:id", updatePlanStatus);
 
 export default router;
