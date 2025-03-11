@@ -62,6 +62,8 @@ export const addRemark = async (req, res) => {
       });
     }
 
+    const coinsToAdd = await calculateCoins(taskDuration);
+
     const remark = new Remark({
       userId: user._id,
       taskName,
@@ -69,10 +71,10 @@ export const addRemark = async (req, res) => {
       taskDuration,
       taskReview,
       taskSummary,
+      coinsEarned: coinsToAdd,
     });
     await remark.save();
 
-    const coinsToAdd = await calculateCoins(taskDuration);
     await User.findByIdAndUpdate(userId, { $inc: { coins: coinsToAdd } });
 
     const updatedUser = await User.findById(userId);
@@ -149,6 +151,17 @@ const checkUnremarkedTasks = async (userId) => {
     }
   }
   return false;
+};
+
+export const getPlanRemarks = async (req, res) => {
+  try {
+    const { planId } = req.params;
+    const remarks = await Remark.find({ planId });
+
+    res.status(200).json({ success: true, remarks });
+  } catch (error) {
+    res.status(500).json({ message: "Server Error", error });
+  }
 };
 
 export const getRemark = async (req, res) => {
