@@ -11,6 +11,7 @@ const remarkSchema = new mongoose.Schema({
   taskDuration: { type: Number, required: true },
   taskReview: { type: Number, required: true },
   taskSummary: { type: String, required: true },
+  coinsEarned: { type: Number, default: 0 },
   createdAt: {
     type: Date,
     default: () => {
