@@ -2,6 +2,51 @@ import Plan from "../model/plan.model.js";
 import Remark from "../model/remark.model.js";
 import User from "../model/user.model.js";
 
+const skipSunday = (date) => {
+  while (date.getDay() === 0) {
+    date.setDate(date.getDate() + 1);
+  }
+  return date;
+};
+
+const getTaskStartDate = (baseDate, srNo) => {
+  let startDate = new Date(baseDate);
+  let daysAdded = 0;
+
+  while (daysAdded < srNo - 1) {
+    startDate.setDate(startDate.getDate() + 1);
+    if (startDate.getDay() !== 0) {
+      daysAdded++;
+    }
+  }
+
+  return skipSunday(startDate);
+};
+
+const getScheduleDates = (taskStartDate, days) => {
+  let scheduleDates = [];
+  days.sort((a, b) => a - b);
+
+  days.forEach((dayOffset) => {
+    let scheduledDate = new Date(taskStartDate);
+    let daysAdded = 0;
+
+    while (daysAdded < dayOffset - 1) {
+      scheduledDate.setDate(scheduledDate.getDate() + 1);
+      if (scheduledDate.getDay() !== 0) {
+        daysAdded++;
+      }
+    }
+
+    scheduleDates.push({
+      date: scheduledDate.toISOString().slice(0, 10),
+      time: "00:01",
+    });
+  });
+
+  return scheduleDates;
+};
+
 export const addNewPlan = async (req, res) => {
   const { userId, userRole, planName, planStart, tasks } = req.body;
 
@@ -13,11 +58,7 @@ export const addNewPlan = async (req, res) => {
         .json({ success: false, message: "User not found" });
     }
 
-    const existingPlan = await Plan.findOne({
-      userId,
-      planName,
-    });
-
+    const existingPlan = await Plan.findOne({ userId, planName });
     if (existingPlan) {
       return res
         .status(400)
@@ -28,51 +69,6 @@ export const addNewPlan = async (req, res) => {
     if (planStart === "tomorrow") {
       currentDate.setDate(currentDate.getDate() + 1);
     }
-
-    const skipSunday = (date) => {
-      while (date.getDay() === 0) {
-        date.setDate(date.getDate() + 1);
-      }
-      return date;
-    };
-
-    const getTaskStartDate = (baseDate, srNo) => {
-      let startDate = new Date(baseDate);
-      let daysAdded = 0;
-
-      while (daysAdded < srNo - 1) {
-        startDate.setDate(startDate.getDate() + 1);
-        if (startDate.getDay() !== 0) {
-          daysAdded++;
-        }
-      }
-
-      return skipSunday(startDate);
-    };
-
-    const getScheduleDates = (taskStartDate, days) => {
-      let scheduleDates = [];
-      days.sort((a, b) => a - b);
-
-      days.forEach((dayOffset) => {
-        let scheduledDate = new Date(taskStartDate);
-        let daysAdded = 0;
-
-        while (daysAdded < dayOffset - 1) {
-          scheduledDate.setDate(scheduledDate.getDate() + 1);
-          if (scheduledDate.getDay() !== 0) {
-            daysAdded++;
-          }
-        }
-
-        scheduleDates.push({
-          date: scheduledDate.toISOString().slice(0, 10),
-          time: "00:01",
-        });
-      });
-
-      return scheduleDates;
-    };
 
     const formattedTasks = tasks.map((task) => {
       const taskStartDate = getTaskStartDate(currentDate, task.srNo);
@@ -86,6 +82,7 @@ export const addNewPlan = async (req, res) => {
         taskDescription: task.taskDescription,
         taskLink: task.taskLink,
         srNo: task.srNo,
+        days: task.days,
         schedule,
       };
     });
@@ -96,6 +93,7 @@ export const addNewPlan = async (req, res) => {
       planName,
       planStart,
       tasks: formattedTasks,
+      status: "Paused",
       createdAt: new Date(),
     });
 
@@ -110,6 +108,196 @@ export const addNewPlan = async (req, res) => {
     res
       .status(500)
       .json({ success: false, message: "Server Error", error: error.message });
+  }
+};
+
+export const updatePlanStart = async (req, res) => {
+  const { id } = req.params;
+  const { planStart } = req.body;
+
+  try {
+    const plan = await Plan.findById(id);
+    if (!plan) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Plan not found" });
+    }
+
+    let currentDate = new Date();
+    if (planStart === "tomorrow") {
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    const updatedTasks = plan.tasks.map((task) => {
+      const taskStartDate = getTaskStartDate(currentDate, task.srNo);
+      const updatedSchedule = getScheduleDates(
+        taskStartDate,
+        task.schedule.map((sched) => Number(sched.day))
+      );
+
+      return {
+        ...task.toObject(),
+        schedule: updatedSchedule,
+      };
+    });
+
+    plan.planStart = planStart;
+    plan.tasks = updatedTasks;
+
+    await plan.save();
+
+    res.json({
+      success: true,
+      message: "Plan start date and task schedules updated",
+      plan,
+    });
+  } catch (error) {
+    console.error("Error updating plan start:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
+
+export const updateTask = async (req, res) => {
+  const { planId, taskId } = req.params;
+  const { taskName, taskDescription, taskLink, srNo, days } = req.body;
+
+  try {
+    const plan = await Plan.findById(planId);
+    if (!plan) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Plan not found" });
+    }
+
+    const taskIndex = plan.tasks.findIndex(
+      (task) => task._id.toString() === taskId
+    );
+    if (taskIndex === -1) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Task not found" });
+    }
+
+    const task = plan.tasks[taskIndex];
+
+    task.taskName = taskName;
+    task.taskDescription = taskDescription;
+    task.taskLink = taskLink;
+    task.srNo = srNo;
+    task.days = days;
+
+    let planStartDate = new Date();
+    if (plan.planStart === "tomorrow") {
+      planStartDate.setDate(planStartDate.getDate() + 1);
+    }
+
+    const daysArray = days
+      .split(",")
+      .map(Number)
+      .sort((a, b) => a - b);
+
+    const taskStartDate = getTaskStartDate(planStartDate, srNo);
+
+    task.schedule = getScheduleDates(taskStartDate, daysArray);
+
+    await plan.save();
+    res.json({
+      success: true,
+      message: "Task updated successfully",
+      updatedTask: task,
+    });
+  } catch (error) {
+    console.error("Error updating task:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error updating task",
+      error: error.message,
+    });
+  }
+};
+
+export const getCoinsEarnedForPlan = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.query.userId;
+
+    if (!userId) {
+      return res.status(400).json({ error: "User ID is required" });
+    }
+
+    const remarks = await Remark.find({ userId });
+
+    const plan = await Plan.findById(id).populate("tasks");
+
+    if (!plan) {
+      return res.status(404).json({ error: "Plan not found" });
+    }
+
+    let totalCoins = 0;
+    plan.tasks.forEach((task) => {
+      remarks.forEach((remark) => {
+        if (remark.taskName === task.taskName) {
+          totalCoins += remark.coinsEarned;
+        }
+      });
+    });
+
+    res.json({ coinsEarned: totalCoins });
+  } catch (error) {
+    console.error("Error fetching coins:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const getPlanById = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const plan = await Plan.findById(id);
+    if (!plan) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Plan not found" });
+    }
+
+    res.json({ success: true, plan });
+  } catch (error) {
+    console.error("Error fetching plan details:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Server error", error: error.message });
+  }
+};
+
+export const updatePlanStatus = async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  try {
+    const plan = await Plan.findById(id);
+    if (!plan) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Plan not found" });
+    }
+
+    plan.status = status;
+    await plan.save();
+
+    res.json({
+      success: true,
+      message: `Plan status updated to ${status}`,
+      plan,
+    });
+  } catch (error) {
+    console.error("Error updating plan status:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Server error", error: error.message });
   }
 };
 
@@ -158,7 +346,10 @@ export const optForPlan = async (req, res) => {
       userId,
       userRole: "User",
       planName: existingPlan.planName,
+      planStart: existingPlan.planStart,
       tasks: existingPlan.tasks,
+      status: "Paused",
+      createdAt: new Date(),
     });
 
     await newPlan.save();
