@@ -21,6 +21,7 @@ import CoinSetting from "./components/CoinSetting";
 import UserNotification from "./components/UserNotification";
 import RemarkList from "./components/RemarkList";
 import EditViewTemplate from "./components/EditViewTemplate";
+import PlanDetails from "./components/PlanDetails";
 
 function App() {
   const [authUser, setAuthUser] = useAuth();
@@ -173,7 +174,7 @@ function App() {
           path="/add-user"
           element={authUser?.role === "Admin" && <AddUser />}
         />
-{/*         <Route
+        {/* <Route
           path="/email-template"
           element={
             (authUser?.role === "Admin" || authUser?.userType === "Custom") && (
@@ -198,6 +199,18 @@ function App() {
               <PreBuiltPlanList />
             ) : (
               <Navigate to="/subscription-plan" />
+            )
+          }
+        />
+        <Route
+          path="/plan-detail/:id"
+          element={
+            authUser?.userType === "Manage" ||
+            authUser?.userType === "Custom" ||
+            authUser?.role === "Admin" ? (
+              <PlanDetails />
+            ) : (
+              <Navigate to="/" />
             )
           }
         />
