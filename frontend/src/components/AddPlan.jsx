@@ -17,6 +17,7 @@ const AddPlan = () => {
     taskLink: "",
     schedule: "",
     srNo: "",
+    days: "",
   });
   const [newEmailTemplate, setNewEmailTemplate] = useState({
     subject: "",
@@ -51,11 +52,13 @@ const AddPlan = () => {
   const createdBy = authUser.userType === "Custom" ? "Custom" : "Admin";
 
   const onSubmit = async (data) => {
+    console.log(data);
     const formattedTasks = data.tasks.map((task) => ({
       taskName: task.taskName,
       taskDescription: task.taskDescription,
       taskLink: task.taskLink,
       srNo: parseInt(task.srNo, 10),
+      days: task.days,
       schedule: task.schedule.split(",").map((day) => ({
         day: parseInt(day.trim(), 10),
         time: "00:01",
@@ -98,8 +101,8 @@ const AddPlan = () => {
   };
 
   const handleAddTask = () => {
-    if (!newTask.taskName || !newTask.schedule || !newTask.srNo) {
-      toast.error("Task Name, Sr No., and Reminder Days are required");
+    if (!newTask.taskName || !newTask.days || !newTask.srNo) {
+      toast.error("Task Name, Sr No., and Days are required");
       return;
     }
     appendTask(newTask);
@@ -109,6 +112,7 @@ const AddPlan = () => {
       taskLink: "",
       schedule: "",
       srNo: "",
+      days: "",
     });
     setIsTaskModalOpen(false);
   };
@@ -253,10 +257,8 @@ const AddPlan = () => {
             <input
               type="text"
               className="w-full p-2 border rounded-md my-2"
-              value={newTask.schedule}
-              onChange={(e) =>
-                setNewTask({ ...newTask, schedule: e.target.value })
-              }
+              value={newTask.days}
+              onChange={(e) => setNewTask({ ...newTask, days: e.target.value })}
             />
             <div className="mt-4 flex justify-between">
               <button
