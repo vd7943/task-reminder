@@ -27,7 +27,7 @@ const PlanDetail = () => {
 
   const fetchPlanDetails = async () => {
     try {
-      const response = await axios.get(`http://localhost:3000/plan/${id}`);
+      const response = await axios.get(`https://task-reminder-4sqz.onrender.com/plan/${id}`);
       const { plan } = response.data;
       setPlan(plan);
       setStatus(plan.status);
@@ -45,7 +45,7 @@ const PlanDetail = () => {
   const fetchTemplates = async (planName) => {
     try {
       const response = await axios.get(
-        `http://localhost:3000/email/templates/${
+        `https://task-reminder-4sqz.onrender.com/email/templates/${
           authUser.userType === "Custom" ? "Custom" : "Admin"
         }`
       );
@@ -60,7 +60,7 @@ const PlanDetail = () => {
   const fetchCoinsEarned = async () => {
     try {
       const response = await axios.get(
-        `http://localhost:3000/plan/coins-earned/${id}?userId=${authUser._id}`
+        `https://task-reminder-4sqz.onrender.com/plan/coins-earned/${id}?userId=${authUser._id}`
       );
       setCoinsEarned(response.data.coinsEarned || 0);
     } catch (error) {
@@ -82,7 +82,7 @@ const PlanDetail = () => {
 
   const handleStatusChange = async (newStatus) => {
     try {
-      await axios.put(`http://localhost:3000/plan/update-plan-status/${id}`, {
+      await axios.put(`https://task-reminder-4sqz.onrender.com/plan/update-plan-status/${id}`, {
         status: newStatus,
       });
       setStatus(newStatus);
@@ -95,7 +95,7 @@ const PlanDetail = () => {
   const handlePlanStartChange = async (newStart) => {
     try {
       const response = await axios.put(
-        `http://localhost:3000/plan/update-plan-start/${id}`,
+        `https://task-reminder-4sqz.onrender.com/plan/update-plan-start/${id}`,
         { planStart: newStart }
       );
       setPlanStart(newStart);
@@ -120,7 +120,7 @@ const PlanDetail = () => {
   const handleSaveTask = async () => {
     try {
       const response = await axios.put(
-        `http://localhost:3000/plan/update-task/${id}/${selectedTask._id}`,
+        `https://task-reminder-4sqz.onrender.com/plan/update-task/${id}/${selectedTask._id}`,
         selectedTask
       );
       toast.success("Task updated successfully!");
