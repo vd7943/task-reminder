@@ -38,7 +38,7 @@ const PreBuiltPlanList = () => {
   const handleTogglePlanStatus = async (planId, status) => {
     try {
       const newStatus = status === "Active" ? "Paused" : "Active";
-      await axios.put(`https://task-reminder-4sqz.onrender.com/plan/update-status/${planId}`, {
+      await axios.put(`https://task-reminder-4sqz.onrender.com/plan/update-plan-status/${planId}`, {
         status: newStatus,
       });
       setPlans((prevPlans) =>
