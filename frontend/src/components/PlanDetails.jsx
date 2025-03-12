@@ -6,6 +6,8 @@ import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import { FaEdit } from "react-icons/fa";
 import { useAuth } from "../context/AuthProvider";
+import { PiCoinBold } from "react-icons/pi";
+import { IoMdStar, IoMdStarOutline } from "react-icons/io";
 
 const PlanDetail = () => {
   const { id } = useParams();
@@ -19,10 +21,12 @@ const PlanDetail = () => {
   const [coinsEarned, setCoinsEarned] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
+  const [milestones, setMilestones] = useState([]);
 
   useEffect(() => {
     fetchPlanDetails();
     fetchCoinsEarned();
+    fetchMilestones();
   }, [id]);
 
   const fetchPlanDetails = async () => {
@@ -66,6 +70,29 @@ const PlanDetail = () => {
     } catch (error) {
       console.error("Error fetching coins earned:", error);
       toast.error("Failed to load earned coins.");
+    }
+  };
+
+  const fetchMilestones = async () => {
+    try {
+      const milestoneRes = await axios.get(
+        `https://task-reminder-4sqz.onrender.com/plan/milestones/${authUser._id}`,
+        { withCredentials: true }
+      );
+
+      const fetchedMilestones = milestoneRes.data.milestones.map(
+        (milestone) => ({
+          taskName: milestone.taskName,
+          taskDate: milestone.taskDate
+            ? new Date(milestone.taskDate).toLocaleDateString("en-CA")
+            : "N/A",
+        })
+      );
+
+      setMilestones(fetchedMilestones);
+      localStorage.setItem("milestones", JSON.stringify(fetchedMilestones));
+    } catch (error) {
+      console.error("Error fetching milestones:", error);
     }
   };
 
@@ -135,6 +162,85 @@ const PlanDetail = () => {
     }
   };
 
+  const handleMilestoneClick = async (event) => {
+    const formattedDate = event.start.toLocaleDateString("en-CA");
+
+    try {
+      const response = await axios.post(
+        `https://task-reminder-4sqz.onrender.com/plan/milestones`,
+        {
+          userId: authUser._id,
+          taskName: event.title,
+          taskDate: formattedDate,
+        },
+        { withCredentials: true }
+      );
+
+      if (response.data) {
+        toast.success(response.data.message);
+        const updatedMilestones = [...milestones, event.title];
+        setMilestones(updatedMilestones);
+        setTimeout(() => {
+          navigate("/");
+        }, 2000);
+      }
+    } catch (error) {
+      console.error("Error adding milestone:", error.response?.data?.message);
+      toast.error(error.response?.data?.message);
+    }
+  };
+
+  // calendar events and milestone
+
+  const CustomEvent = ({ event, handleMilestoneClick, viewType }) => {
+    return (
+      <div
+        className={`p-1 rounded-md w-full bg-opacity-90 ${
+          viewType === "dayGridMonth"
+            ? "shadow-md overflow-hidden truncate px-2 flex flex-col justify-between" // Month view styling
+            : "shadow-lg p-2 flex items-center justify-between" // List view styling
+        }`}
+      >
+        <span className="font-semibold text-[10px] lg:text-sm text-white truncate">
+          {event.title}
+        </span>
+
+        <div className="flex justify-between items-center w-full">
+          <div className="flex gap-2">
+            {(authUser.userType === "Custom" ||
+              authUser.userType === "Manage") && (
+              <button
+                onClick={() => handleMilestoneClick(event)}
+                className={`p-1 rounded-md transition duration-200 cursor-pointer shadow-sm 
+                      ${
+                        milestones.some(
+                          (milestone) =>
+                            milestone.taskName === event.title &&
+                            milestone.taskDate ===
+                              event.start.toLocaleDateString("en-CA") // Matching title & date
+                        )
+                          ? "bg-yellow-500 text-white"
+                          : "border border-white text-white bg-transparent"
+                      }`}
+              >
+                {milestones.some(
+                  (milestone) =>
+                    milestone.taskName === event.title &&
+                    milestone.taskDate ===
+                      event.start.toISOString().split("T")[0]
+                ) ? (
+                  <IoMdStar size={16} />
+                ) : (
+                  <IoMdStarOutline size={16} />
+                )}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="p-6 lg:mx-auto h-full pt-16 md:pt-4 w-full xl:w-[960px]">
       {plan ? (
@@ -177,7 +283,10 @@ const PlanDetail = () => {
                       {task.taskName}
                     </h4>
                     <p className="text-gray-300">Sr No: {task.srNo}</p>
-
+                    <p className="text-gray-300">
+                      Description: {task.taskDescription}
+                    </p>
+                    <p className="text-gray-300">Task Link: {task.taskLink}</p>
                     <p className="text-gray-300">Task Days: {task.days}</p>
                   </div>
                   <div>
@@ -284,6 +393,8 @@ const PlanDetail = () => {
             ))}
           </div>
 
+          {/* calendar */}
+
           <div className="bg-white/10 p-6 rounded-lg shadow-lg border border-white/10 mb-6">
             <h3 className="text-2xl font-bold text-purple-400 mb-4">
               Task Calendar
@@ -292,14 +403,23 @@ const PlanDetail = () => {
               plugins={[dayGridPlugin]}
               initialView="dayGridMonth"
               events={events}
+              eventContent={(eventInfo) => (
+                <CustomEvent
+                  event={eventInfo.event}
+                  handleMilestoneClick={handleMilestoneClick}
+                  viewType={eventInfo.view.type}
+                />
+              )}
             />
           </div>
 
           <div className="bg-white/10 p-6 rounded-lg shadow-lg border border-white/10">
-            <h3 className="text-2xl font-bold text-yellow-400 mb-4">
-              Coins Earned
+            <h3 className="text-2xl font-bold text-purple-400 mb-4">
+              Coins Earned From This Plan:
             </h3>
-            <p className="text-gray-300 text-lg">{coinsEarned} Coins</p>
+            <p className="text-gray-300 text-[24px] flex items-center gap-2">
+              {coinsEarned} <PiCoinBold color="yellow" />
+            </p>
           </div>
         </>
       ) : (
