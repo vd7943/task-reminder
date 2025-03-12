@@ -118,9 +118,11 @@ const PreBuiltPlanList = () => {
                     key={plan._id}
                     className="border-b border-gray-200 hover:bg-gray-800 transition-all duration-200"
                   >
-                    <Link to={`/plan-detail/${plan._id}`}>
-                      <td className="p-4 cursor-pointer">{plan.planName}</td>
-                    </Link>
+                    <td className="p-4 cursor-pointer">
+                      <Link to={`/plan-detail/${plan._id}`}>
+                        {plan.planName}
+                      </Link>
+                    </td>
                     <td className="p-4">{plan.tasks.length}</td>
                     <td className="p-4">{plan.status}</td>
                     <td className="p-4 text-center">
@@ -128,7 +130,7 @@ const PreBuiltPlanList = () => {
                         onClick={() =>
                           handleTogglePlanStatus(plan._id, plan.status)
                         }
-                        className={`px-4 py-2 rounded-lg ${
+                        className={`px-4 py-2 cursor-pointer rounded-lg ${
                           plan.status === "Active"
                             ? "bg-red-500"
                             : "bg-green-500"
@@ -150,9 +152,11 @@ const PreBuiltPlanList = () => {
                   </tr>
                 ))
               ) : (
-                <td colSpan="4" className="text-center p-4">
-                  No Plan found.
-                </td>
+                <tr>
+                  <td colSpan="4" className="text-center p-4">
+                    No Plan found.
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>
