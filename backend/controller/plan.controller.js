@@ -74,7 +74,7 @@ export const addNewPlan = async (req, res) => {
       const taskStartDate = getTaskStartDate(currentDate, task.srNo);
       const schedule = getScheduleDates(
         taskStartDate,
-        task.schedule.map((sched) => Number(sched.day))
+        task.days.split(",").map((day) => Number(day.trim()))
       );
 
       return {
@@ -431,9 +431,21 @@ export const addMilestone = async (req, res) => {
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    const plan = await Plan.findOne({ "tasks.taskName": taskName });
+    if (user.isDeactivated) {
+      return res.status(403).json({
+        success: false,
+        message: "Your account is deactivated. Contact admin.",
+      });
+    }
+
+    const plan = await Plan.findOne({
+      "tasks.taskName": taskName,
+      status: "Active",
+    });
     if (!plan)
-      return res.status(404).json({ message: "Task not found in any plan" });
+      return res
+        .status(404)
+        .json({ message: "Task not found in any active plan" });
 
     const task = plan.tasks.find((task) => task.taskName === taskName);
     if (!task) return res.status(404).json({ message: "Task not found" });
