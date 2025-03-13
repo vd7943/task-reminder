@@ -21,15 +21,6 @@ export const sendEmail = async ({
     return;
   }
 
-  if (user.emailBlocked) {
-    user.notifications.push({
-      message: `You have not added remark for a task in the last 5 days. Email notifications have been paused until you add a remark.`,
-    });
-    await user.save();
-
-    return;
-  }
-
   const transporter = nodeMailer.createTransport({
     host: process.env.SMTP_HOST,
     port: process.env.SMTP_PORT,
