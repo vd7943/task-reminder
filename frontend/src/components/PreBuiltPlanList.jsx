@@ -133,12 +133,16 @@ const PreBuiltPlanList = () => {
                 <th className="p-4 text-center text-lg font-semibold">
                   Actions
                 </th>
-                {authUser.role === "User" &&
-                  filteredPlans.some((plan) => plan.status === "Paused") && (
-                    <th className="p-4 text-center text-lg font-semibold">
-                      Restart Plan
-                    </th>
-                  )}
+                {authUser.userType === "Manage" && (
+                  <th className="p-4 text-center text-lg font-semibold">
+                    Opt Plan
+                  </th>
+                )}
+                {filteredPlans.some((plan) => plan.status === "Paused") && (
+                  <th className="p-4 text-center text-lg font-semibold">
+                    Restart Plan
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody className="text-start">
@@ -170,10 +174,10 @@ const PreBuiltPlanList = () => {
                       </button>
                     </td>
                     {authUser.userType === "Manage" && (
-                      <td className="p-4">
+                      <td className="p-4 text-center">
                         <button
                           onClick={() => handleOptPlan(plan._id)}
-                          className="bg-green-500 px-4 py-2 rounded-lg text-white"
+                          className="bg-green-500 px-4 py-2 rounded-lg text-white cursor-pointer"
                         >
                           Opt Plan
                         </button>
