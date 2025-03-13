@@ -12,6 +12,7 @@ import {
   updateTask,
   updatePlanStatus,
   getCoinsEarnedForPlan,
+  restartPlan,
 } from "../controller/plan.controller.js";
 
 const router = express.Router();
@@ -28,5 +29,6 @@ router.get("/coins-earned/:id", getCoinsEarnedForPlan);
 router.put("/update-plan-start/:id", updatePlanStart);
 router.put("/update-task/:planId/:taskId", updateTask);
 router.put("/update-plan-status/:id", updatePlanStatus);
+router.put("/restart-plan", restartPlan);
 
 export default router;
