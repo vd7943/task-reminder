@@ -1,6 +1,7 @@
 import Plan from "../model/plan.model.js";
 import Remark from "../model/remark.model.js";
 import User from "../model/user.model.js";
+import CoinRule from "../model/coinRule.model.js";
 
 const skipSunday = (date) => {
   while (date.getDay() === 0) {
@@ -520,5 +521,66 @@ export const getMilestones = async (req, res) => {
   } catch (error) {
     console.error("Error fetching milestones:", error);
     res.status(500).json({ message: "Server Error", error: error.message });
+  }
+};
+
+// restart plan
+
+export const restartPlan = async (req, res) => {
+  try {
+    const { userId, planId } = req.body;
+
+    const user = await User.findById(userId);
+    const plan = await Plan.findById(planId);
+
+    if (!user || !plan || plan.status !== "Paused") {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid request or plan is not paused.",
+      });
+    }
+
+    const coinRule = await CoinRule.findOne();
+    const planRestartCoins = coinRule?.planRestartCoins;
+
+    if (user.coins < planRestartCoins) {
+      return {
+        success: false,
+        message: "Not enough coins to restart the plan.",
+      };
+    }
+
+    user.coins -= planRestartCoins;
+    plan.status = "Active";
+    await user.save();
+
+    let lastCompletedTaskNo = 0;
+
+    for (let task of plan.tasks) {
+      const remark = await Remark.findOne({ userId, taskName: task.taskName });
+      if (remark) {
+        lastCompletedTaskNo = Math.max(lastCompletedTaskNo, task.srNo);
+      }
+    }
+
+    // Reassign tasks from the last completed task onwards
+    const remainingTasks = plan.tasks.filter(
+      (task) => task.srNo > lastCompletedTaskNo
+    );
+    const today = new Date();
+
+    remainingTasks.forEach((task, index) => {
+      task.scheduledDate = new Date(today.setDate(today.getDate() + index)); // Assign tasks in sequence
+    });
+
+    await plan.save();
+
+    return {
+      success: true,
+      message: "Plan restarted successfully and tasks reassigned.",
+    };
+  } catch (error) {
+    console.error("Error in restartPlan:", error);
+    return { success: false, message: "Failed to restart plan." };
   }
 };
