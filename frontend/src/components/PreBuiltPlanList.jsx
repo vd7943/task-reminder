@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthProvider";
 import axios from "axios";
 import toast from "react-hot-toast";
@@ -38,9 +38,12 @@ const PreBuiltPlanList = () => {
   const handleTogglePlanStatus = async (planId, status) => {
     try {
       const newStatus = status === "Active" ? "Paused" : "Active";
-      await axios.put(`https://task-reminder-4sqz.onrender.com/plan/update-plan-status/${planId}`, {
-        status: newStatus,
-      });
+      await axios.put(
+        `https://task-reminder-4sqz.onrender.com/plan/update-plan-status/${planId}`,
+        {
+          status: newStatus,
+        }
+      );
       setPlans((prevPlans) =>
         prevPlans.map((plan) =>
           plan._id === planId ? { ...plan, status: newStatus } : plan
@@ -66,6 +69,27 @@ const PreBuiltPlanList = () => {
       toast.success(response.data.message);
     } catch (error) {
       toast.error(error.response.data.message);
+    }
+  };
+
+  const handleRestartPlan = async (planId) => {
+    try {
+      const response = await axios.post(
+        "https://task-reminder-4sqz.onrender.com/plan/restart-plan",
+        {
+          userId: authUser._id,
+          planId,
+        }
+      );
+
+      toast.success(response.data.message);
+      setPlans((prevPlans) =>
+        prevPlans.map((plan) =>
+          plan._id === planId ? { ...plan, status: "Active" } : plan
+        )
+      );
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to restart plan");
     }
   };
 
@@ -109,6 +133,12 @@ const PreBuiltPlanList = () => {
                 <th className="p-4 text-center text-lg font-semibold">
                   Actions
                 </th>
+                {authUser.role === "User" &&
+                  filteredPlans.some((plan) => plan.status === "Paused") && (
+                    <th className="p-4 text-center text-lg font-semibold">
+                      Restart Plan
+                    </th>
+                  )}
               </tr>
             </thead>
             <tbody className="text-start">
@@ -146,6 +176,16 @@ const PreBuiltPlanList = () => {
                           className="bg-green-500 px-4 py-2 rounded-lg text-white"
                         >
                           Opt Plan
+                        </button>
+                      </td>
+                    )}
+                    {plan.status === "Paused" && authUser.role === "User" && (
+                      <td className="p-4 text-center">
+                        <button
+                          onClick={() => handleRestartPlan(plan._id)}
+                          className="bg-yellow-600 px-4 py-2 rounded-lg text-white cursor-pointer"
+                        >
+                          Restart Plan
                         </button>
                       </td>
                     )}
