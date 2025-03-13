@@ -103,20 +103,6 @@ export const addRemark = async (req, res) => {
       await updatedUser.save();
     }
 
-    if (user.emailBlocked) {
-      const hasPendingUnremarkedTasks = await checkUnremarkedTasks(user._id);
-
-      if (!hasPendingUnremarkedTasks) {
-        user.emailBlocked = false;
-        user.notifications.push({
-          message:
-            "You've added the remark for the task! Email notifications have resumed.",
-        });
-
-        await user.save();
-      }
-    }
-
     res.status(201).json({
       success: true,
       message: "Remark added successfully",
