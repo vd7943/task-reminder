@@ -2,21 +2,25 @@ import cron from "node-cron";
 import User from "../model/user.model.js";
 import Plan from "../model/plan.model.js";
 import Remark from "../model/remark.model.js";
+import CoinRule from "../model/coinRule.model.js";
 
 export const checkRemarkDelaysCron = async () => {
   try {
     const users = await User.find({ isDeactivated: false });
 
+    const coinRule = await CoinRule.findOne();
+    const planRestartCoins = coinRule?.planRestartCoins;
+
     for (const user of users) {
-      const userPlans = await Plan.find({ userId: user._id });
+      const userPlans = await Plan.find({ userId: user._id, status: "Active" });
 
       const fiveDaysAgo = new Date();
       fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
       const fiveDaysAgoStr = fiveDaysAgo.toISOString().split("T")[0]; // Convert to YYYY-MM-DD format
 
-      let hasPendingUnremarkedTasks = false;
-
       for (const plan of userPlans) {
+        let hasPendingUnremarkedTasks = false;
+
         for (const task of plan.tasks) {
           for (const schedule of task.schedule) {
             if (schedule.date <= fiveDaysAgoStr) {
@@ -34,16 +38,16 @@ export const checkRemarkDelaysCron = async () => {
           }
           if (hasPendingUnremarkedTasks) break;
         }
-        if (hasPendingUnremarkedTasks) break;
-      }
 
-      if (hasPendingUnremarkedTasks && !user.emailBlocked) {
-        user.emailBlocked = true;
-        user.notifications.push({
-          message:
-            "You have not added a remark for a task in the last 5 days. Email notifications have been paused until you add a remark.",
-        });
-        await user.save();
+        if (hasPendingUnremarkedTasks) {
+          plan.status = "Paused"; // Pause the plan
+          await plan.save();
+
+          user.notifications.push({
+            message: `Your plan "${plan.planName}" has been paused due to missing remarks for 5 days. You need to pay ${planRestartCoins} coins to restart.`,
+          });
+          await user.save();
+        }
       }
     }
   } catch (error) {
