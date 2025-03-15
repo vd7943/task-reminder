@@ -254,11 +254,17 @@ const AddPlan = () => {
               }
             />
             <label>Task Days (e.g., 1,3,5):</label>
-            <input
+           <input
               type="text"
               className="w-full p-2 border rounded-md my-2"
               value={newTask.days}
-              onChange={(e) => setNewTask({ ...newTask, days: e.target.value })}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (/^[\d,]*$/.test(value)) {
+                  // Allows digits (0-infinity) and commas
+                  setNewTask({ ...newTask, days: value });
+                }
+              }}
             />
             <div className="mt-4 flex justify-between">
               <button
