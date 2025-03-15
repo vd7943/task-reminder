@@ -2,10 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { Calendar } from "react-calendar";
 import { useAuth } from "../context/AuthProvider";
 import { FaBars, FaCalendarAlt, FaTimes } from "react-icons/fa";
-import { MdDashboard, MdHome } from "react-icons/md";
-import { HiTemplate } from "react-icons/hi";
+import { MdHome } from "react-icons/md";
+import { GrValidate } from "react-icons/gr";
 import {
-  FaList,
   FaUserCog,
   FaTasks,
   FaFileAlt,
@@ -16,7 +15,6 @@ import Logout from "../Auth/Logout";
 import { Link, useLocation } from "react-router-dom";
 import { TiUserAdd } from "react-icons/ti";
 import { SiBuiltbybit } from "react-icons/si";
-import { MdEmail } from "react-icons/md";
 import { MdNavigateNext } from "react-icons/md";
 import { MdNavigateBefore } from "react-icons/md";
 import { LuHandCoins } from "react-icons/lu";
@@ -175,50 +173,7 @@ const Sidebar = () => {
               </li>
             </Link>
           )}
-          {/* {(authUser?.userType === "Custom" ||
-            authUser?.userType === "Manage") && (
-            <Link
-              to="/task-reminder"
-              className="pb-10"
-              onClick={() => setIsOpen(false)}
-            >
-              <li
-                className={`flex items-center space-x-3 p-2 rounded-lg cursor-pointer transition-all hover:bg-[#FFFFFF2B]
-                ${isActive("/task-reminder") ? "bg-[#FFFFFF2B]" : ""}`}
-              >
-                <div className="flex items-center justify-center gap-4">
-                  <div className="rounded-full text-pink-600">
-                    <FaTasks />
-                  </div>
-                  <div className="text-xl font-medium flex items-center gap-2">
-                    Add Task
-                  </div>
-                </div>
-              </li>
-            </Link>
-          )} */}
-          {/* {(authUser?.userType === "Custom" ||
-            authUser?.userType === "Manage") && (
-            <Link
-              to="/task-list"
-              className="pb-10"
-              onClick={() => setIsOpen(false)}
-            >
-              <li
-                className={`flex items-center space-x-3 p-2 rounded-lg cursor-pointer transition-all hover:bg-[#FFFFFF2B]
-                ${isActive("/task-list") ? "bg-[#FFFFFF2B]" : ""}`}
-              >
-                <div className="flex items-center justify-center gap-4">
-                  <div className="rounded-full text-blue-400">
-                    <FaList />
-                  </div>
-                  <div className="text-xl font-medium flex items-center gap-2">
-                    Task List
-                  </div>
-                </div>
-              </li>
-            </Link>
-          )} */}
+
           {authUser?.role === "User" && (
             <Link
               to="/subscription-plan"
@@ -351,50 +306,30 @@ const Sidebar = () => {
               </li>
             </Link>
           )}
-{/*           {(authUser?.role === "Admin" || authUser?.userType === "Custom") && (
-            <Link
-              to="/email-template"
-              className="pb-10"
-              onClick={() => setIsOpen(false)}
-            >
-              <li
-                className={`flex items-center space-x-3 p-2 rounded-lg cursor-pointer transition-all hover:bg-[#FFFFFF2B]
-                ${isActive("/email-template") ? "bg-[#FFFFFF2B]" : ""}`}
-              >
-                <div className="flex items-center justify-center gap-4">
-                  <div className="rounded-full text-purple-400">
-                    <MdEmail />
-                  </div>
-                  <div className="text-xl font-medium flex items-center gap-2">
-                    Set Email Template
-                  </div>
-                </div>
-              </li>
-            </Link>
-          )} */}
 
-{/*           {(authUser?.role === "Admin" || authUser?.userType === "Custom") && (
+          {(authUser?.userType === "Custom" ||
+            authUser?.userType === "Manage") && (
             <Link
-              to="/edit-view-template"
+              to="/validation"
               className="pb-10"
               onClick={() => setIsOpen(false)}
             >
               <li
                 className={`flex items-center space-x-3 p-2 rounded-lg cursor-pointer transition-all hover:bg-[#FFFFFF2B]
-                ${isActive("/edit-view-template") ? "bg-[#FFFFFF2B]" : ""}`}
+                ${isActive("/validation") ? "bg-[#FFFFFF2B]" : ""}`}
               >
                 <div className="flex items-center justify-center gap-4">
-                  <div className="rounded-full text-red-400">
-                    <HiTemplate />
+                  <div className="rounded-full text-green-400">
+                    <GrValidate />
                   </div>
                   <div className="text-xl font-medium flex items-center gap-2">
-                    View Templates
+                    Validation
                   </div>
                 </div>
               </li>
             </Link>
           )}
- */}
+
           {authUser?.role === "Admin" && (
             <Link
               to="/coin-setting"
