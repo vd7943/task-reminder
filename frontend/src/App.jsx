@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Home from "./components/Home";
 import Sidebar from "./components/Sidebar";
 import { Toaster } from "react-hot-toast";
@@ -14,14 +14,13 @@ import AddPlan from "./components/AddPlan";
 import Setting from "./components/Setting";
 import AddUser from "./components/AddUser";
 import PreBuiltPlanList from "./components/PreBuiltPlanList";
-import EmailTemplate from "./components/EmailTemplate";
 import CustomUserList from "./components/CustomUserList";
 import ManageUserList from "./components/ManageUserList";
 import CoinSetting from "./components/CoinSetting";
 import UserNotification from "./components/UserNotification";
 import RemarkList from "./components/RemarkList";
-import EditViewTemplate from "./components/EditViewTemplate";
 import PlanDetails from "./components/PlanDetails";
+import ValidityPage from "./components/ValidityPage";
 
 function App() {
   const [authUser, setAuthUser] = useAuth();
@@ -49,17 +48,6 @@ function App() {
           }
         />
 
-        {/* <Route
-          path="/task-reminder"
-          element={
-            authUser?.userType === "Manage" ||
-            authUser?.userType === "Custom" ? (
-              <TaskReminder />
-            ) : (
-              <Navigate to="/subscription-plan" />
-            )
-          }
-        /> */}
         <Route
           path="/admin-dashboard"
           element={
@@ -123,17 +111,6 @@ function App() {
           }
         />
 
-        {/* <Route
-          path="/task-list"
-          element={
-            authUser?.userType === "Manage" ||
-            authUser?.userType === "Custom" ? (
-              <TaskList />
-            ) : (
-              <Navigate to="/" />
-            )
-          }
-        /> */}
         <Route path="*" element={<Home />} />
         <Route
           path="/remark-list"
@@ -169,27 +146,24 @@ function App() {
             )
           }
         />
+
+        <Route
+          path="/validation"
+          element={
+            authUser?.userType === "Manage" ||
+            authUser?.userType === "Custom" ? (
+              <ValidityPage />
+            ) : (
+              <Navigate to="/" />
+            )
+          }
+        />
         <Route path="/setting" element={<Setting />} />
         <Route
           path="/add-user"
           element={authUser?.role === "Admin" && <AddUser />}
         />
-        {/* <Route
-          path="/email-template"
-          element={
-            (authUser?.role === "Admin" || authUser?.userType === "Custom") && (
-              <EmailTemplate />
-            )
-          }
-        /> */}
-{/*         <Route
-          path="/edit-view-template"
-          element={
-            (authUser?.role === "Admin" || authUser?.userType === "Custom") && (
-              <EditViewTemplate />
-            )
-          }
-        /> */}
+
         <Route
           path="/pre-built-plans"
           element={
