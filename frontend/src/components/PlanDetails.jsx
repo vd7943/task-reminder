@@ -402,11 +402,17 @@ const PlanDetail = () => {
                 </div>
                 <div className="mb-3">
                   <label className="block text-gray-400 mb-1">Days</label>
-                  <input
+                 <input
                     type="text"
                     name="days"
                     value={selectedTask.days}
-                    onChange={handleTaskChange}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (/^[\d,]*$/.test(value)) {
+                        // Allows only numbers (0-infinity) and commas
+                        handleTaskChange(e);
+                      }
+                    }}
                     className="w-full p-2 bg-gray-700 text-white rounded"
                   />
                 </div>
