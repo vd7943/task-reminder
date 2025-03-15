@@ -24,7 +24,16 @@ const planSchema = new mongoose.Schema({
   userRole: { type: String, required: true },
   planName: { type: String, required: true },
   planStart: String,
-  tasks: [TaskSchema],
+  tasks: {
+    type: [TaskSchema],
+    validate: {
+      validator: function (tasks) {
+        const srNos = tasks.map((task) => task.srNo);
+        return srNos.length === new Set(srNos).size; // Ensures all srNos are unique
+      },
+      message: "Duplicate Sr No. found! Please assign a unique Sr No.",
+    },
+  },
   status: { type: String, enum: ["Active", "Paused"], default: "Paused" },
   createdAt: { type: Date, default: Date.now },
 });
