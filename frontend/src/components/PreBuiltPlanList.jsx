@@ -138,11 +138,12 @@ const PreBuiltPlanList = () => {
                     Opt Plan
                   </th>
                 )}
-                {filteredPlans.some((plan) => plan.status === "Paused") && (
-                  <th className="p-4 text-center text-lg font-semibold">
-                    Restart Plan
-                  </th>
-                )}
+                {filteredPlans.some((plan) => plan.status === "Paused") &&
+                  authUser.role === "User" && (
+                    <th className="p-4 text-center text-lg font-semibold">
+                      Restart Plan
+                    </th>
+                  )}
               </tr>
             </thead>
             <tbody className="text-start">
