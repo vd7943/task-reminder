@@ -373,7 +373,7 @@ const Sidebar = () => {
             </Link>
           )} */}
 
-          {(authUser?.role === "Admin" || authUser?.userType === "Custom") && (
+{/*           {(authUser?.role === "Admin" || authUser?.userType === "Custom") && (
             <Link
               to="/edit-view-template"
               className="pb-10"
@@ -394,7 +394,7 @@ const Sidebar = () => {
               </li>
             </Link>
           )}
-
+ */}
           {authUser?.role === "Admin" && (
             <Link
               to="/coin-setting"
