@@ -66,6 +66,14 @@ export const addNewPlan = async (req, res) => {
         .json({ success: false, message: "Plan already exists" });
     }
 
+    const srNos = tasks.map((task) => task.srNo);
+    if (srNos.length !== new Set(srNos).size) {
+      return res.status(400).json({
+        success: false,
+        message: "Each task must have a unique Sr No. within the plan.",
+      });
+    }
+
     let currentDate = new Date();
     if (planStart === "tomorrow") {
       currentDate.setDate(currentDate.getDate() + 1);
