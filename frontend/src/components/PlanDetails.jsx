@@ -522,7 +522,7 @@ const PlanDetail = () => {
         </>
       ) : (
         <div className="flex justify-center items-center h-screen">
-          <div className="w-20 h-20 border-4 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
+          <div className="w-20 h-20 border-4 border-gray-300 border-t-[#FFFFFF2B] rounded-full animate-spin"></div>
         </div>
       )}
     </div>
