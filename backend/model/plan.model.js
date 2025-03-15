@@ -5,7 +5,7 @@ const TaskSchema = new mongoose.Schema({
   taskName: { type: String, required: true },
   taskDescription: String,
   taskLink: String,
-  srNo: Number,
+  srNo: { type: Number, required: true },
   days: { type: String, required: true },
   schedule: [
     {
