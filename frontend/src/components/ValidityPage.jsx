@@ -10,7 +10,7 @@ const ValidityPage = () => {
 
   useEffect(() => {
     axios
-      .get(`http://localhost:3000/user/${authUser._id}`, {
+      .get(`https://task-reminder-4sqz.onrender.com/user/${authUser._id}`, {
         withCredentials: true,
       })
       .then((response) => {
@@ -59,7 +59,7 @@ const ValidityPage = () => {
   // Fetch User Plans
   useEffect(() => {
     axios
-      .get(`http://localhost:3000/plan/get-user-plan/${authUser._id}`)
+      .get(`https://task-reminder-4sqz.onrender.com/plan/get-user-plan/${authUser._id}`)
       .then((response) => {
         setPlans(response.data);
       })
