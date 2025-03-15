@@ -182,14 +182,14 @@ function App() {
             )
           }
         /> */}
-        <Route
+{/*         <Route
           path="/edit-view-template"
           element={
             (authUser?.role === "Admin" || authUser?.userType === "Custom") && (
               <EditViewTemplate />
             )
           }
-        />
+        /> */}
         <Route
           path="/pre-built-plans"
           element={
