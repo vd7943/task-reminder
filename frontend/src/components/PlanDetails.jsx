@@ -8,6 +8,7 @@ import { FaEdit } from "react-icons/fa";
 import { useAuth } from "../context/AuthProvider";
 import { PiCoinBold } from "react-icons/pi";
 import { IoMdStar, IoMdStarOutline } from "react-icons/io";
+import { MdEdit } from "react-icons/md";
 
 const PlanDetail = () => {
   const { id } = useParams();
@@ -22,6 +23,9 @@ const PlanDetail = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [milestones, setMilestones] = useState([]);
+  const [editingTemplate, setEditingTemplate] = useState(null);
+  const [updatedSubject, setUpdatedSubject] = useState("");
+  const [updatedBody, setUpdatedBody] = useState("");
 
   useEffect(() => {
     fetchPlanDetails();
@@ -53,7 +57,13 @@ const PlanDetail = () => {
           authUser.userType === "Custom" ? "Custom" : "Admin"
         }`
       );
-      const templatesForPlan = response.data.templates[planName] || [];
+
+      let templatesForPlan = response.data.templates[planName];
+
+      if (!Array.isArray(templatesForPlan)) {
+        templatesForPlan = [];
+      }
+
       setTemplates(templatesForPlan);
     } catch (error) {
       console.error("Error fetching templates:", error);
@@ -162,6 +172,49 @@ const PlanDetail = () => {
     }
   };
 
+  const handleEmailEdit = (template) => {
+    setEditingTemplate(template._id);
+    setUpdatedSubject(template.subject);
+    setUpdatedBody(template.body);
+  };
+
+  const handleEmailUpdate = async () => {
+    try {
+      await axios.put(
+        `https://task-reminder-4sqz.onrender.com/email/update-template/${editingTemplate}`,
+        {
+          subject: updatedSubject,
+          body: updatedBody,
+        }
+      );
+
+      toast.success("Template updated successfully");
+
+      setTemplates((prevTemplates) => {
+        const updatedTemplates = { ...prevTemplates };
+
+        Object.keys(updatedTemplates).forEach((planName) => {
+          if (Array.isArray(updatedTemplates[planName])) {
+            updatedTemplates[planName] = updatedTemplates[planName].map((t) =>
+              t._id === editingTemplate
+                ? { ...t, subject: updatedSubject, body: updatedBody }
+                : t
+            );
+          }
+        });
+
+        return { ...updatedTemplates };
+      });
+
+      setEditingTemplate(null);
+      setTimeout(() => {
+        window.location.reload();
+      }, 100);
+    } catch (err) {
+      toast.error("Failed to update template");
+    }
+  };
+
   const handleMilestoneClick = async (event) => {
     const formattedDate = event.start.toLocaleDateString("en-CA");
 
@@ -182,7 +235,7 @@ const PlanDetail = () => {
         setMilestones(updatedMilestones);
         setTimeout(() => {
           navigate("/");
-        }, 2000);
+        }, 1000);
       }
     } catch (error) {
       console.error("Error adding milestone:", error.response?.data?.message);
@@ -380,17 +433,56 @@ const PlanDetail = () => {
               Email Templates
             </h3>
 
-            {templates.map((template, index) => (
-              <div
-                key={index}
-                className="p-4 my-2 bg-white/5 rounded-lg shadow-md"
-              >
-                <h4 className="text-xl font-semibold text-white">
-                  {template.subject}
-                </h4>
-                <p className="text-gray-300">{template.body}</p>
+            {Object.keys(templates).length === 0 ? (
+              <div className="bg-[#FFFFFF2B] p-6 rounded-lg shadow-lg border border-white/10">
+                <p className="text-center text-gray-300">No templates found.</p>
               </div>
-            ))}
+            ) : (
+              <div className="mb-6">
+                {Array.isArray(templates) &&
+                  templates.map((template) => (
+                    <div
+                      key={template._id}
+                      className="relative bg-[#FFFFFF2B] p-6 rounded-lg shadow-lg border border-white/10 hover:bg-gray-800 transition-all duration-200 mb-2"
+                    >
+                      {editingTemplate === template._id ? (
+                        <>
+                          <input
+                            type="text"
+                            value={updatedSubject}
+                            onChange={(e) => setUpdatedSubject(e.target.value)}
+                            className="border p-2 w-full bg-gray-800 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-purple-400"
+                          />
+                          <textarea
+                            value={updatedBody}
+                            onChange={(e) => setUpdatedBody(e.target.value)}
+                            className="border p-2 w-full bg-gray-800 text-white rounded-md mt-2 h-24 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                          ></textarea>
+                          <button
+                            onClick={handleEmailUpdate}
+                            className="bg-green-500 text-white py-3 px-6 rounded-lg font-semibold shadow-lg hover:bg-green-600 transition-all duration-300 cursor-pointer mt-4"
+                          >
+                            ✅ Save Changes
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <h4 className="text-xl font-bold text-white mb-2 drop-shadow-md">
+                            {template.subject}
+                          </h4>
+                          <p className="text-gray-300">{template.body}</p>
+                          <button
+                            onClick={() => handleEmailEdit(template)}
+                            className="bg-[#9D60EC] text-white py-3 px-6 rounded-lg font-semibold shadow-lg hover:bg-[#c095f8] duration-300 cursor-pointer mt-4"
+                          >
+                            <MdEdit />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  ))}
+              </div>
+            )}
           </div>
 
           {/* calendar */}
