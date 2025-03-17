@@ -295,7 +295,7 @@ const PlanDetail = () => {
   };
 
   return (
-    <div className="p-6 lg:mx-auto h-full pt-16 md:pt-4 w-full xl:w-[960px]">
+     <div className="p-6 lg:mx-auto h-full pt-16 md:pt-4 w-full xl:w-[960px]">
       {plan ? (
         <>
           <div className="flex justify-between items-center mb-6">
@@ -311,15 +311,17 @@ const PlanDetail = () => {
                 <option value="Paused">Paused</option>
                 <option value="Active">Active</option>
               </select>
-
-              <select
-                value={planStart}
-                onChange={(e) => handlePlanStartChange(e.target.value)}
-                className="bg-gray-700 text-white px-4 py-2 rounded-lg"
-              >
-                <option value="today">Today</option>
-                <option value="tomorrow">Tomorrow</option>
-              </select>
+              {(authUser.userType === "Custom" ||
+                authUser.role === "Admin") && (
+                <select
+                  value={planStart}
+                  onChange={(e) => handlePlanStartChange(e.target.value)}
+                  className="bg-gray-700 text-white px-4 py-2 rounded-lg"
+                >
+                  <option value="today">Today</option>
+                  <option value="tomorrow">Tomorrow</option>
+                </select>
+              )}
             </div>
           </div>
 
@@ -342,12 +344,15 @@ const PlanDetail = () => {
                     <p className="text-gray-300">Task Link: {task.taskLink}</p>
                     <p className="text-gray-300">Task Days: {task.days}</p>
                   </div>
-                  <div>
-                    <FaEdit
-                      className="text-white text-xl cursor-pointer"
-                      onClick={() => handleEditTask(task)}
-                    />
-                  </div>
+                  {(authUser.userType === "Custom" ||
+                    authUser.role === "Admin") && (
+                    <div>
+                      <FaEdit
+                        className="text-white text-xl cursor-pointer"
+                        onClick={() => handleEditTask(task)}
+                      />
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -402,7 +407,7 @@ const PlanDetail = () => {
                 </div>
                 <div className="mb-3">
                   <label className="block text-gray-400 mb-1">Days</label>
-                 <input
+                  <input
                     type="text"
                     name="days"
                     value={selectedTask.days}
@@ -477,12 +482,15 @@ const PlanDetail = () => {
                             {template.subject}
                           </h4>
                           <p className="text-gray-300">{template.body}</p>
-                          <button
-                            onClick={() => handleEmailEdit(template)}
-                            className="bg-[#9D60EC] text-white py-3 px-6 rounded-lg font-semibold shadow-lg hover:bg-[#c095f8] duration-300 cursor-pointer mt-4"
-                          >
-                            <MdEdit />
-                          </button>
+                          {(authUser.userType === "Custom" ||
+                            authUser.role === "Admin") && (
+                            <button
+                              onClick={() => handleEmailEdit(template)}
+                              className="bg-[#9D60EC] text-white py-3 px-6 rounded-lg font-semibold shadow-lg hover:bg-[#c095f8] duration-300 cursor-pointer mt-4"
+                            >
+                              <MdEdit />
+                            </button>
+                          )}
                         </>
                       )}
                     </div>
