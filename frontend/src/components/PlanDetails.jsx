@@ -119,13 +119,16 @@ const PlanDetail = () => {
 
   const handleStatusChange = async (newStatus) => {
     try {
-      await axios.put(`https://task-reminder-4sqz.onrender.com/plan/update-plan-status/${id}`, {
-        status: newStatus,
-      });
+      await axios.put(
+        `https://task-reminder-4sqz.onrender.com/plan/update-plan-status/${id}/${authUser._id}`,
+        {
+          status: newStatus,
+        }
+      );
       setStatus(newStatus);
       toast.success(`Plan status updated to ${newStatus}`);
     } catch (error) {
-      toast.error("Failed to update status.");
+      toast.error(error.response?.data?.message || "Failed to update status.");
     }
   };
 
@@ -225,6 +228,7 @@ const PlanDetail = () => {
           userId: authUser._id,
           taskName: event.title,
           taskDate: formattedDate,
+          id,
         },
         { withCredentials: true }
       );
@@ -295,7 +299,7 @@ const PlanDetail = () => {
   };
 
   return (
-     <div className="p-6 lg:mx-auto h-full pt-16 md:pt-4 w-full xl:w-[960px]">
+    <div className="p-6 lg:mx-auto h-full pt-16 md:pt-4 w-full xl:w-[960px]">
       {plan ? (
         <>
           <div className="flex justify-between items-center mb-6">
@@ -311,8 +315,7 @@ const PlanDetail = () => {
                 <option value="Paused">Paused</option>
                 <option value="Active">Active</option>
               </select>
-              {(authUser.userType === "Custom" ||
-                authUser.role === "Admin") && (
+              {authUser.userType === "Custom" || authUser.role === "Admin" ? (
                 <select
                   value={planStart}
                   onChange={(e) => handlePlanStartChange(e.target.value)}
@@ -321,6 +324,10 @@ const PlanDetail = () => {
                   <option value="today">Today</option>
                   <option value="tomorrow">Tomorrow</option>
                 </select>
+              ) : (
+                <div className="bg-gray-700 text-white px-4 py-2 rounded-lg">
+                  {planStart === "today" ? "Today" : "Tomorrow"}
+                </div>
               )}
             </div>
           </div>
