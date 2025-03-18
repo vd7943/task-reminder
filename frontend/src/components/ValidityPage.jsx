@@ -61,7 +61,7 @@ const ValidityPage = () => {
     axios
       .get(`https://task-reminder-4sqz.onrender.com/plan/get-user-plan/${authUser._id}`)
       .then((response) => {
-        setPlans(response.data);
+        setPlans(response.data.plans);
       })
       .catch((error) => console.error(error));
   }, [authUser._id]);
