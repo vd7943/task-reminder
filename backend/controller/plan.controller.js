@@ -283,15 +283,24 @@ export const getPlanById = async (req, res) => {
 };
 
 export const updatePlanStatus = async (req, res) => {
-  const { id } = req.params;
+  const { id, userId } = req.params;
   const { status } = req.body;
 
   try {
-    const plan = await Plan.findById(id);
+    const plan = await Plan.findOne({ _id: id, userId });
     if (!plan) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Plan not found" });
+      return res.status(404).json({
+        success: false,
+        message:
+          "Plan not found or user is not authorized to update the status.",
+      });
+    }
+
+    if (status === "Active") {
+      await Plan.updateMany(
+        { userId, _id: { $ne: id }, status: "Active" }, // Exclude current plan
+        { $set: { status: "Paused" } }
+      );
     }
 
     plan.status = status;
@@ -377,10 +386,8 @@ export const getPlans = async (req, res) => {
   const userId = req.params.id;
 
   try {
-    const plan = await Plan.find({
-      userId: userId,
-    });
-    res.status(200).json(plan);
+    const plans = await Plan.find({ userId });
+    res.status(200).json({ success: true, plans });
   } catch (error) {
     res.status(500).json({ success: false, message: "Server Error", error });
   }
@@ -434,7 +441,7 @@ export const getTodayPlans = async (req, res) => {
 };
 
 export const addMilestone = async (req, res) => {
-  const { userId, taskName, taskDate } = req.body;
+  const { userId, taskName, taskDate, id } = req.body;
 
   try {
     const user = await User.findById(userId);
@@ -450,11 +457,14 @@ export const addMilestone = async (req, res) => {
     const plan = await Plan.findOne({
       "tasks.taskName": taskName,
       status: "Active",
+      userId: userId,
+      _id: id,
     });
     if (!plan)
-      return res
-        .status(404)
-        .json({ message: "Task not found in any active plan" });
+      return res.status(404).json({
+        message:
+          "Plan is not active or user is not authorized to add milestone in this",
+      });
 
     const task = plan.tasks.find((task) => task.taskName === taskName);
     if (!task) return res.status(404).json({ message: "Task not found" });
