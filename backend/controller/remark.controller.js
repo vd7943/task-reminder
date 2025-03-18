@@ -34,6 +34,14 @@ export const addRemark = async (req, res) => {
         message: "Task not found in user's plan.",
       });
     }
+
+    if (userPlan.status !== "Active") {
+      return res.status(403).json({
+        success: false,
+        message: "The plan is not active .",
+      });
+    }
+
     const task = userPlan.tasks.find((t) => t.taskName === taskName);
     const scheduledTask = task.schedule.find((s) => s.date === taskDate);
 
