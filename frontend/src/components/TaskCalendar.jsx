@@ -61,7 +61,11 @@ const TaskCalendar = () => {
           { withCredentials: true }
         );
 
-        const planEvents = planResponse.data.flatMap((plan) =>
+        const activePlans = planResponse?.data?.plans?.filter(
+          (plan) => plan.status === "Active"
+        );
+
+        const planEvents = activePlans?.flatMap((plan) =>
           plan.tasks.flatMap((task) =>
             task.schedule.map((scheduleItem) => {
               const startTime = new Date(
@@ -212,11 +216,11 @@ const TaskCalendar = () => {
       const remarkPromises = selectedTasks.map(async (taskTitle) => {
         const remarkData = {
           taskName: taskTitle,
+          taskDate: selectedRemarkTask.start.toLocaleDateString("en-CA"),
           taskDuration: data.taskDuration,
           taskReview: data.taskReview,
           taskSummary: data.taskSummary,
           userId: authUser._id,
-          taskDate: selectedRemarkTask.start.toLocaleDateString("en-CA"),
         };
 
         return await axios.post(
@@ -243,7 +247,7 @@ const TaskCalendar = () => {
       resetRemarkForm();
     } catch (error) {
       console.error("Error:", error);
-      toast.error(error.response?.data?.message || "Something went wrong");
+      toast.error(error.response?.data?.message);
     }
   };
 
