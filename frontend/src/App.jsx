@@ -21,6 +21,7 @@ import UserNotification from "./components/UserNotification";
 import RemarkList from "./components/RemarkList";
 import PlanDetails from "./components/PlanDetails";
 import ValidityPage from "./components/ValidityPage";
+import PlanList from "./components/PlanList";
 
 function App() {
   const [authUser, setAuthUser] = useAuth();
@@ -141,6 +142,19 @@ function App() {
           element={
             authUser?.userType === "Custom" || authUser?.role === "Admin" ? (
               <AddPlan />
+            ) : (
+              <Navigate to="/" />
+            )
+          }
+        />
+
+        <Route
+          path="/plan-list"
+          element={
+            authUser?.userType === "Manage" ||
+            authUser?.userType === "Custom" ||
+            authUser?.role === "Admin" ? (
+              <PlanList />
             ) : (
               <Navigate to="/" />
             )
