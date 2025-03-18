@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthProvider";
 import axios from "axios";
 import toast from "react-hot-toast";
@@ -7,26 +7,43 @@ import toast from "react-hot-toast";
 const PreBuiltPlanList = () => {
   const [plans, setPlans] = useState([]);
   const [filteredPlans, setFilteredPlans] = useState([]);
+  const [optedPlanNames, setOptedPlanNames] = useState(new Set());
   const [searchQuery, setSearchQuery] = useState("");
   const [authUser] = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const role = authUser.userType === "Manage" ? "Admin" : authUser.role;
-    const url = `https://task-reminder-4sqz.onrender.com/plan/get-plan/${role}/${authUser.userType}`;
+    const fetchPlans = async () => {
+      try {
+        const role = authUser.userType === "Manage" ? "Admin" : authUser.role;
+        const url = `https://task-reminder-4sqz.onrender.com/plan/get-plan/${role}/${authUser.userType}`;
 
-    axios
-      .get(
-        authUser.userType === "Custom" ? `${url}?userId=${authUser._id}` : url,
-        {
-          withCredentials: true,
+        // Fetch all plans
+        const planResponse = await axios.get(url, { withCredentials: true });
+        const allPlans = planResponse.data.plans;
+        setPlans(allPlans);
+        setFilteredPlans(allPlans);
+
+        if (authUser.userType === "Manage") {
+          // Fetch user's opted plans
+          const userPlanResponse = await axios.get(
+            `https://task-reminder-4sqz.onrender.com/plan/get-user-plan/${authUser._id}`,
+            { withCredentials: true }
+          );
+
+          const optedNames = new Set(
+            userPlanResponse.data.plans.map((plan) => plan.planName)
+          );
+
+          setOptedPlanNames(optedNames);
         }
-      )
-      .then((response) => {
-        setPlans(response.data.plans);
-        setFilteredPlans(response.data.plans);
-      })
-      .catch((error) => console.error(error));
-  }, []);
+      } catch (error) {
+        console.error("❌ Error fetching plans:", error);
+      }
+    };
+
+    fetchPlans();
+  }, [authUser]);
 
   useEffect(() => {
     const filtered = plans.filter((plan) =>
@@ -34,26 +51,6 @@ const PreBuiltPlanList = () => {
     );
     setFilteredPlans(filtered);
   }, [searchQuery, plans]);
-
-  const handleTogglePlanStatus = async (planId, status) => {
-    try {
-      const newStatus = status === "Active" ? "Paused" : "Active";
-      await axios.put(
-        `https://task-reminder-4sqz.onrender.com/plan/update-plan-status/${planId}`,
-        {
-          status: newStatus,
-        }
-      );
-      setPlans((prevPlans) =>
-        prevPlans.map((plan) =>
-          plan._id === planId ? { ...plan, status: newStatus } : plan
-        )
-      );
-      toast.success(`Plan ${newStatus}`);
-    } catch (error) {
-      toast.error("Failed to update status");
-    }
-  };
 
   const handleOptPlan = async (planId) => {
     try {
@@ -67,29 +64,13 @@ const PreBuiltPlanList = () => {
       );
 
       toast.success(response.data.message);
+      setOptedPlanNames((prev) => new Set(prev).add(planId));
+      window.location.reload();
+      setTimeout(() => {
+        navigate("/plan-list");
+      }, 1500);
     } catch (error) {
       toast.error(error.response.data.message);
-    }
-  };
-
-  const handleRestartPlan = async (planId) => {
-    try {
-      const response = await axios.post(
-        "https://task-reminder-4sqz.onrender.com/plan/restart-plan",
-        {
-          userId: authUser._id,
-          planId,
-        }
-      );
-
-      toast.success(response.data.message);
-      setPlans((prevPlans) =>
-        prevPlans.map((plan) =>
-          plan._id === planId ? { ...plan, status: "Active" } : plan
-        )
-      );
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to restart plan");
     }
   };
 
@@ -97,15 +78,8 @@ const PreBuiltPlanList = () => {
     <div className="p-6 lg:mx-auto h-full pt-16 md:pt-4 w-full xl:w-[960px]">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-3xl font-semibold text-gray-200 pt-4 md:pt-0">
-          Plan List
+          Pre Built Plans
         </h2>
-        {authUser.role === "Admin" && (
-          <Link to="/add-plan">
-            <button className="bg-[#9D60EC] text-white py-3 px-8 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 hover:bg-[#c095f8] duration-300 cursor-pointer">
-              Add Plan
-            </button>
-          </Link>
-        )}
       </div>
 
       <div className="mb-4">
@@ -129,21 +103,16 @@ const PreBuiltPlanList = () => {
                 <th className="p-4 text-left text-lg font-semibold">
                   Task Count
                 </th>
-                <th className="p-4 text-left text-lg font-semibold">Status</th>
-                <th className="p-4 text-center text-lg font-semibold">
-                  Actions
+                <th className="p-4 text-left text-lg font-semibold">
+                  Plan Start
                 </th>
+                <th className="p-4 text-left text-lg font-semibold">Status</th>
+
                 {authUser.userType === "Manage" && (
                   <th className="p-4 text-center text-lg font-semibold">
                     Opt Plan
                   </th>
                 )}
-                {filteredPlans.some((plan) => plan.status === "Paused") &&
-                  authUser.role === "User" && (
-                    <th className="p-4 text-center text-lg font-semibold">
-                      Restart Plan
-                    </th>
-                  )}
               </tr>
             </thead>
             <tbody className="text-start">
@@ -159,38 +128,22 @@ const PreBuiltPlanList = () => {
                       </Link>
                     </td>
                     <td className="p-4">{plan.tasks.length}</td>
+                    <td className="p-4">{plan.planStart}</td>
                     <td className="p-4">{plan.status}</td>
-                    <td className="p-4 text-center">
-                      <button
-                        onClick={() =>
-                          handleTogglePlanStatus(plan._id, plan.status)
-                        }
-                        className={`px-4 py-2 cursor-pointer rounded-lg ${
-                          plan.status === "Active"
-                            ? "bg-red-500"
-                            : "bg-green-500"
-                        } text-white`}
-                      >
-                        {plan.status === "Active" ? "Pause" : "Activate"}
-                      </button>
-                    </td>
+
                     {authUser.userType === "Manage" && (
                       <td className="p-4 text-center">
                         <button
                           onClick={() => handleOptPlan(plan._id)}
-                          className="bg-green-500 px-4 py-2 rounded-lg text-white cursor-pointer"
+                          className={`px-4 py-2 rounded-lg text-white cursor-pointer ${
+                            optedPlanNames.has(plan.planName)
+                              ? "bg-blue-600"
+                              : "bg-green-500"
+                          }`}
                         >
-                          Opt Plan
-                        </button>
-                      </td>
-                    )}
-                    {plan.status === "Paused" && authUser.role === "User" && (
-                      <td className="p-4 text-center">
-                        <button
-                          onClick={() => handleRestartPlan(plan._id)}
-                          className="bg-yellow-600 px-4 py-2 rounded-lg text-white cursor-pointer"
-                        >
-                          Restart Plan
+                          {optedPlanNames.has(plan.planName)
+                            ? "Opted"
+                            : "Opt Plan"}
                         </button>
                       </td>
                     )}
