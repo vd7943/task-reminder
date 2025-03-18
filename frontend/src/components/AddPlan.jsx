@@ -52,7 +52,13 @@ const AddPlan = () => {
   const createdBy = authUser.userType === "Custom" ? "Custom" : "Admin";
 
   const onSubmit = async (data) => {
-    console.log(data);
+    if (emailFields.length === 0) {
+      toast.error(
+        "Please add at least one email template before saving the plan."
+      );
+      return;
+    }
+
     const formattedTasks = data.tasks.map((task) => ({
       taskName: task.taskName,
       taskDescription: task.taskDescription,
@@ -93,7 +99,7 @@ const AddPlan = () => {
 
       toast.success("Plan and Email Templates saved successfully!");
       setTimeout(() => {
-        navigate("/pre-built-plans");
+        navigate("/plan-list");
       }, 1000);
     } catch (error) {
       toast.error(error.response?.data?.message || "Something went wrong");
@@ -254,7 +260,7 @@ const AddPlan = () => {
               }
             />
             <label>Task Days (e.g., 1,3,5):</label>
-           <input
+            <input
               type="text"
               className="w-full p-2 border rounded-md my-2"
               value={newTask.days}
