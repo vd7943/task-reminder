@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthProvider";
 import { FaBars, FaCalendarAlt, FaTimes } from "react-icons/fa";
 import { MdHome } from "react-icons/md";
 import { GrValidate } from "react-icons/gr";
+import { FaListUl } from "react-icons/fa";
 import {
   FaUserCog,
   FaTasks,
@@ -217,7 +218,7 @@ const Sidebar = () => {
               </li>
             </Link>
           )}
-          {(authUser?.role === "Admin" || authUser?.userType === "Manage") && (
+          {authUser?.userType === "Manage" && (
             <Link
               to="/pre-built-plans"
               className="pb-10"
@@ -238,22 +239,24 @@ const Sidebar = () => {
               </li>
             </Link>
           )}
-          {authUser?.userType === "Custom" && (
+          {(authUser?.userType === "Custom" ||
+            authUser?.userType === "Manage" ||
+            authUser?.role === "Admin") && (
             <Link
-              to="/pre-built-plans"
+              to="/plan-list"
               className="pb-10"
               onClick={() => setIsOpen(false)}
             >
               <li
                 className={`flex items-center space-x-3 p-2 rounded-lg cursor-pointer transition-all hover:bg-[#FFFFFF2B]
-                ${isActive("/pre-built-plans") ? "bg-[#FFFFFF2B]" : ""}`}
+                ${isActive("/plan-list") ? "bg-[#FFFFFF2B]" : ""}`}
               >
                 <div className="flex items-center justify-center gap-4">
-                  <div className="rounded-full text-amber-700">
-                    <SiBuiltbybit />
+                  <div className="rounded-full text-red-600">
+                    <FaListUl />
                   </div>
                   <div className="text-xl font-medium flex items-center gap-2">
-                    Custom Plan List
+                    Plan List
                   </div>
                 </div>
               </li>
