@@ -12,7 +12,7 @@ const PlanList = () => {
 
   useEffect(() => {
     axios
-      .get(`http://localhost:3000/plan/get-user-plan/${authUser._id}`, {
+      .get(`https://task-reminder-4sqz.onrender.com/plan/get-user-plan/${authUser._id}`, {
         withCredentials: true,
       })
       .then((response) => {
@@ -34,7 +34,7 @@ const PlanList = () => {
     try {
       const newStatus = status === "Active" ? "Paused" : "Active";
       await axios.put(
-        `http://localhost:3000/plan/update-plan-status/${planId}/${authUser._id}`,
+        `https://task-reminder-4sqz.onrender.com/plan/update-plan-status/${planId}/${authUser._id}`,
         {
           status: newStatus,
         }
@@ -56,7 +56,7 @@ const PlanList = () => {
   const handleRestartPlan = async (planId) => {
     try {
       const response = await axios.post(
-        "http://localhost:3000/plan/restart-plan",
+        "https://task-reminder-4sqz.onrender.com/plan/restart-plan",
         {
           userId: authUser._id,
           planId,
