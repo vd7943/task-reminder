@@ -46,13 +46,6 @@ const userSchema = mongoose.Schema({
       read: { type: Boolean, default: false },
     },
   ],
-  milestones: [
-    {
-      taskName: { type: String, required: false },
-      taskDate: { type: String, required: false },
-      createdAt: { type: Date, default: Date.now },
-    },
-  ],
   isDeactivated: { type: Boolean, default: false },
   previousUserType: { type: String, default: "Regular" },
   createdAt: {
