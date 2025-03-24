@@ -15,6 +15,12 @@ const TaskSchema = new mongoose.Schema({
   ],
 });
 
+const MilestoneSchema = new mongoose.Schema({
+  milestoneName: { type: String, required: true },
+  startTask: { type: Number, required: true },
+  endTask: { type: Number, required: true },
+});
+
 const planSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -29,11 +35,12 @@ const planSchema = new mongoose.Schema({
     validate: {
       validator: function (tasks) {
         const srNos = tasks.map((task) => task.srNo);
-        return srNos.length === new Set(srNos).size; // Ensures all srNos are unique
+        return srNos.length === new Set(srNos).size;
       },
       message: "Duplicate Sr No. found! Please assign a unique Sr No.",
     },
   },
+  milestones: [MilestoneSchema],
   status: { type: String, enum: ["Active", "Paused"], default: "Paused" },
   createdAt: { type: Date, default: Date.now },
 });
