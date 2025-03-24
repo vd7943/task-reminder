@@ -89,7 +89,7 @@ const Setting = () => {
              <img
               src={profileImagePreview || authUser?.profileImage?.url}
               alt="profileImagePreview"
-              className="w-46 h-46 rounded-full border-4 border-[#9D60EC]"
+              className="w-46 h-46 object-cover rounded-full border-4 border-[#9D60EC]"
             />
             <FaEdit
               className="absolute text-gray-300 bottom-0 right-0 lg:right-[35%] text-4xl cursor-pointer rounded-full p-2"
