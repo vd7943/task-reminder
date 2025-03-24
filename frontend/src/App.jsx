@@ -22,6 +22,7 @@ import RemarkList from "./components/RemarkList";
 import PlanDetails from "./components/PlanDetails";
 import ValidityPage from "./components/ValidityPage";
 import PlanList from "./components/PlanList";
+import UserSettings from "./components/UserSettings";
 
 function App() {
   const [authUser, setAuthUser] = useAuth();
@@ -65,6 +66,16 @@ function App() {
           element={
             authUser && authUser?.role === "Admin" ? (
               <CoinSetting />
+            ) : (
+              <Navigate to="/" />
+            )
+          }
+        />
+        <Route
+          path="/user-setting"
+          element={
+            authUser && authUser?.role === "Admin" ? (
+              <UserSettings />
             ) : (
               <Navigate to="/" />
             )
