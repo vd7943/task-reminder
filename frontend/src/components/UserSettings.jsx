@@ -13,7 +13,7 @@ const UserSettings = () => {
   const fetchUserTypes = async () => {
     try {
       const response = await axios.get(
-        `http://localhost:3000/config/get-user-type?role=${authUser?.role}`
+        `https://task-reminder-4sqz.onrender.com/config/get-user-type?role=${authUser?.role}`
       );
       setUserTypes(response.data.userTypes);
       console.log(response.data.userTypes);
@@ -40,7 +40,7 @@ const UserSettings = () => {
 
     try {
       await axios.post(
-        "http://localhost:3000/config/update-user-type",
+        "https://task-reminder-4sqz.onrender.com/config/update-user-type",
         userTypes,
         { withCredentials: true }
       );
