@@ -5,6 +5,7 @@ import fileUpload from "express-fileupload";
 import mongoose from "mongoose";
 import cloudinary from "cloudinary";
 import userRoute from "./route/user.route.js";
+import configRoute from "./route/config.route.js";
 import passport from "passport";
 import session from "express-session";
 import MongoStore from "connect-mongo";
@@ -77,6 +78,7 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 app.use("/user", userRoute);
+app.use("/config", configRoute);
 app.use("/plan", paymentRoute);
 app.use("/task", reminder);
 app.use("/admin", dashboardStatsRoute);
