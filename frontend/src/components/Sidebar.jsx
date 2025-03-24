@@ -19,6 +19,7 @@ import { SiBuiltbybit } from "react-icons/si";
 import { MdNavigateNext } from "react-icons/md";
 import { MdNavigateBefore } from "react-icons/md";
 import { LuHandCoins } from "react-icons/lu";
+import { RiUserSettingsFill } from "react-icons/ri";
 import axios from "axios";
 
 const Sidebar = () => {
@@ -335,6 +336,28 @@ const Sidebar = () => {
 
           {authUser?.role === "Admin" && (
             <Link
+              to="/user-setting"
+              className="pb-10"
+              onClick={() => setIsOpen(false)}
+            >
+              <li
+                className={`flex items-center space-x-3 p-2 rounded-lg cursor-pointer transition-all hover:bg-[#FFFFFF2B]
+                ${isActive("/user-setting") ? "bg-[#FFFFFF2B]" : ""}`}
+              >
+                <div className="flex items-center justify-center gap-4">
+                  <div className="rounded-full text-gray-400">
+                    <RiUserSettingsFill />
+                  </div>
+                  <div className="text-xl font-medium flex items-center gap-2">
+                    User Settings
+                  </div>
+                </div>
+              </li>
+            </Link>
+          )}
+
+          {authUser?.role === "Admin" && (
+            <Link
               to="/coin-setting"
               className="pb-10"
               onClick={() => setIsOpen(false)}
@@ -348,7 +371,7 @@ const Sidebar = () => {
                     <LuHandCoins />
                   </div>
                   <div className="text-xl font-medium flex items-center gap-2">
-                    Coin settings
+                    Coin Settings
                   </div>
                 </div>
               </li>
