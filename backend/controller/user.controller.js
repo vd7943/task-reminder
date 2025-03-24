@@ -4,6 +4,10 @@ import { v2 as cloudinary } from "cloudinary";
 import "../config/passport.js";
 import passport from "passport";
 import jwt from "jsonwebtoken";
+import { config } from "dotenv";
+import Config from "../model/config.model.js";
+
+config();
 
 const generateToken = (userId) => {
   return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
@@ -25,8 +29,9 @@ export const signup = async (req, res) => {
     }
 
     const { fullname, email, password } = req.body;
-    const user = await User.findOne({ email });
-    if (user) {
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
       return res.status(400).json({ message: "User already exists" });
     }
     const cloudinaryResponse = await cloudinary.uploader.upload(
@@ -52,6 +57,7 @@ export const signup = async (req, res) => {
       email: email,
       password: hashPassword,
       role: "User",
+      userType: "Regular",
       payments: [],
       notifications: [],
     });
@@ -80,28 +86,42 @@ export const signup = async (req, res) => {
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
+
     const user = await User.findOne({ email });
-    const isMatch = await bcryptjs.compare(password, user.password);
-    if (!user || !isMatch) {
-      res.status(400).json({ message: "Invalid email or password" });
-    } else {
-      res.status(200).json({
-        message: "Login successfull",
-        user: {
-          _id: user._id,
-          fullname: user.fullname,
-          email: user.email,
-          role: user.role,
-          profileImage: user.profileImage,
-          userType: user.userType,
-          subscriptionEndDate: user.subscriptionEndDate,
-          createdAt: user.createdAt,
-          coins: user.coins,
-        },
-      });
+    if (!user) {
+      return res.status(400).json({ message: "Invalid email or password" });
     }
+
+    const isMatch = await bcryptjs.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid email or password" });
+    }
+
+    const configData = await Config.findOne();
+    if (!configData) {
+      return res.status(500).json({ message: "Config not found" });
+    }
+
+    const currentUserTypes = configData.userTypes;
+
+    const userType = currentUserTypes[user.userType] || user.userType;
+
+    res.status(200).json({
+      message: "Login successful",
+      user: {
+        _id: user._id,
+        fullname: user.fullname,
+        email: user.email,
+        role: user.role,
+        profileImage: user.profileImage,
+        userType,
+        subscriptionEndDate: user.subscriptionEndDate,
+        createdAt: user.createdAt,
+        coins: user.coins,
+      },
+    });
   } catch (error) {
-    console.log("Error: ", error.message);
+    console.error("Error: ", error.message);
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -110,8 +130,7 @@ export const getUserData = async (req, res) => {
   try {
     const userId = req.params.id;
 
-    // Fetch user data from database
-    const user = await User.findById(userId).select("-password"); // Exclude password
+    const user = await User.findById(userId).select("-password");
 
     if (!user) {
       return res
@@ -221,7 +240,7 @@ export const markNotificationsAsRead = async (req, res) => {
       notif.read = true;
     });
 
-     user.notifications = user.notifications.filter((notif) => !notif.read);
+    user.notifications = user.notifications.filter((notif) => !notif.read);
 
     await user.save();
 
@@ -248,12 +267,7 @@ export const githubCallback = (req, res) => {
   const token = generateToken(req.user._id);
 
   // Set token in a secure HTTP-only cookie
-  res.cookie("userToken", token, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "None",
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
+  res.cookie("userToken", token);
 
   res.redirect(`${process.env.FRONTEND_URL}/auth-success`);
 };
