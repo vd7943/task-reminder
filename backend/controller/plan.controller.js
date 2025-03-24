@@ -3,53 +3,36 @@ import Remark from "../model/remark.model.js";
 import User from "../model/user.model.js";
 import CoinRule from "../model/coinRule.model.js";
 
-const skipSunday = (date) => {
-  while (date.getDay() === 0) {
-    date.setDate(date.getDate() + 1);
-  }
-  return date;
-};
+const getScheduleDates = (startDate, days, skipDays = [0]) => {
+  let schedule = [];
+  const daysArray = days
+    .split(",")
+    .map((day) => parseInt(day.trim(), 10))
+    .filter((day) => !isNaN(day));
 
-const getTaskStartDate = (baseDate, srNo) => {
-  let startDate = new Date(baseDate);
-  let daysAdded = 0;
+  let currentDate = new Date(startDate);
 
-  while (daysAdded < srNo - 1) {
-    startDate.setDate(startDate.getDate() + 1);
-    if (startDate.getDay() !== 0) {
-      daysAdded++;
-    }
-  }
+  daysArray.forEach((dayOffset) => {
+    // Create a new date for each task
+    let scheduledDate = new Date(currentDate);
+    scheduledDate.setDate(currentDate.getDate() + dayOffset);
 
-  return skipSunday(startDate);
-};
-
-const getScheduleDates = (taskStartDate, days) => {
-  let scheduleDates = [];
-  days.sort((a, b) => a - b);
-
-  days.forEach((dayOffset) => {
-    let scheduledDate = new Date(taskStartDate);
-    let daysAdded = 0;
-
-    while (daysAdded < dayOffset - 1) {
+    // Loop until it finds a valid day (not in skipDays)
+    while (skipDays.includes(scheduledDate.getDay())) {
       scheduledDate.setDate(scheduledDate.getDate() + 1);
-      if (scheduledDate.getDay() !== 0) {
-        daysAdded++;
-      }
     }
 
-    scheduleDates.push({
-      date: scheduledDate.toISOString().slice(0, 10),
+    schedule.push({
+      date: scheduledDate.toISOString().split("T")[0],
       time: "00:01",
     });
   });
 
-  return scheduleDates;
+  return schedule;
 };
 
 export const addNewPlan = async (req, res) => {
-  const { userId, userRole, planName, planStart, tasks } = req.body;
+  const { userId, userRole, planName, tasks, milestones } = req.body;
 
   try {
     const user = await User.findById(userId);
@@ -66,32 +49,14 @@ export const addNewPlan = async (req, res) => {
         .json({ success: false, message: "Plan already exists" });
     }
 
-    const srNos = tasks.map((task) => task.srNo);
-    if (srNos.length !== new Set(srNos).size) {
-      return res.status(400).json({
-        success: false,
-        message: "Each task must have a unique Sr No. within the plan.",
-      });
-    }
+    let baseDate = new Date();
 
-    let currentDate = new Date();
-    if (planStart === "tomorrow") {
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
-
-    const formattedTasks = tasks.map((task) => {
-      const taskStartDate = getTaskStartDate(currentDate, task.srNo);
-      const schedule = getScheduleDates(
-        taskStartDate,
-        task.days.split(",").map((day) => Number(day.trim()))
-      );
-
+    // ✅ Formatting tasks with schedule excluding Sundays
+    const formattedTasks = tasks.map((task, index) => {
+      const schedule = getScheduleDates(baseDate, task.days, [0]); // 0 = Sunday
       return {
-        taskName: task.taskName,
-        taskDescription: task.taskDescription,
-        taskLink: task.taskLink,
-        srNo: task.srNo,
-        days: task.days,
+        ...task,
+        srNo: index,
         schedule,
       };
     });
@@ -100,8 +65,8 @@ export const addNewPlan = async (req, res) => {
       userId,
       userRole,
       planName,
-      planStart,
       tasks: formattedTasks,
+      milestones,
       status: "Paused",
       createdAt: new Date(),
     });
@@ -109,7 +74,7 @@ export const addNewPlan = async (req, res) => {
     await newPlan.save();
     res.status(201).json({
       success: true,
-      message: "Plan added successfully",
+      message: "Plan with milestones added successfully (excluding Sundays)",
       plan: newPlan,
     });
   } catch (error) {
@@ -117,6 +82,107 @@ export const addNewPlan = async (req, res) => {
     res
       .status(500)
       .json({ success: false, message: "Server Error", error: error.message });
+  }
+};
+export const addMilestone = async (req, res) => {
+  const { userId, taskName, taskDate, id } = req.body;
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (user.isDeactivated) {
+      return res.status(403).json({
+        success: false,
+        message: "Your account is deactivated. Contact admin.",
+      });
+    }
+
+    const plan = await Plan.findOne({
+      "tasks.taskName": taskName,
+      status: "Active",
+      userId: userId,
+      _id: id,
+    });
+    if (!plan)
+      return res.status(404).json({
+        message:
+          "Plan is not active or user is not authorized to add milestone in this",
+      });
+
+    const task = plan.tasks.find((task) => task.taskName === taskName);
+    if (!task) return res.status(404).json({ message: "Task not found" });
+
+    const taskScheduled = task.schedule.some(
+      (schedule) => schedule.date === taskDate
+    );
+    if (!taskScheduled) {
+      return res
+        .status(400)
+        .json({ message: "Task is not scheduled on this date" });
+    }
+
+    const milestoneExists = user.milestones.some(
+      (milestone) =>
+        milestone.taskName === taskName && milestone.taskDate === taskDate
+    );
+
+    if (milestoneExists) {
+      return res.status(400).json({
+        success: false,
+        message: "Milestone is already added for this task on the given date",
+      });
+    }
+
+    user.milestones.push({
+      taskName,
+      taskDate,
+      createdAt: new Date(),
+    });
+
+    await user.save();
+    res.json({
+      message: "Milestone added successfully",
+      milestones: user.milestones,
+    });
+  } catch (error) {
+    console.error("Error adding milestone:", error);
+    res.status(500).json({ message: "Server Error", error: error.message });
+  }
+};
+
+export const getMilestones = async (req, res) => {
+  const { userId, taskName, taskDate } = req.params;
+
+  try {
+    const user = await User.findById(userId).select("milestones");
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (user.isDeactivated) {
+      return res.status(403).json({
+        success: false,
+        message: "Your account is deactivated. Contact admin.",
+      });
+    }
+
+    let filteredMilestones = user.milestones;
+
+    if (taskName) {
+      filteredMilestones = filteredMilestones.filter(
+        (milestone) => milestone.taskName === taskName
+      );
+    }
+
+    if (taskDate) {
+      filteredMilestones = filteredMilestones.filter(
+        (milestone) => milestone.taskDate === taskDate
+      );
+    }
+
+    res.json({ milestones: filteredMilestones });
+  } catch (error) {
+    console.error("Error fetching milestones:", error);
+    res.status(500).json({ message: "Server Error", error: error.message });
   }
 };
 
@@ -437,108 +503,6 @@ export const getTodayPlans = async (req, res) => {
     res.status(200).json(todayPlans);
   } catch (error) {
     res.status(500).json({ success: false, message: "Server Error", error });
-  }
-};
-
-export const addMilestone = async (req, res) => {
-  const { userId, taskName, taskDate, id } = req.body;
-
-  try {
-    const user = await User.findById(userId);
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    if (user.isDeactivated) {
-      return res.status(403).json({
-        success: false,
-        message: "Your account is deactivated. Contact admin.",
-      });
-    }
-
-    const plan = await Plan.findOne({
-      "tasks.taskName": taskName,
-      status: "Active",
-      userId: userId,
-      _id: id,
-    });
-    if (!plan)
-      return res.status(404).json({
-        message:
-          "Plan is not active or user is not authorized to add milestone in this",
-      });
-
-    const task = plan.tasks.find((task) => task.taskName === taskName);
-    if (!task) return res.status(404).json({ message: "Task not found" });
-
-    const taskScheduled = task.schedule.some(
-      (schedule) => schedule.date === taskDate
-    );
-    if (!taskScheduled) {
-      return res
-        .status(400)
-        .json({ message: "Task is not scheduled on this date" });
-    }
-
-    const milestoneExists = user.milestones.some(
-      (milestone) =>
-        milestone.taskName === taskName && milestone.taskDate === taskDate
-    );
-
-    if (milestoneExists) {
-      return res.status(400).json({
-        success: false,
-        message: "Milestone is already added for this task on the given date",
-      });
-    }
-
-    user.milestones.push({
-      taskName,
-      taskDate,
-      createdAt: new Date(),
-    });
-
-    await user.save();
-    res.json({
-      message: "Milestone added successfully",
-      milestones: user.milestones,
-    });
-  } catch (error) {
-    console.error("Error adding milestone:", error);
-    res.status(500).json({ message: "Server Error", error: error.message });
-  }
-};
-
-export const getMilestones = async (req, res) => {
-  const { userId, taskName, taskDate } = req.params;
-
-  try {
-    const user = await User.findById(userId).select("milestones");
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    if (user.isDeactivated) {
-      return res.status(403).json({
-        success: false,
-        message: "Your account is deactivated. Contact admin.",
-      });
-    }
-
-    let filteredMilestones = user.milestones;
-
-    if (taskName) {
-      filteredMilestones = filteredMilestones.filter(
-        (milestone) => milestone.taskName === taskName
-      );
-    }
-
-    if (taskDate) {
-      filteredMilestones = filteredMilestones.filter(
-        (milestone) => milestone.taskDate === taskDate
-      );
-    }
-
-    res.json({ milestones: filteredMilestones });
-  } catch (error) {
-    console.error("Error fetching milestones:", error);
-    res.status(500).json({ message: "Server Error", error: error.message });
   }
 };
 
