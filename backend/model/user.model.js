@@ -17,11 +17,7 @@ const userSchema = mongoose.Schema({
     enum: ["Admin", "User"],
     default: "User",
   },
-  userType: {
-    type: String,
-    enum: ["Custom", "Manage", "Regular"],
-    default: "Regular",
-  },
+  userType: { type: String, required: true, default: "Regular" },
   payments: [
     {
       razorpay_order_id: String,
