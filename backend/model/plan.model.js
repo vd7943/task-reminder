@@ -17,8 +17,8 @@ const TaskSchema = new mongoose.Schema({
 
 const MilestoneSchema = new mongoose.Schema({
   milestoneName: { type: String, required: true },
-  startTask: { type: Number, required: true },
-  endTask: { type: Number, required: true },
+  startTask: { type: String, required: true },
+  endTask: { type: String, required: true },
 });
 
 const planSchema = new mongoose.Schema({
@@ -29,7 +29,6 @@ const planSchema = new mongoose.Schema({
   },
   userRole: { type: String, required: true },
   planName: { type: String, required: true },
-  planStart: String,
   tasks: {
     type: [TaskSchema],
     validate: {
@@ -42,6 +41,7 @@ const planSchema = new mongoose.Schema({
   },
   milestones: [MilestoneSchema],
   status: { type: String, enum: ["Active", "Paused"], default: "Paused" },
+  optedCount: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now },
 });
 
