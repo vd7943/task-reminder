@@ -1,7 +1,6 @@
 import Plan from "../model/plan.model.js";
 import Remark from "../model/remark.model.js";
 import User from "../model/user.model.js";
-import CoinRule from "../model/coinRule.model.js";
 
 const getScheduleDates = (startDate, days, skipDays = [0]) => {
   let schedule = [];
@@ -13,11 +12,9 @@ const getScheduleDates = (startDate, days, skipDays = [0]) => {
   let currentDate = new Date(startDate);
 
   daysArray.forEach((dayOffset) => {
-    // Create a new date for each task
     let scheduledDate = new Date(currentDate);
     scheduledDate.setDate(currentDate.getDate() + dayOffset);
 
-    // Loop until it finds a valid day (not in skipDays)
     while (skipDays.includes(scheduledDate.getDay())) {
       scheduledDate.setDate(scheduledDate.getDate() + 1);
     }
@@ -51,9 +48,8 @@ export const addNewPlan = async (req, res) => {
 
     let baseDate = new Date();
 
-    // ✅ Formatting tasks with schedule excluding Sundays
     const formattedTasks = tasks.map((task, index) => {
-      const schedule = getScheduleDates(baseDate, task.days, [0]); // 0 = Sunday
+      const schedule = getScheduleDates(baseDate, task.days, [0]);
       return {
         ...task,
         srNo: index,
@@ -68,6 +64,7 @@ export const addNewPlan = async (req, res) => {
       tasks: formattedTasks,
       milestones,
       status: "Paused",
+      optedCount: userRole === "Admin" && 0,
       createdAt: new Date(),
     });
 
@@ -84,6 +81,66 @@ export const addNewPlan = async (req, res) => {
       .json({ success: false, message: "Server Error", error: error.message });
   }
 };
+
+export const updateTask = async (req, res) => {
+  const { planId, taskId } = req.params;
+  const { taskName, taskDescription, taskLink, srNo, days } = req.body;
+
+  try {
+    const plan = await Plan.findById(planId);
+    if (!plan) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Plan not found" });
+    }
+
+    const taskIndex = plan.tasks.findIndex(
+      (task) => task._id.toString() === taskId
+    );
+    if (taskIndex === -1) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Task not found" });
+    }
+
+    const task = plan.tasks[taskIndex];
+
+    task.taskName = taskName;
+    task.taskDescription = taskDescription;
+    task.taskLink = taskLink;
+    task.srNo = srNo;
+    task.days = days;
+
+    let planStartDate = new Date();
+    if (plan.planStart === "tomorrow") {
+      planStartDate.setDate(planStartDate.getDate() + 1);
+    }
+
+    const daysArray = days
+      .split(",")
+      .map(Number)
+      .sort((a, b) => a - b);
+
+    const taskStartDate = getTaskStartDate(planStartDate, srNo);
+
+    task.schedule = getScheduleDates(taskStartDate, daysArray);
+
+    await plan.save();
+    res.json({
+      success: true,
+      message: "Task updated successfully",
+      updatedTask: task,
+    });
+  } catch (error) {
+    console.error("Error updating task:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error updating task",
+      error: error.message,
+    });
+  }
+};
+
 export const addMilestone = async (req, res) => {
   const { userId, taskName, taskDate, id } = req.body;
 
@@ -186,112 +243,25 @@ export const getMilestones = async (req, res) => {
   }
 };
 
-export const updatePlanStart = async (req, res) => {
-  const { id } = req.params;
-  const { planStart } = req.body;
-
+export const deletePlan = async (req, res) => {
   try {
-    const plan = await Plan.findById(id);
+    const { userId, planId } = req.params;
+
+    const plan = await Plan.findOne({ _id: planId, userId });
+
     if (!plan) {
       return res
         .status(404)
-        .json({ success: false, message: "Plan not found" });
+        .json({ message: "Plan not found or user is unauthorized" });
     }
 
-    let currentDate = new Date();
-    if (planStart === "tomorrow") {
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
+    await Plan.findByIdAndDelete(planId);
 
-    const updatedTasks = plan.tasks.map((task) => {
-      const taskStartDate = getTaskStartDate(currentDate, task.srNo);
-      const updatedSchedule = getScheduleDates(
-        taskStartDate,
-        task.schedule.map((sched) => Number(sched.day))
-      );
-
-      return {
-        ...task.toObject(),
-        schedule: updatedSchedule,
-      };
-    });
-
-    plan.planStart = planStart;
-    plan.tasks = updatedTasks;
-
-    await plan.save();
-
-    res.json({
-      success: true,
-      message: "Plan start date and task schedules updated",
-      plan,
-    });
+    return res.status(200).json({ message: "Plan deleted successfully" });
   } catch (error) {
-    console.error("Error updating plan start:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error",
-      error: error.message,
-    });
-  }
-};
-
-export const updateTask = async (req, res) => {
-  const { planId, taskId } = req.params;
-  const { taskName, taskDescription, taskLink, srNo, days } = req.body;
-
-  try {
-    const plan = await Plan.findById(planId);
-    if (!plan) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Plan not found" });
-    }
-
-    const taskIndex = plan.tasks.findIndex(
-      (task) => task._id.toString() === taskId
-    );
-    if (taskIndex === -1) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Task not found" });
-    }
-
-    const task = plan.tasks[taskIndex];
-
-    task.taskName = taskName;
-    task.taskDescription = taskDescription;
-    task.taskLink = taskLink;
-    task.srNo = srNo;
-    task.days = days;
-
-    let planStartDate = new Date();
-    if (plan.planStart === "tomorrow") {
-      planStartDate.setDate(planStartDate.getDate() + 1);
-    }
-
-    const daysArray = days
-      .split(",")
-      .map(Number)
-      .sort((a, b) => a - b);
-
-    const taskStartDate = getTaskStartDate(planStartDate, srNo);
-
-    task.schedule = getScheduleDates(taskStartDate, daysArray);
-
-    await plan.save();
-    res.json({
-      success: true,
-      message: "Task updated successfully",
-      updatedTask: task,
-    });
-  } catch (error) {
-    console.error("Error updating task:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error updating task",
-      error: error.message,
-    });
+    return res
+      .status(500)
+      .json({ message: "Server error", error: error.message });
   }
 };
 
@@ -430,13 +400,14 @@ export const optForPlan = async (req, res) => {
       userId,
       userRole: "User",
       planName: existingPlan.planName,
-      planStart: existingPlan.planStart,
       tasks: existingPlan.tasks,
       status: "Paused",
       createdAt: new Date(),
     });
 
     await newPlan.save();
+
+    await Plan.findByIdAndUpdate(planId, { $inc: { optedCount: 1 } });
 
     res.status(201).json({
       success: true,
@@ -503,66 +474,5 @@ export const getTodayPlans = async (req, res) => {
     res.status(200).json(todayPlans);
   } catch (error) {
     res.status(500).json({ success: false, message: "Server Error", error });
-  }
-};
-
-// restart plan
-
-export const restartPlan = async (req, res) => {
-  try {
-    const { userId, planId } = req.body;
-
-    const user = await User.findById(userId);
-    const plan = await Plan.findById(planId);
-
-    if (!user || !plan || plan.status !== "Paused") {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid request or plan is not paused.",
-      });
-    }
-
-    const coinRule = await CoinRule.findOne();
-    const planRestartCoins = coinRule?.planRestartCoins;
-
-    if (user.coins < planRestartCoins) {
-      return {
-        success: false,
-        message: "Not enough coins to restart the plan.",
-      };
-    }
-
-    user.coins -= planRestartCoins;
-    plan.status = "Active";
-    await user.save();
-
-    let lastCompletedTaskNo = 0;
-
-    for (let task of plan.tasks) {
-      const remark = await Remark.findOne({ userId, taskName: task.taskName });
-      if (remark) {
-        lastCompletedTaskNo = Math.max(lastCompletedTaskNo, task.srNo);
-      }
-    }
-
-    // Reassign tasks from the last completed task onwards
-    const remainingTasks = plan.tasks.filter(
-      (task) => task.srNo > lastCompletedTaskNo
-    );
-    const today = new Date();
-
-    remainingTasks.forEach((task, index) => {
-      task.scheduledDate = new Date(today.setDate(today.getDate() + index)); // Assign tasks in sequence
-    });
-
-    await plan.save();
-
-    return {
-      success: true,
-      message: "Plan restarted successfully and tasks reassigned.",
-    };
-  } catch (error) {
-    console.error("Error in restartPlan:", error);
-    return { success: false, message: "Failed to restart plan." };
   }
 };
