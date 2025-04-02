@@ -132,21 +132,6 @@ const PlanDetail = () => {
     }
   };
 
-  const handlePlanStartChange = async (newStart) => {
-    try {
-      const response = await axios.put(
-        `https://task-reminder-4sqz.onrender.com/plan/update-plan-start/${id}`,
-        { planStart: newStart }
-      );
-      setPlanStart(newStart);
-      setTasks(response.data.updatedTasks);
-      updateEvents(response.data.updatedTasks);
-      toast.success("Plan start date updated and tasks rescheduled.");
-    } catch (error) {
-      toast.error("Failed to update plan start date.");
-    }
-  };
-
   const handleEditTask = (task) => {
     setSelectedTask(task);
     setIsModalOpen(true);
@@ -306,30 +291,19 @@ const PlanDetail = () => {
             <h2 className="text-3xl font-semibold text-gray-200">
               {plan.planName}
             </h2>
-            <div className="flex items-center gap-4">
-              <select
-                value={status}
-                onChange={(e) => handleStatusChange(e.target.value)}
-                className="bg-gray-700 text-white px-4 py-2 rounded-lg"
-              >
-                <option value="Paused">Paused</option>
-                <option value="Active">Active</option>
-              </select>
-              {authUser.userType === "Custom" || authUser.role === "Admin" ? (
+            {(authUser.userType === "Custom" ||
+              authUser.userType === "Manage") && (
+              <div className="flex items-center gap-4">
                 <select
-                  value={planStart}
-                  onChange={(e) => handlePlanStartChange(e.target.value)}
+                  value={status}
+                  onChange={(e) => handleStatusChange(e.target.value)}
                   className="bg-gray-700 text-white px-4 py-2 rounded-lg"
                 >
-                  <option value="today">Today</option>
-                  <option value="tomorrow">Tomorrow</option>
+                  <option value="Paused">Paused</option>
+                  <option value="Active">Active</option>
                 </select>
-              ) : (
-                <div className="bg-gray-700 text-white px-4 py-2 rounded-lg">
-                  {planStart === "today" ? "Today" : "Tomorrow"}
-                </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
 
           <div className="bg-white/10 p-6 rounded-lg shadow-lg border border-white/10 mb-6">
