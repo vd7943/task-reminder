@@ -3,12 +3,17 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthProvider";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { CiWarning } from "react-icons/ci";
 
 const PlanList = () => {
   const [plans, setPlans] = useState([]);
   const [filteredPlans, setFilteredPlans] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [authUser] = useAuth();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletePlanId, setDeletePlanId] = useState(null);
+  const [deletePlanName, setDeletePlanName] = useState("");
+  const [confirmPlanName, setConfirmPlanName] = useState("");
 
   useEffect(() => {
     axios
@@ -53,24 +58,27 @@ const PlanList = () => {
     }
   };
 
-  const handleRestartPlan = async (planId) => {
-    try {
-      const response = await axios.post(
-        "https://task-reminder-4sqz.onrender.com/plan/restart-plan",
-        {
-          userId: authUser._id,
-          planId,
-        }
-      );
+  const handleDeleteClick = (planId, planName, optedCount) => {
+    if (optedCount > 0) {
+      setShowDeleteModal(true);
+      setDeletePlanId(planId);
+      setDeletePlanName(planName);
+      setConfirmPlanName("");
+    } else {
+      handleDeletePlan(planId);
+    }
+  };
 
-      toast.success(response.data.message);
-      setPlans((prevPlans) =>
-        prevPlans.map((plan) =>
-          plan._id === planId ? { ...plan, status: "Active" } : plan
-        )
+  const handleDeletePlan = async (planId) => {
+    try {
+      await axios.delete(
+        `https://task-reminder-4sqz.onrender.com/plan/delete/${authUser?._id}/${planId}`
       );
+      setPlans((prevPlans) => prevPlans.filter((plan) => plan._id !== planId));
+      toast.success("Plan deleted successfully");
+      setShowDeleteModal(false);
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to restart plan");
+      toast.error("Failed to delete plan");
     }
   };
 
@@ -110,18 +118,25 @@ const PlanList = () => {
                 <th className="p-4 text-left text-lg font-semibold">
                   Task Count
                 </th>
+                {authUser.role === "Admin" && (
+                  <th className="p-4 text-left text-lg font-semibold">
+                    Opted Users
+                  </th>
+                )}
 
-                <th className="p-4 text-left text-lg font-semibold">Status</th>
-                <th className="p-4 text-center text-lg font-semibold">
-                  Actions
-                </th>
-
-                {filteredPlans.some((plan) => plan.status === "Paused") &&
-                  authUser.role === "User" && (
-                    <th className="p-4 text-center text-lg font-semibold">
-                      Restart Plan
+                {authUser.userType === "Custom" && (
+                  <>
+                    <th className="p-4 text-left text-lg font-semibold">
+                      Status
                     </th>
-                  )}
+                    <th className="p-4 text-center text-lg font-semibold">
+                      Actions
+                    </th>
+                  </>
+                )}
+                <th className="p-4 text-center text-lg font-semibold">
+                  Delete Plan
+                </th>
               </tr>
             </thead>
             <tbody className="text-start">
@@ -137,32 +152,42 @@ const PlanList = () => {
                       </Link>
                     </td>
                     <td className="p-4">{plan.tasks.length}</td>
-                    <td className="p-4">{plan.status}</td>
+                    {authUser.role === "Admin" && (
+                      <td className="p-4">{plan.optedCount}</td>
+                    )}
+                    {authUser.userType === "Custom" && (
+                      <>
+                        <td className="p-4">{plan.status}</td>
+                        <td className="p-4 text-center">
+                          <button
+                            onClick={() =>
+                              handleTogglePlanStatus(plan._id, plan.status)
+                            }
+                            className={`px-4 py-2 cursor-pointer rounded-lg ${
+                              plan.status === "Active"
+                                ? "bg-red-500"
+                                : "bg-green-500"
+                            } text-white`}
+                          >
+                            {plan.status === "Active" ? "Pause" : "Activate"}
+                          </button>
+                        </td>
+                      </>
+                    )}
                     <td className="p-4 text-center">
                       <button
                         onClick={() =>
-                          handleTogglePlanStatus(plan._id, plan.status)
+                          handleDeleteClick(
+                            plan._id,
+                            plan.planName,
+                            plan.optedCount
+                          )
                         }
-                        className={`px-4 py-2 cursor-pointer rounded-lg ${
-                          plan.status === "Active"
-                            ? "bg-red-500"
-                            : "bg-green-500"
-                        } text-white`}
+                        className="px-4 py-2 cursor-pointer rounded-lg bg-red-500 text-white"
                       >
-                        {plan.status === "Active" ? "Pause" : "Activate"}
+                        Delete
                       </button>
                     </td>
-
-                    {plan.status === "Paused" && authUser.role === "User" && (
-                      <td className="p-4 text-center">
-                        <button
-                          onClick={() => handleRestartPlan(plan._id)}
-                          className="bg-yellow-600 px-4 py-2 rounded-lg text-white cursor-pointer"
-                        >
-                          Restart Plan
-                        </button>
-                      </td>
-                    )}
                   </tr>
                 ))
               ) : (
@@ -176,6 +201,71 @@ const PlanList = () => {
           </table>
         </div>
       </div>
+      {showDeleteModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-[#FFFFFF2B] bg-opacity-50 backdrop-blur-lg z-50">
+          <div className="bg-[#1E1E2F] p-6 rounded-2xl shadow-lg w-[400px] relative border border-gray-700">
+            <h3 className="text-xl font-semibold mb-3 text-red-400 flex items-center space-x-2">
+              <span className="bg-red-500 text-white p-1.5 rounded-full">
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 16h-1v-4h-1m0-4h.01M12 2a10 10 0 1 1-7.071 2.929A10 10 0 0 1 12 2z"
+                  />
+                </svg>
+              </span>
+              <span className="text-red-300">
+                Warning: This plan is opted by{" "}
+                <b className="text-white">
+                  {
+                    filteredPlans.find((p) => p._id === deletePlanId)
+                      ?.optedCount
+                  }
+                </b>{" "}
+                users.
+              </span>
+            </h3>
+
+            <p className="text-gray-300 mb-3 text-sm">
+              To confirm deletion, type{" "}
+              <b className="text-white">{deletePlanName}</b> below:
+            </p>
+            <input
+              type="text"
+              value={confirmPlanName}
+              onChange={(e) => setConfirmPlanName(e.target.value)}
+              className="w-full p-2 border bg-[#2A2A3C] text-white rounded-md focus:ring-2 focus:ring-red-400 outline-none mb-4"
+              placeholder="Type plan name..."
+            />
+            <div className="flex justify-center space-x-3">
+              <button
+                onClick={() => handleDeletePlan(deletePlanId)}
+                className={`px-4 py-2 cursor-pointer rounded-lg text-white transition-all duration-200 ${
+                  confirmPlanName === deletePlanName
+                    ? "bg-red-500 hover:bg-red-600"
+                    : "bg-red-900 opacity-50 cursor-not-allowed"
+                }`}
+                disabled={confirmPlanName !== deletePlanName}
+              >
+                Delete
+              </button>
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="px-4 py-2 cursor-pointer bg-gray-600 hover:bg-gray-500 text-white rounded-lg transition-all duration-200"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
