@@ -17,7 +17,7 @@ const UserMilestone = () => {
           `https://task-reminder-4sqz.onrender.com/plan/milestones/${authUser._id}`,
           { withCredentials: true }
         );
-        setMilestones(milestoneRes.data.milestones);
+        setMilestones(milestoneRes.data?.milestones);
       } catch (error) {
         console.error("Error fetching milestones:", error);
       }
@@ -65,7 +65,7 @@ const UserMilestone = () => {
       <div className="relative w-full mx-auto overflow-hidden">
         <div className="absolute left-1/2 transform -translate-x-1/2 w-[2px] sm:w-1 bg-gradient-to-b from-[#a56cef] to-[#6a1b9a] rounded-full h-full"></div>
 
-        {milestones.map((milestone, index) => {
+        {milestones?.map((milestone, index) => {
           const completionDate = getCompletionDate(
             milestone.taskName,
             milestone.taskDate
@@ -124,7 +124,7 @@ const UserMilestone = () => {
         ✅{" "}
         <span className="text-green-400 text-xl sm:text-2xl font-bold">
           {
-            milestones.filter((m) => getCompletionDate(m.taskName, m.taskDate))
+            milestones?.filter((m) => getCompletionDate(m.taskName, m.taskDate))
               .length
           }
         </span>{" "}
