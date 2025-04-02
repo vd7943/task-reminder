@@ -55,6 +55,7 @@ const AddPlan = () => {
     fields: emailFields,
     append: appendEmail,
     remove: removeEmail,
+    update: updateEmail,
   } = useFieldArray({
     control,
     name: "emailTemplates",
@@ -64,6 +65,7 @@ const AddPlan = () => {
     fields: milestoneFields,
     append: appendMilestone,
     remove: removeMilestone,
+    update: updateMilestone,
   } = useFieldArray({
     control,
     name: "milestones",
@@ -74,19 +76,16 @@ const AddPlan = () => {
   const validateDays = (days) => {
     const trimmedDays = days.trim();
 
-    // Ensure days start with "0,"
-    if (!trimmedDays.startsWith("0,")) {
-      toast.error("Days must start with '0,'");
+    if (!trimmedDays.startsWith("0")) {
+      toast.error("Days must start with '0'");
       return false;
     }
 
-    // Prevent consecutive commas
     if (/,,/.test(trimmedDays)) {
       toast.error("Days cannot have consecutive commas.");
       return false;
     }
 
-    // Split and validate each day value
     const daysArray = trimmedDays.split(",").map((d) => d.trim());
 
     for (let day of daysArray) {
@@ -99,13 +98,9 @@ const AddPlan = () => {
     return true;
   };
 
-  const renumberTasks = () => {
-    taskFields.forEach((task, index) => {
-      updateTask(index, { ...task, srNo: index });
-    });
-  };
+  const handleAddTask = (e) => {
+    e.preventDefault();
 
-  const handleAddTask = () => {
     if (!newTask.taskName || !newTask.days) {
       toast.error("Task Name and Days are required!");
       return;
@@ -113,44 +108,44 @@ const AddPlan = () => {
 
     if (!validateDays(newTask.days)) return;
 
+    let daysArray = newTask.days.split(",").map(Number);
+    let uniqueDays = [...new Set(daysArray)].sort((a, b) => a - b);
+
+    if (daysArray.length !== uniqueDays.length) {
+      toast.error("Duplicate days are not allowed in Reminding Days.");
+      return;
+    }
+
+    const updatedTask = {
+      ...newTask,
+      days: uniqueDays.join(","),
+    };
+
     if (editingIndex !== null) {
-      // Update existing task
-      updateTask(editingIndex, { ...newTask });
+      updateTask(editingIndex, updatedTask);
       setEditingIndex(null);
     } else if (addBelowIndex !== null) {
-      // Handle Add Task Below logic
-      const newSrNo = addBelowIndex + 1;
+      const newSrNo = taskFields[addBelowIndex].srNo + 1;
+      const updatedTaskWithSrNo = { ...updatedTask, srNo: newSrNo };
 
-      // Insert the new task with updated Sr No.
-      insertTask(newSrNo, {
-        ...newTask,
-        srNo: newSrNo,
-      });
+      insertTask(addBelowIndex + 1, updatedTaskWithSrNo);
 
-      // Increment Sr No. of all subsequent tasks
-      for (let i = newSrNo + 1; i < taskFields.length + 1; i++) {
-        updateTask(i, { ...taskFields[i - 1], srNo: i });
+      for (let i = addBelowIndex + 1; i < taskFields.length; i++) {
+        updateTask(i + 1, { ...taskFields[i], srNo: taskFields[i].srNo + 1 });
       }
 
       setAddBelowIndex(null);
     } else {
-      // Add a new task at the end
-      appendTask({
-        ...newTask,
-        srNo: taskFields.length,
-      });
+      appendTask(updatedTask);
     }
 
-    renumberTasks();
     setIsTaskModalOpen(false);
-
-    // ✅ Reset newTask state
     setNewTask({
       taskName: "",
       taskDescription: "",
       taskLink: "",
-      srNo: taskFields.length,
-      days: "0,", // Ensure days start with 0,
+      srNo: taskFields.length + 1,
+      days: "0,",
     });
   };
 
@@ -159,7 +154,7 @@ const AddPlan = () => {
       taskName: "",
       taskDescription: "",
       taskLink: "",
-      srNo: index + 1,
+      srNo: taskFields[index].srNo + 1,
       days: "0,",
     });
 
@@ -168,32 +163,50 @@ const AddPlan = () => {
   };
 
   const handleEditTask = (index) => {
-    const task = taskFields[index];
-    setNewTask(task);
+    let task = taskFields[index];
+
+    let daysArray = task.days.split(",").map(Number);
+    let uniqueDays = [...new Set(daysArray)].sort((a, b) => a - b);
+
+    if (daysArray.length !== uniqueDays.length) {
+      toast.error("Duplicate days are not allowed in Reminding Days.");
+      return;
+    }
+
+    setNewTask({
+      ...task,
+      days: uniqueDays.join(","),
+    });
+
     setEditingIndex(index);
     setIsTaskModalOpen(true);
   };
 
   const handleAddEmailTemplate = () => {
     if (!newEmailTemplate.subject || !newEmailTemplate.body) {
-      toast.error("Subject and Body are required for email templates");
+      toast.error("Subject and Body are required!");
       return;
     }
 
     if (editingIndex !== null) {
-      updateEmail(editingIndex, newEmailTemplate);
-      setEditingIndex(null);
+      updateEmail(editingIndex, { ...newEmailTemplate });
     } else {
-      appendEmail(newEmailTemplate);
+      appendEmail({ ...newEmailTemplate });
     }
 
     setNewEmailTemplate({ subject: "", body: "" });
+    setEditingIndex(null);
     setIsEmailModalOpen(false);
   };
 
   const handleEditEmailTemplate = (index) => {
     const email = emailFields[index];
-    setNewEmailTemplate(email);
+    if (!email) {
+      toast.error("Error: Email template not found!");
+      return;
+    }
+
+    setNewEmailTemplate({ ...email });
     setEditingIndex(index);
     setIsEmailModalOpen(true);
   };
@@ -204,15 +217,15 @@ const AddPlan = () => {
       !newMilestone.startTask ||
       !newMilestone.endTask
     ) {
-      toast.error("Milestone name, start, and end tasks are required!");
+      toast.error("Please fill in all fields");
       return;
     }
 
     if (editingIndex !== null) {
-      updateMilestone(editingIndex, newMilestone);
+      updateMilestone(editingIndex, { ...newMilestone });
       setEditingIndex(null);
     } else {
-      appendMilestone(newMilestone);
+      appendMilestone({ ...newMilestone });
     }
 
     setNewMilestone({ milestoneName: "", startTask: "", endTask: "" });
@@ -227,7 +240,7 @@ const AddPlan = () => {
   };
 
   const onSubmit = async (data) => {
-    if (emailFields.length === 0) {
+    if (!editingIndex && emailFields.length === 0) {
       toast.error(
         "Please add at least one email template before saving the plan."
       );
@@ -299,25 +312,34 @@ const AddPlan = () => {
               <p>
                 Sr No.: {task.srNo} | Days: {task.days}
               </p>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => handleEditTask(index)}
-                  className="text-blue-400"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => removeTask(index)}
-                  className="text-red-400"
-                >
-                  Remove
-                </button>
-                <button
-                  onClick={() => handleAddTaskBelow(index)}
-                  className="text-green-400"
-                >
-                  + Add Task Below
-                </button>
+              <div className="flex justify-between">
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => handleEditTask(index)}
+                    className="text-blue-400 cursor-pointer"
+                  >
+                    Edit
+                  </button>
+                </div>
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => handleAddTaskBelow(index)}
+                    className="text-green-400 cursor-pointer"
+                  >
+                    + Add Task Below
+                  </button>
+                </div>
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => removeTask(index)}
+                    className="text-red-400 cursor-pointer"
+                  >
+                    Remove
+                  </button>
+                </div>
               </div>
             </div>
           ))}
@@ -339,30 +361,39 @@ const AddPlan = () => {
             Add Task
           </button>
 
-          {/* add email template */}
           <h3 className="text-lg font-medium mt-6">Add Email Templates:</h3>
           {emailFields.map((field, index) => (
             <div
               key={field.id}
-              className="bg-gray-800 p-4 rounded-md text-white mb-2"
+              className="bg-gray-900 p-6 rounded-lg text-white shadow-md border border-gray-700 mb-4 w-full mx-auto"
             >
-              <span>{field.subject}</span>
-              <div className="flex gap-3">
+              <p className="text-lg font-semibold text-blue-300 mb-2">
+                {field.subject}
+              </p>
+
+              <p className="text-sm text-gray-200 whitespace-pre-wrap">
+                {field.body}
+              </p>
+
+              <div className="flex justify-end gap-4 mt-4">
                 <button
+                  type="button"
                   onClick={() => handleEditEmailTemplate(index)}
-                  className="text-blue-400"
+                  className="px-4 py-1 cursor-pointer text-sm bg-blue-600 hover:bg-blue-500 text-white rounded-md"
                 >
                   Edit
                 </button>
                 <button
+                  type="button"
                   onClick={() => removeEmail(index)}
-                  className="text-red-400"
+                  className="px-4 py-1 cursor-pointer text-sm bg-red-600 hover:bg-red-500 text-white rounded-md"
                 >
                   Remove
                 </button>
               </div>
             </div>
           ))}
+
           <button
             type="button"
             onClick={() => setIsEmailModalOpen(true)}
@@ -388,14 +419,16 @@ const AddPlan = () => {
                 </div>
                 <div className="flex gap-3">
                   <button
+                    type="button"
                     onClick={() => handleEditMilestone(index)}
-                    className="text-blue-400"
+                    className="text-blue-400 cursor-pointer"
                   >
                     Edit
                   </button>
                   <button
+                    type="button"
                     onClick={() => removeMilestone(index)}
-                    className="text-red-400"
+                    className="text-red-400 cursor-pointer"
                   >
                     Remove
                   </button>
@@ -439,9 +472,43 @@ const AddPlan = () => {
             <input
               type="number"
               className="w-full p-2 border rounded-md my-2"
-              value={newTask.srNo}
-              onChange={(e) => setNewTask({ ...newTask, srNo: e.target.value })}
+              value={newTask.srNo === "" ? "" : newTask.srNo} // Allow empty input
+              onChange={(e) => {
+                let value = e.target.value;
+
+                // Allow empty input but prevent negatives
+                if (value === "") {
+                  setNewTask({ ...newTask, srNo: "" });
+                  return;
+                }
+
+                let numValue = Number(value);
+
+                if (numValue < 0) {
+                  toast.error("Sr No. must be 0 or greater.");
+                  return;
+                }
+
+                setNewTask({ ...newTask, srNo: numValue });
+              }}
+              onBlur={() => {
+                let finalValue = newTask.srNo === "" ? 0 : newTask.srNo; // Reset empty to 0
+
+                let isSrNoDuplicate = taskFields.some(
+                  (t, i) => t.srNo === finalValue && i !== editingIndex
+                );
+
+                if (isSrNoDuplicate) {
+                  toast.error(
+                    `Sr No. ${finalValue} already exists! Choose a different one.`
+                  );
+                  finalValue = taskFields[editingIndex].srNo; // Reset to original if duplicate
+                }
+
+                setNewTask({ ...newTask, srNo: finalValue });
+              }}
             />
+
             <label>Task Description:</label>
             <input
               type="text"
@@ -460,13 +527,36 @@ const AddPlan = () => {
                 setNewTask({ ...newTask, taskLink: e.target.value })
               }
             />
-            <label>Task Days (e.g., 1,3,5):</label>
+            <label>Reminding Days (e.g., 1,3,5):</label>
             <input
               type="text"
               className="w-full p-2 border rounded-md my-2"
               value={newTask.days}
-              onChange={(e) => setNewTask({ ...newTask, days: e.target.value })}
+              onChange={(e) => {
+                let value = e.target.value;
+
+                value = value.replace(/[^0-9,]/g, "");
+
+                value = value.replace(/,,+/g, ",");
+
+                let daysArray = value
+                  .split(",")
+                  .filter((day) => day !== "" && !isNaN(day));
+
+                value = daysArray.join(",");
+
+                if (e.target.value.endsWith(",")) {
+                  value += ",";
+                }
+
+                if (value === "") {
+                  value = "0";
+                }
+
+                setNewTask({ ...newTask, days: value });
+              }}
             />
+
             <div className="mt-4 flex justify-between">
               <button
                 onClick={handleAddTask}
@@ -487,9 +577,11 @@ const AddPlan = () => {
 
       {isEmailModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-opacity-50 backdrop-blur-lg z-50">
-          <div className="p-6 rounded-2xl shadow-xl w-96 bg-gray-800 text-white">
+          <div className="p-6 rounded-2xl shadow-xl w-[200] bg-gray-800 text-white">
             <h2 className="text-2xl font-bold mb-4 text-center">
-              Add Email Template
+              {editingIndex !== null
+                ? "Edit Email Template"
+                : "Add Email Template"}
             </h2>
             <label className="text-lg">Subject</label>
             <input
@@ -507,6 +599,7 @@ const AddPlan = () => {
             <label className="text-lg">Body</label>
             <textarea
               placeholder="Enter the body"
+              rows={8}
               className="w-full p-2 border rounded-md my-2"
               value={newEmailTemplate.body}
               onChange={(e) =>
@@ -521,7 +614,9 @@ const AddPlan = () => {
                 onClick={handleAddEmailTemplate}
                 className="bg-green-500 text-white px-4 py-2 rounded-md mt-2 cursor-pointer"
               >
-                Save Email Template
+                {editingIndex !== null
+                  ? "Update Email Template"
+                  : "Save Email Template"}
               </button>
               <button
                 onClick={() => setIsEmailModalOpen(false)}
@@ -554,9 +649,9 @@ const AddPlan = () => {
               }
             />
 
-            <label>Start Task (Task No.):</label>
+            <label>Start Task Name:</label>
             <input
-              type="number"
+              type="text"
               className="w-full p-2 border rounded-md my-2"
               value={newMilestone.startTask}
               onChange={(e) =>
@@ -564,9 +659,9 @@ const AddPlan = () => {
               }
             />
 
-            <label>End Task (Task No.):</label>
+            <label>End Task Name:</label>
             <input
-              type="number"
+              type="text"
               className="w-full p-2 border rounded-md my-2"
               value={newMilestone.endTask}
               onChange={(e) =>
