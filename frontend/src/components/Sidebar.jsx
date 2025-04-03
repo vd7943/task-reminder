@@ -21,6 +21,7 @@ import { MdNavigateBefore } from "react-icons/md";
 import { LuHandCoins } from "react-icons/lu";
 import { RiUserSettingsFill } from "react-icons/ri";
 import { MdOutlineSupportAgent } from "react-icons/md";
+import { RiListSettingsLine } from "react-icons/ri";
 
 const Sidebar = () => {
   const [date, setDate] = useState(new Date());
@@ -302,6 +303,28 @@ const Sidebar = () => {
                   </div>
                   <div className="text-xl font-medium flex items-center gap-2">
                     User Settings
+                  </div>
+                </div>
+              </li>
+            </Link>
+          )}
+
+          {authUser?.role === "Admin" && (
+            <Link
+              to="/plan-setting"
+              className="pb-10"
+              onClick={() => setIsOpen(false)}
+            >
+              <li
+                className={`flex items-center space-x-3 p-2 rounded-lg cursor-pointer transition-all hover:bg-[#FFFFFF2B]
+                ${isActive("/plan-setting") ? "bg-[#FFFFFF2B]" : ""}`}
+              >
+                <div className="flex items-center justify-center gap-4">
+                  <div className="rounded-full text-amber-800">
+                    <RiListSettingsLine />
+                  </div>
+                  <div className="text-xl font-medium flex items-center gap-2">
+                    Plan Setting
                   </div>
                 </div>
               </li>
