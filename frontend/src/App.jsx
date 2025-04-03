@@ -24,6 +24,7 @@ import ValidityPage from "./components/ValidityPage";
 import PlanList from "./components/PlanList";
 import UserSettings from "./components/UserSettings";
 import ContactForm from "./components/ContactForm";
+import PlanSetting from "./components/PlanSetting";
 
 function App() {
   const [authUser, setAuthUser] = useAuth();
@@ -77,6 +78,16 @@ function App() {
           element={
             authUser && authUser?.role === "Admin" ? (
               <UserSettings />
+            ) : (
+              <Navigate to="/" />
+            )
+          }
+        />
+        <Route
+          path="/plan-setting"
+          element={
+            authUser && authUser?.role === "Admin" ? (
+              <PlanSetting />
             ) : (
               <Navigate to="/" />
             )
