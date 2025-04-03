@@ -21,7 +21,7 @@ const ContactForm = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:3000/api/contact",
+        "https://task-reminder-4sqz.onrender.com/api/contact",
         formData,
         {
           headers: { "Content-Type": "application/json" },
