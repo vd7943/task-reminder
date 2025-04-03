@@ -12,7 +12,7 @@ const Setting = () => {
     handleSubmit,
     formState: { errors },
     setValue,
-    reset,
+    watch,
   } = useForm();
 
   const [selectedFile, setSelectedFile] = useState(null);
@@ -24,6 +24,7 @@ const Setting = () => {
     if (authUser) {
       setValue("fullname", authUser.fullname);
       setValue("email", authUser.email);
+      setValue("emailTime", authUser.emailTime);
       setProfileImagePreview(authUser.profileImage?.url || "");
     }
   }, [authUser, setValue]);
@@ -51,6 +52,9 @@ const Setting = () => {
     }
     if (data.password) {
       formData.append("password", data.password);
+    }
+    if (data.emailTime) {
+      formData.append("emailTime", data.emailTime);
     }
 
     try {
@@ -86,7 +90,7 @@ const Setting = () => {
           className="flex flex-col gap-6 w-full"
         >
           <div className="relative flex justify-center items-center">
-             <img
+            <img
               src={profileImagePreview || authUser?.profileImage?.url}
               alt="profileImagePreview"
               className="w-46 h-46 object-cover rounded-full border-4 border-[#9D60EC]"
@@ -128,6 +132,13 @@ const Setting = () => {
               placeholder="Enter your password"
               className="w-full p-3 rounded-lg border-2 border-[#D0D0D0] focus:border-[#9D60EC] outline-none transition duration-300"
               {...register("password")}
+            />
+
+            <label className="text-lg">Preferred Email Time</label>
+            <input
+              type="time"
+              className="w-full p-3 rounded-lg border-2 border-[#D0D0D0] focus:border-[#9D60EC] outline-none transition duration-300"
+              {...register("emailTime")}
             />
           </div>
 
