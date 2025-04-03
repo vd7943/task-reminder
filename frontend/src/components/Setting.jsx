@@ -214,7 +214,7 @@ const Setting = () => {
                   </span>
                   <span
                     className={`text-lg font-bold ${
-                      timeLeft.includes("Plz subscribe")
+                      timeLeft?.includes("Plz subscribe")
                         ? "text-red-500"
                         : "text-green-400"
                     }`}
