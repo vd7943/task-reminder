@@ -3,22 +3,20 @@ import Remark from "../model/remark.model.js";
 import User from "../model/user.model.js";
 import EmailTemplate from "../model/emailTemplate.model.js";
 
-const getScheduleDates = (startDate, days, skipDays = [0]) => {
+const getScheduleDates = (startDate, days, srNo) => {
   let schedule = [];
   const daysArray = days
     .split(",")
     .map((day) => parseInt(day.trim(), 10))
     .filter((day) => !isNaN(day));
 
-  let currentDate = new Date(startDate);
+  let baseDate = new Date(startDate);
+  let taskStartDate = new Date(baseDate);
+  taskStartDate.setDate(baseDate.getDate() + srNo);
 
   daysArray.forEach((dayOffset) => {
-    let scheduledDate = new Date(currentDate);
-    scheduledDate.setDate(currentDate.getDate() + dayOffset);
-
-    while (skipDays.includes(scheduledDate.getDay())) {
-      scheduledDate.setDate(scheduledDate.getDate() + 1);
-    }
+    let scheduledDate = new Date(taskStartDate);
+    scheduledDate.setDate(taskStartDate.getDate() + dayOffset);
 
     schedule.push({
       date: scheduledDate.toISOString().split("T")[0],
@@ -47,10 +45,10 @@ export const addNewPlan = async (req, res) => {
         .json({ success: false, message: "Plan already exists" });
     }
 
-    let baseDate = new Date();
+    let baseDate = new Date(); // Today's date
 
     const formattedTasks = tasks.map((task, index) => {
-      const schedule = getScheduleDates(baseDate, task.days, [0]);
+      const schedule = getScheduleDates(baseDate, task.days, index);
       return {
         ...task,
         srNo: index,
@@ -65,14 +63,14 @@ export const addNewPlan = async (req, res) => {
       tasks: formattedTasks,
       milestones,
       status: "Paused",
-      optedCount: userRole === "Admin" && 0,
+      optedCount: userRole === "Admin" ? 0 : undefined,
       createdAt: new Date(),
     });
 
     await newPlan.save();
     res.status(201).json({
       success: true,
-      message: "Plan with milestones added successfully (excluding Sundays)",
+      message: "Plan with milestones added successfully.",
       plan: newPlan,
     });
   } catch (error) {
@@ -113,16 +111,11 @@ export const updateTask = async (req, res) => {
     task.days = days;
 
     let planStartDate = new Date();
-    if (plan.planStart === "tomorrow") {
-      planStartDate.setDate(planStartDate.getDate() + 1);
-    }
 
     const daysArray = days
       .split(",")
       .map(Number)
       .sort((a, b) => a - b);
-
-    const taskStartDate = getTaskStartDate(planStartDate, srNo);
 
     task.schedule = getScheduleDates(taskStartDate, daysArray);
 
