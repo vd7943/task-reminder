@@ -188,10 +188,15 @@ const AddPlan = () => {
       return;
     }
 
+    const formattedTemplate = {
+      subject: newEmailTemplate.subject,
+      body: newEmailTemplate.body,
+    };
+
     if (editingIndex !== null) {
-      updateEmail(editingIndex, { ...newEmailTemplate });
+      updateEmail(editingIndex, formattedTemplate);
     } else {
-      appendEmail({ ...newEmailTemplate });
+      appendEmail(formattedTemplate);
     }
 
     setNewEmailTemplate({ subject: "", body: "" });
