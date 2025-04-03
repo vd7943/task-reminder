@@ -208,6 +208,22 @@ const Setting = () => {
             <div className="bg-gradient-to-r from-[#9D60EC] to-[#BE1966] p-6 rounded-lg shadow-lg text-white w-full max-w-md text-center">
               <h4 className="text-lg font-semibold">📅 Subscription Details</h4>
               <div className="mt-3 flex flex-col gap-2">
+                {authUser.userType === "Custom" && (
+                  <div className="flex justify-between items-center border-b border-white pb-2">
+                    <span className="text-md font-medium">Plan Type:</span>
+                    <span className="text-lg font-bold text-blue-300">
+                      Custom Plan
+                    </span>
+                  </div>
+                )}
+                {authUser.userType === "Manage" && (
+                  <div className="flex justify-between items-center border-b border-white pb-2">
+                    <span className="text-md font-medium">Plan Type:</span>
+                    <span className="text-lg font-bold text-green-300">
+                      Manage Plan
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center border-b border-white pb-2">
                   <span className="text-md font-medium">
                     Subscription Ends In:
