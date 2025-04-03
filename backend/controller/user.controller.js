@@ -60,6 +60,7 @@ export const signup = async (req, res) => {
       userType: "Regular",
       payments: [],
       notifications: [],
+       emailTime: "00:01",
     });
     await createdUser.save();
     res.status(201).json({
@@ -74,6 +75,7 @@ export const signup = async (req, res) => {
         payments: createdUser.payments,
         createdAt: createdUser.createdAt,
         coins: createdUser.coins,
+        emailTime: createdUser.emailTime,
         notifications: createdUser.notifications,
       },
     });
@@ -118,6 +120,7 @@ export const login = async (req, res) => {
         subscriptionEndDate: user.subscriptionEndDate,
         createdAt: user.createdAt,
         coins: user.coins,
+        emailTime: user.emailTime,
       },
     });
   } catch (error) {
