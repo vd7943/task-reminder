@@ -1,6 +1,7 @@
 import Plan from "../model/plan.model.js";
 import Remark from "../model/remark.model.js";
 import User from "../model/user.model.js";
+import EmailTemplate from "../model/emailTemplate.model.js";
 
 const getScheduleDates = (startDate, days, skipDays = [0]) => {
   let schedule = [];
@@ -247,6 +248,12 @@ export const deletePlan = async (req, res) => {
   try {
     const { userId, planId } = req.params;
 
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
     const plan = await Plan.findOne({ _id: planId, userId });
 
     if (!plan) {
@@ -255,9 +262,42 @@ export const deletePlan = async (req, res) => {
         .json({ message: "Plan not found or user is unauthorized" });
     }
 
+    if (user.role === "Admin") {
+      await EmailTemplate.deleteMany({
+        planName: plan.planName,
+        createdBy: "Admin",
+      });
+    } else if (user.role === "User" && user.userType === "Custom") {
+      await EmailTemplate.deleteMany({
+        planName: plan.planName,
+        createdBy: "Custom",
+      });
+    }
+
+    const userOptedPlans = await Plan.find({ adminPlanId: planId });
+
+    const userIdsToNotify = userOptedPlans.map((optedPlan) => optedPlan.userId);
+
+    await Plan.deleteMany({ adminPlanId: planId });
+
+    await User.updateMany(
+      { _id: { $in: userIdsToNotify } },
+      {
+        $push: {
+          notifications: {
+            message: `The plan "${plan.planName}" has been removed by the Admin.`,
+            date: new Date(),
+            read: false,
+          },
+        },
+      }
+    );
+
     await Plan.findByIdAndDelete(planId);
 
-    return res.status(200).json({ message: "Plan deleted successfully" });
+    return res.status(200).json({
+      message: "Plan and associated email templates deleted successfully",
+    });
   } catch (error) {
     return res
       .status(500)
@@ -403,6 +443,7 @@ export const optForPlan = async (req, res) => {
       tasks: existingPlan.tasks,
       status: "Paused",
       createdAt: new Date(),
+      adminPlanId: planId,
     });
 
     await newPlan.save();
