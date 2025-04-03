@@ -8,7 +8,7 @@ const PlanSetting = () => {
 
   useEffect(() => {
     axios
-      .get("http://localhost:3000/limit/get-plan-limit", {
+      .get("https://task-reminder-4sqz.onrender.com/limit/get-plan-limit", {
         withCredentials: true,
       })
       .then((response) => {
@@ -23,7 +23,7 @@ const PlanSetting = () => {
     setLoading(true);
     try {
       const res = await axios.post(
-        "http://localhost:3000/limit/set-plan-limit",
+        "https://task-reminder-4sqz.onrender.com/limit/set-plan-limit",
         { planLimit },
         { withCredentials: true }
       );
