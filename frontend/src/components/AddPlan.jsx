@@ -214,8 +214,8 @@ const AddPlan = () => {
   const handleAddMilestone = () => {
     if (
       !newMilestone.milestoneName ||
-      !newMilestone.startTask ||
-      !newMilestone.endTask
+      newMilestone.startTaskSrNo === "" ||
+      newMilestone.endTaskSrNo === ""
     ) {
       toast.error("Please fill in all fields");
       return;
@@ -228,13 +228,17 @@ const AddPlan = () => {
       appendMilestone({ ...newMilestone });
     }
 
-    setNewMilestone({ milestoneName: "", startTask: "", endTask: "" });
+    setNewMilestone({ milestoneName: "", startTaskSrNo: "", endTaskSrNo: "" });
     setIsMilestoneModalOpen(false);
   };
 
   const handleEditMilestone = (index) => {
     const milestone = milestoneFields[index];
-    setNewMilestone(milestone);
+    setNewMilestone({
+      milestoneName: milestone.milestoneName,
+      startTaskSrNo: milestone.startTaskSrNo,
+      endTaskSrNo: milestone.endTaskSrNo,
+    });
     setEditingIndex(index);
     setIsMilestoneModalOpen(true);
   };
@@ -414,7 +418,8 @@ const AddPlan = () => {
                     <strong>{milestone.milestoneName}</strong>
                   </p>
                   <p>
-                    Task {milestone.startTask} → Task {milestone.endTask}
+                    Sr No. {milestone.startTaskSrNo} → Sr No.{" "}
+                    {milestone.endTaskSrNo}
                   </p>
                 </div>
                 <div className="flex gap-3">
@@ -649,24 +654,32 @@ const AddPlan = () => {
               }
             />
 
-            <label>Start Task Name:</label>
+            <label>Start Task Sr No.:</label>
             <input
-              type="text"
+              type="number"
               className="w-full p-2 border rounded-md my-2"
-              value={newMilestone.startTask}
-              onChange={(e) =>
-                setNewMilestone({ ...newMilestone, startTask: e.target.value })
-              }
+              value={newMilestone.startTaskSrNo}
+              onChange={(e) => {
+                const value = e.target.value;
+                setNewMilestone({
+                  ...newMilestone,
+                  startTaskSrNo: value === "" ? "" : Number(value),
+                });
+              }}
             />
 
-            <label>End Task Name:</label>
+            <label>End Task Sr No.:</label>
             <input
-              type="text"
+              type="number"
               className="w-full p-2 border rounded-md my-2"
-              value={newMilestone.endTask}
-              onChange={(e) =>
-                setNewMilestone({ ...newMilestone, endTask: e.target.value })
-              }
+              value={newMilestone.endTaskSrNo}
+              onChange={(e) => {
+                const value = e.target.value;
+                setNewMilestone({
+                  ...newMilestone,
+                  endTaskSrNo: value === "" ? "" : Number(value),
+                });
+              }}
             />
 
             <div className="mt-4 flex justify-between">
