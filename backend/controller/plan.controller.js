@@ -2,6 +2,7 @@ import Plan from "../model/plan.model.js";
 import Remark from "../model/remark.model.js";
 import User from "../model/user.model.js";
 import EmailTemplate from "../model/emailTemplate.model.js";
+import PlanLimit from "../model/planLimit.model.js";
 
 const getScheduleDates = (startDate, days, srNo) => {
   let schedule = [];
@@ -360,16 +361,22 @@ export const updatePlanStatus = async (req, res) => {
     if (!plan) {
       return res.status(404).json({
         success: false,
-        message:
-          "Plan not found or user is not authorized to update the status.",
+        message: "Plan not found or unauthorized.",
       });
     }
 
     if (status === "Active") {
-      await Plan.updateMany(
-        { userId, _id: { $ne: id }, status: "Active" }, // Exclude current plan
-        { $set: { status: "Paused" } }
-      );
+      const limitData = await PlanLimit.findOne();
+      const maxActivePlans = limitData ? limitData.limit : 1;
+
+      const activePlans = await Plan.find({ userId, status: "Active" });
+
+      if (activePlans.length >= maxActivePlans) {
+        return res.status(400).json({
+          success: false,
+          message: `You can only have ${maxActivePlans} active plan(s) at a time.`,
+        });
+      }
     }
 
     plan.status = status;
