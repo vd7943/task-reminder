@@ -21,63 +21,13 @@ import { MdNavigateBefore } from "react-icons/md";
 import { LuHandCoins } from "react-icons/lu";
 import { RiUserSettingsFill } from "react-icons/ri";
 import { MdOutlineSupportAgent } from "react-icons/md";
-import axios from "axios";
 
 const Sidebar = () => {
   const [date, setDate] = useState(new Date());
   const [authUser, setAuthUser] = useAuth();
   const [isOpen, setIsOpen] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(null);
-  const [subscription, setSubscription] = useState(null);
   const sidebarRef = useRef(null);
   const location = useLocation();
-
-  useEffect(() => {
-    axios
-      .get(`https://task-reminder-4sqz.onrender.com/user/${authUser?._id}`, {
-        withCredentials: true,
-      })
-      .then((response) => {
-        if (response?.data?.user?.subscriptionEndDate) {
-          setSubscription(response?.data?.user?.subscriptionEndDate);
-        }
-      })
-      .catch((error) => console.error(error));
-  }, []);
-
-  const calculateTimeLeft = (subscription) => {
-    if (!subscription) {
-      setTimeLeft("Plz subscribe !");
-      return;
-    }
-    const expiryDate = new Date(subscription);
-    expiryDate.setHours(expiryDate.getHours() - 5);
-    expiryDate.setMinutes(expiryDate.getMinutes() - 30);
-
-    const now = new Date();
-    const timeLeftMs = expiryDate - now;
-
-    if (timeLeftMs <= 0) {
-      setTimeLeft("Plz subscribe !");
-      return;
-    }
-
-    const days = Math.floor(timeLeftMs / (1000 * 60 * 60 * 24));
-    setTimeLeft(`${days} Days !`);
-  };
-
-  useEffect(() => {
-    if (subscription) {
-      calculateTimeLeft(subscription);
-    }
-  }, [subscription]);
-
-  const subscriptionEndDate = subscription ? new Date(subscription) : null;
-
-  if (subscriptionEndDate) {
-    subscriptionEndDate.setHours(subscriptionEndDate.getHours() - 5);
-    subscriptionEndDate.setMinutes(subscriptionEndDate.getMinutes() - 30);
-  }
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -421,28 +371,6 @@ const Sidebar = () => {
           </Link>
           <div className="pt-2 pl-2">{authUser && <Logout />}</div>
         </ul>
-        {authUser.role === "User" && (
-          <div className="mt-8 lg:mt-4">
-            <div className="flex flex-row space-x-[3px] pl-2 text-[13px] font-semibold">
-              <h4>Subscription Ends in:</h4>
-              <span className="text-red-500">
-                {authUser.userType === "Regular" ? "Plz subscribe!" : timeLeft}
-              </span>
-            </div>
-          </div>
-        )}
-        {authUser.role === "User" && (
-          <div className="mt-8 lg:mt-4">
-            <div className="flex flex-row space-x-[3px] pl-2 text-[13px] font-semibold">
-              <h4>Subscription End Date:</h4>
-              <span className="text-red-500">
-                {subscriptionEndDate === null
-                  ? ""
-                  : new Date(subscriptionEndDate).toDateString()}
-              </span>
-            </div>
-          </div>
-        )}
 
         <div className="mt-8 lg:mt-4">
           <div className="flex items-center space-x-2 pl-2 text-lg font-semibold">
