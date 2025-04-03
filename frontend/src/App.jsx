@@ -193,8 +193,7 @@ function App() {
           path="/pre-built-plans"
           element={
             authUser?.userType === "Custom" ||
-            authUser?.userType === "Manage" ||
-            authUser?.role === "Admin" ? (
+            authUser?.userType === "Manage" ? (
               <PreBuiltPlanList />
             ) : (
               <Navigate to="/subscription-plan" />
