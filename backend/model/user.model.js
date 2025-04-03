@@ -48,6 +48,7 @@ const userSchema = mongoose.Schema({
   ],
   isDeactivated: { type: Boolean, default: false },
   previousUserType: { type: String, default: "Regular" },
+  emailTime: { type: String, default: "08:00" },
   createdAt: {
     type: Date,
     default: () => {
