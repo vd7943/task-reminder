@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthProvider";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { CiWarning } from "react-icons/ci";
 
 const PlanList = () => {
   const [plans, setPlans] = useState([]);
@@ -42,12 +41,14 @@ const PlanList = () => {
   const handleTogglePlanStatus = async (planId, status) => {
     try {
       const newStatus = status === "Active" ? "Paused" : "Active";
-      await axios.put(
+      const response = await axios.put(
         `https://task-reminder-4sqz.onrender.com/plan/update-plan-status/${planId}/${authUser._id}`,
-        {
-          status: newStatus,
-        }
+        { status: newStatus }
       );
+
+      if (!response.data.success) {
+        throw new Error(response.data.message);
+      }
       setPlans((prevPlans) =>
         prevPlans.map((plan) =>
           plan._id === planId ? { ...plan, status: newStatus } : plan
@@ -58,7 +59,7 @@ const PlanList = () => {
         window.location.reload();
       }, 500);
     } catch (error) {
-      toast.error("Failed to update status");
+      toast.error(error.response?.data?.message || "Failed to update status");
     }
   };
 
