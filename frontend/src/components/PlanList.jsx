@@ -16,6 +16,10 @@ const PlanList = () => {
   const [confirmPlanName, setConfirmPlanName] = useState("");
 
   useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  useEffect(() => {
     axios
       .get(`https://task-reminder-4sqz.onrender.com/plan/get-user-plan/${authUser._id}`, {
         withCredentials: true,
@@ -124,7 +128,8 @@ const PlanList = () => {
                   </th>
                 )}
 
-                {authUser.userType === "Custom" && (
+                {(authUser.userType === "Custom" ||
+                  authUser.userType === "Manage") && (
                   <>
                     <th className="p-4 text-left text-lg font-semibold">
                       Status
@@ -134,9 +139,12 @@ const PlanList = () => {
                     </th>
                   </>
                 )}
-                <th className="p-4 text-center text-lg font-semibold">
-                  Delete Plan
-                </th>
+                {(authUser.userType === "Custom" ||
+                  authUser.role === "Admin") && (
+                  <th className="p-4 text-center text-lg font-semibold">
+                    Delete Plan
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody className="text-start">
@@ -155,7 +163,8 @@ const PlanList = () => {
                     {authUser.role === "Admin" && (
                       <td className="p-4">{plan.optedCount}</td>
                     )}
-                    {authUser.userType === "Custom" && (
+                    {(authUser.userType === "Custom" ||
+                      authUser.userType === "Manage") && (
                       <>
                         <td className="p-4">{plan.status}</td>
                         <td className="p-4 text-center">
@@ -174,25 +183,28 @@ const PlanList = () => {
                         </td>
                       </>
                     )}
-                    <td className="p-4 text-center">
-                      <button
-                        onClick={() =>
-                          handleDeleteClick(
-                            plan._id,
-                            plan.planName,
-                            plan.optedCount
-                          )
-                        }
-                        className="px-4 py-2 cursor-pointer rounded-lg bg-red-500 text-white"
-                      >
-                        Delete
-                      </button>
-                    </td>
+                    {(authUser.userType === "Custom" ||
+                      authUser.role === "Admin") && (
+                      <td className="p-4 text-center">
+                        <button
+                          onClick={() =>
+                            handleDeleteClick(
+                              plan._id,
+                              plan.planName,
+                              plan.optedCount
+                            )
+                          }
+                          className="px-4 py-2 cursor-pointer rounded-lg bg-red-500 text-white"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="4" className="text-center p-4">
+                  <td colSpan="5" className="text-center p-4">
                     No Plan found.
                   </td>
                 </tr>
