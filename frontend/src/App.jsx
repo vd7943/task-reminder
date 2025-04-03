@@ -23,6 +23,7 @@ import PlanDetails from "./components/PlanDetails";
 import ValidityPage from "./components/ValidityPage";
 import PlanList from "./components/PlanList";
 import UserSettings from "./components/UserSettings";
+import ContactForm from "./components/ContactForm";
 
 function App() {
   const [authUser, setAuthUser] = useAuth();
@@ -211,6 +212,10 @@ function App() {
               <Navigate to="/" />
             )
           }
+        />
+        <Route
+          path="/contact-us"
+          element={authUser ? <ContactForm /> : <Navigate to="/" />}
         />
       </Routes>
 
