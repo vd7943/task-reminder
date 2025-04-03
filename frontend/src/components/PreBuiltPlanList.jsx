@@ -18,14 +18,12 @@ const PreBuiltPlanList = () => {
         const role = authUser.userType === "Manage" ? "Admin" : authUser.role;
         const url = `https://task-reminder-4sqz.onrender.com/plan/get-plan/${role}/${authUser.userType}`;
 
-        // Fetch all plans
         const planResponse = await axios.get(url, { withCredentials: true });
         const allPlans = planResponse.data.plans;
         setPlans(allPlans);
         setFilteredPlans(allPlans);
 
         if (authUser.userType === "Manage") {
-          // Fetch user's opted plans
           const userPlanResponse = await axios.get(
             `https://task-reminder-4sqz.onrender.com/plan/get-user-plan/${authUser._id}`,
             { withCredentials: true }
@@ -103,16 +101,10 @@ const PreBuiltPlanList = () => {
                 <th className="p-4 text-left text-lg font-semibold">
                   Task Count
                 </th>
-                <th className="p-4 text-left text-lg font-semibold">
-                  Plan Start
-                </th>
-                <th className="p-4 text-left text-lg font-semibold">Status</th>
 
-                {authUser.userType === "Manage" && (
-                  <th className="p-4 text-center text-lg font-semibold">
-                    Opt Plan
-                  </th>
-                )}
+                <th className="p-4 text-center text-lg font-semibold">
+                  Opt Plan
+                </th>
               </tr>
             </thead>
             <tbody className="text-start">
@@ -128,30 +120,26 @@ const PreBuiltPlanList = () => {
                       </Link>
                     </td>
                     <td className="p-4">{plan.tasks.length}</td>
-                    <td className="p-4">{plan.planStart}</td>
-                    <td className="p-4">{plan.status}</td>
 
-                    {authUser.userType === "Manage" && (
-                      <td className="p-4 text-center">
-                        <button
-                          onClick={() => handleOptPlan(plan._id)}
-                          className={`px-4 py-2 rounded-lg text-white cursor-pointer ${
-                            optedPlanNames.has(plan.planName)
-                              ? "bg-blue-600"
-                              : "bg-green-500"
-                          }`}
-                        >
-                          {optedPlanNames.has(plan.planName)
-                            ? "Opted"
-                            : "Opt Plan"}
-                        </button>
-                      </td>
-                    )}
+                    <td className="p-4 text-center">
+                      <button
+                        onClick={() => handleOptPlan(plan._id)}
+                        className={`px-4 py-2 rounded-lg text-white cursor-pointer ${
+                          optedPlanNames.has(plan.planName)
+                            ? "bg-blue-600"
+                            : "bg-green-500"
+                        }`}
+                      >
+                        {optedPlanNames.has(plan.planName)
+                          ? "Opted"
+                          : "Opt Plan"}
+                      </button>
+                    </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="4" className="text-center p-4">
+                  <td colSpan="3" className="text-center p-4">
                     No Plan found.
                   </td>
                 </tr>
