@@ -17,8 +17,8 @@ const TaskSchema = new mongoose.Schema({
 
 const MilestoneSchema = new mongoose.Schema({
   milestoneName: { type: String, required: true },
-  startTask: { type: String, required: true },
-  endTask: { type: String, required: true },
+  startTaskSrNo: { type: Number, required: true },
+  endTaskSrNo: { type: Number, required: true },
 });
 
 const planSchema = new mongoose.Schema({
@@ -42,6 +42,11 @@ const planSchema = new mongoose.Schema({
   milestones: [MilestoneSchema],
   status: { type: String, enum: ["Active", "Paused"], default: "Paused" },
   optedCount: { type: Number, default: 0 },
+  adminPlanId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Plan",
+    default: null,
+  },
   createdAt: { type: Date, default: Date.now },
 });
 
