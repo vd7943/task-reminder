@@ -20,6 +20,7 @@ import planRoute from "./route/plan.route.js";
 import appreciationRoute from "./route/appreciation.route.js";
 import emailTemplateRoute from "./route/emailTemplate.route.js";
 import coinRuleRoute from "./route/coinRule.route.js";
+import contactRoute from "./route/contact.route.js";
 import cookieParser from "cookie-parser";
 import { checkRemarkDelaysCron } from "./automation/checkRemarkDelaysCron.js";
 
@@ -87,6 +88,7 @@ app.use("/plan", planRoute);
 app.use("/api/user", appreciationRoute);
 app.use("/email", emailTemplateRoute);
 app.use("/coins", coinRuleRoute);
+app.use("/api", contactRoute);
 
 reminderNotificationCron();
 planNotificationCron();
