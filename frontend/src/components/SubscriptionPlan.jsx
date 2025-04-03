@@ -17,11 +17,6 @@ const SubscriptionPlan = () => {
     ? new Date(authUser.subscriptionEndDate)
     : null;
 
-  if (subscriptionEndDate) {
-    subscriptionEndDate.setHours(subscriptionEndDate.getHours() - 5);
-    subscriptionEndDate.setMinutes(subscriptionEndDate.getMinutes() - 30);
-  }
-
   useEffect(() => {
     const now = new Date();
 
@@ -133,12 +128,6 @@ const SubscriptionPlan = () => {
       <p className="text-xl mt-4">
         We offer great <span className="text-[#9D60EC]">price</span> plans for
         the Website
-      </p>
-      <p className="mt-4 text-gray-400">
-        Subscription End Date:{" "}
-        {subscriptionEndDate === null
-          ? ""
-          : new Date(subscriptionEndDate).toDateString()}
       </p>
       <div className="mt-4 flex items-center gap-3 rounded-full px-2 py-1 shadow-md">
         <button
