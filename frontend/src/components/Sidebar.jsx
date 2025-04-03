@@ -20,6 +20,7 @@ import { MdNavigateNext } from "react-icons/md";
 import { MdNavigateBefore } from "react-icons/md";
 import { LuHandCoins } from "react-icons/lu";
 import { RiUserSettingsFill } from "react-icons/ri";
+import { MdOutlineSupportAgent } from "react-icons/md";
 import axios from "axios";
 
 const Sidebar = () => {
@@ -33,7 +34,7 @@ const Sidebar = () => {
 
   useEffect(() => {
     axios
-      .get(`https://task-reminder-4sqz.onrender.com/user/${authUser._id}`, {
+      .get(`https://task-reminder-4sqz.onrender.com/user/${authUser?._id}`, {
         withCredentials: true,
       })
       .then((response) => {
@@ -219,7 +220,7 @@ const Sidebar = () => {
               </li>
             </Link>
           )}
-         {(authUser?.userType === "Custom" ||
+          {(authUser?.userType === "Custom" ||
             authUser?.userType === "Manage") && (
             <Link
               to="/pre-built-plans"
@@ -373,6 +374,27 @@ const Sidebar = () => {
                   </div>
                   <div className="text-xl font-medium flex items-center gap-2">
                     Coin Settings
+                  </div>
+                </div>
+              </li>
+            </Link>
+          )}
+          {authUser?.role === "User" && (
+            <Link
+              to="/contact-us"
+              className="pb-10"
+              onClick={() => setIsOpen(false)}
+            >
+              <li
+                className={`flex items-center space-x-3 p-2 rounded-lg cursor-pointer transition-all hover:bg-[#FFFFFF2B]
+                ${isActive("/contact-us") ? "bg-[#FFFFFF2B]" : ""}`}
+              >
+                <div className="flex items-center justify-center gap-4">
+                  <div className="rounded-full text-red-400">
+                    <MdOutlineSupportAgent />
+                  </div>
+                  <div className="text-xl font-medium flex items-center gap-2">
+                    Contact us
                   </div>
                 </div>
               </li>
