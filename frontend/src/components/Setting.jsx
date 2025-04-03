@@ -134,12 +134,17 @@ const Setting = () => {
               {...register("password")}
             />
 
-            <label className="text-lg">Preferred Email Time</label>
-            <input
-              type="time"
-              className="w-full p-3 rounded-lg border-2 border-[#D0D0D0] focus:border-[#9D60EC] outline-none transition duration-300"
-              {...register("emailTime")}
-            />
+           {(authUser.userType === "Custom" ||
+              authUser.userType === "Manage") && (
+              <>
+                <label className="text-lg">Preferred Email Time</label>
+                <input
+                  type="time"
+                  className="w-full p-3 rounded-lg border-2 border-[#D0D0D0] focus:border-[#9D60EC] outline-none transition duration-300"
+                  {...register("emailTime")}
+                />
+              </>
+            )}
           </div>
 
           <div className="pt-6 flex justify-center">
