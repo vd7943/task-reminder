@@ -219,7 +219,8 @@ const Sidebar = () => {
               </li>
             </Link>
           )}
-          {authUser?.userType === "Manage" && (
+         {(authUser?.userType === "Custom" ||
+            authUser?.userType === "Manage") && (
             <Link
               to="/pre-built-plans"
               className="pb-10"
