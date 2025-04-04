@@ -256,9 +256,8 @@ const AddPlan = () => {
       return;
     }
 
-    const formattedTasks = taskFields.map((task, index) => ({
+    const formattedTasks = taskFields.map((task) => ({
       ...task,
-      srNo: index,
     }));
 
     try {
