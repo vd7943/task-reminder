@@ -15,7 +15,7 @@ const PreBuiltPlanList = () => {
   useEffect(() => {
     const fetchPlans = async () => {
       try {
-        const url = "https://task-reminder-4sqz.onrender.com/plan/get-plan";
+        const url = "https://task-reminder-4sqz.onrender.com/plan/get-admin-plan";
 
         const planResponse = await axios.get(url, { withCredentials: true });
         const allPlans = planResponse.data.plans;
