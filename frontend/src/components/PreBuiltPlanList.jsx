@@ -15,26 +15,23 @@ const PreBuiltPlanList = () => {
   useEffect(() => {
     const fetchPlans = async () => {
       try {
-        const role = authUser.userType === "Manage" ? "Admin" : authUser.role;
-        const url = `https://task-reminder-4sqz.onrender.com/plan/get-plan/${role}/${authUser.userType}`;
+        const url = "https://task-reminder-4sqz.onrender.com/plan/get-plan";
 
         const planResponse = await axios.get(url, { withCredentials: true });
         const allPlans = planResponse.data.plans;
         setPlans(allPlans);
         setFilteredPlans(allPlans);
 
-        if (authUser.userType === "Manage") {
-          const userPlanResponse = await axios.get(
-            `https://task-reminder-4sqz.onrender.com/plan/get-user-plan/${authUser._id}`,
-            { withCredentials: true }
-          );
+        const userPlanResponse = await axios.get(
+          `https://task-reminder-4sqz.onrender.com/plan/get-user-plan/${authUser._id}`,
+          { withCredentials: true }
+        );
 
-          const optedNames = new Set(
-            userPlanResponse.data.plans.map((plan) => plan.planName)
-          );
+        const optedNames = new Set(
+          userPlanResponse.data.plans.map((plan) => plan.planName)
+        );
 
-          setOptedPlanNames(optedNames);
-        }
+        setOptedPlanNames(optedNames);
       } catch (error) {
         console.error("❌ Error fetching plans:", error);
       }
@@ -115,9 +112,10 @@ const PreBuiltPlanList = () => {
                     className="border-b border-gray-200 hover:bg-gray-800 transition-all duration-200"
                   >
                     <td className="p-4 cursor-pointer">
-                      <Link to={`/plan-detail/${plan._id}`}
-                         className="inline-block bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 shadow-sm border border-gray-600"
-                        >
+                      <Link
+                        to={`/plan-detail/${plan._id}`}
+                        className="inline-block bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 shadow-sm border border-gray-600"
+                      >
                         {plan.planName}
                       </Link>
                     </td>
