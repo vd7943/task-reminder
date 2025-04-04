@@ -16,7 +16,7 @@ const router = express.Router();
 
 router.post("/add-plan", addNewPlan);
 router.post("/opt-plan", optForPlan);
-router.get("/get-plan", getAllPlans);
+router.get("/get-admin-plan", getAllPlans);
 router.get("/get-user-plan/:id", getPlans);
 router.get("/get-today-plan/:id", getTodayPlans);
 router.get("/:id", getPlanById);
