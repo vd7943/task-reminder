@@ -7,7 +7,6 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import { FaEdit } from "react-icons/fa";
 import { useAuth } from "../context/AuthProvider";
 import { PiCoinBold } from "react-icons/pi";
-import { IoMdStar, IoMdStarOutline } from "react-icons/io";
 import { MdEdit } from "react-icons/md";
 
 const PlanDetail = () => {
@@ -15,14 +14,12 @@ const PlanDetail = () => {
   const [authUser] = useAuth();
   const [plan, setPlan] = useState(null);
   const [status, setStatus] = useState("");
-  const [planStart, setPlanStart] = useState("");
   const [tasks, setTasks] = useState([]);
   const [templates, setTemplates] = useState([]);
   const [events, setEvents] = useState([]);
   const [coinsEarned, setCoinsEarned] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
-  const [milestones, setMilestones] = useState([]);
   const [editingTemplate, setEditingTemplate] = useState(null);
   const [updatedSubject, setUpdatedSubject] = useState("");
   const [updatedBody, setUpdatedBody] = useState("");
@@ -30,7 +27,6 @@ const PlanDetail = () => {
   useEffect(() => {
     fetchPlanDetails();
     fetchCoinsEarned();
-    fetchMilestones();
   }, [id]);
 
   const fetchPlanDetails = async () => {
@@ -39,7 +35,6 @@ const PlanDetail = () => {
       const { plan } = response.data;
       setPlan(plan);
       setStatus(plan.status);
-      setPlanStart(plan.planStart);
       setTasks(plan.tasks);
       updateEvents(plan.tasks);
 
@@ -71,6 +66,41 @@ const PlanDetail = () => {
     }
   };
 
+  const getTaskStartEndDates = (schedule) => {
+    const dates = schedule
+      .map((s) => new Date(s.date))
+      .filter((date) => !isNaN(date));
+
+    if (dates.length === 0) return { startDate: "N/A", endDate: "N/A" };
+
+    const startDate = new Date(Math.min(...dates)).toDateString();
+    const endDate = new Date(Math.max(...dates)).toDateString();
+
+    return { startDate, endDate };
+  };
+
+  const getPlanStartDate = (tasks) => {
+    if (!tasks || tasks.length === 0) return "N/A";
+
+    const firstTaskDate = tasks
+      .map((task) => new Date(task.schedule?.[0]?.date))
+      .filter((date) => !isNaN(date))
+      .sort((a, b) => a - b)[0];
+
+    return firstTaskDate ? firstTaskDate.toDateString() : "N/A";
+  };
+
+  const getPlanEndDate = (tasks) => {
+    if (!tasks || tasks.length === 0) return "N/A";
+
+    const lastTaskDate = tasks
+      .map((task) => new Date(task.schedule?.[task.schedule.length - 1]?.date))
+      .filter((date) => !isNaN(date))
+      .sort((a, b) => b - a)[0];
+
+    return lastTaskDate ? lastTaskDate.toDateString() : "N/A";
+  };
+
   const fetchCoinsEarned = async () => {
     try {
       const response = await axios.get(
@@ -80,29 +110,6 @@ const PlanDetail = () => {
     } catch (error) {
       console.error("Error fetching coins earned:", error);
       toast.error("Failed to load earned coins.");
-    }
-  };
-
-  const fetchMilestones = async () => {
-    try {
-      const milestoneRes = await axios.get(
-        `https://task-reminder-4sqz.onrender.com/plan/milestones/${authUser._id}`,
-        { withCredentials: true }
-      );
-
-      const fetchedMilestones = milestoneRes.data.milestones.map(
-        (milestone) => ({
-          taskName: milestone.taskName,
-          taskDate: milestone.taskDate
-            ? new Date(milestone.taskDate).toLocaleDateString("en-CA")
-            : "N/A",
-        })
-      );
-
-      setMilestones(fetchedMilestones);
-      localStorage.setItem("milestones", JSON.stringify(fetchedMilestones));
-    } catch (error) {
-      console.error("Error fetching milestones:", error);
     }
   };
 
@@ -139,10 +146,59 @@ const PlanDetail = () => {
 
   const handleTaskChange = (e) => {
     const { name, value } = e.target;
+
+    if (name === "days") {
+      let input = value;
+
+      input = input.replace(/[^0-9,]/g, "");
+
+      input = input.replace(/,,+/g, ",");
+
+      setSelectedTask((prevTask) => ({
+        ...prevTask,
+        [name]: input,
+      }));
+      return;
+    }
+
     setSelectedTask((prevTask) => ({ ...prevTask, [name]: value }));
   };
 
   const handleSaveTask = async () => {
+    const isDuplicateSrNo = tasks.some(
+      (task) =>
+        task._id !== selectedTask._id && task.srNo === Number(selectedTask.srNo)
+    );
+    if (isDuplicateSrNo) {
+      toast.error(`Sr No. ${selectedTask.srNo} already exists!`);
+      return;
+    }
+
+    const daysInput = selectedTask.days;
+
+    if (
+      daysInput.startsWith(",") ||
+      daysInput.endsWith(",") ||
+      daysInput.includes(",,")
+    ) {
+      toast.error(
+        "Days format is invalid: avoid leading/trailing or double commas."
+      );
+      return;
+    }
+
+    const daysArray = daysInput
+      .split(",")
+      .map((d) => d.trim())
+      .filter((d) => d !== "");
+
+    const hasDuplicateDays = new Set(daysArray).size !== daysArray.length;
+
+    if (hasDuplicateDays) {
+      toast.error("Duplicate days are not allowed.");
+      return;
+    }
+
     try {
       const response = await axios.put(
         `https://task-reminder-4sqz.onrender.com/plan/update-task/${id}/${selectedTask._id}`,
@@ -203,38 +259,7 @@ const PlanDetail = () => {
     }
   };
 
-  const handleMilestoneClick = async (event) => {
-    const formattedDate = event.start.toLocaleDateString("en-CA");
-
-    try {
-      const response = await axios.post(
-        `https://task-reminder-4sqz.onrender.com/plan/milestones`,
-        {
-          userId: authUser._id,
-          taskName: event.title,
-          taskDate: formattedDate,
-          id,
-        },
-        { withCredentials: true }
-      );
-
-      if (response.data) {
-        toast.success(response.data.message);
-        const updatedMilestones = [...milestones, event.title];
-        setMilestones(updatedMilestones);
-        setTimeout(() => {
-          navigate("/");
-        }, 1000);
-      }
-    } catch (error) {
-      console.error("Error adding milestone:", error.response?.data?.message);
-      toast.error(error.response?.data?.message);
-    }
-  };
-
-  // calendar events and milestone
-
-  const CustomEvent = ({ event, handleMilestoneClick, viewType }) => {
+  const CustomEvent = ({ event, viewType }) => {
     return (
       <div
         className={`p-1 rounded-md w-full bg-opacity-90 ${
@@ -246,51 +271,35 @@ const PlanDetail = () => {
         <span className="font-semibold text-[10px] lg:text-sm text-white truncate">
           {event.title}
         </span>
-
-        <div className="flex justify-between items-center w-full">
-          <div className="flex gap-2">
-            {(authUser.userType === "Custom" ||
-              authUser.userType === "Manage") && (
-              <button
-                onClick={() => handleMilestoneClick(event)}
-                className={`p-1 rounded-md transition duration-200 cursor-pointer shadow-sm 
-                      ${
-                        milestones.some(
-                          (milestone) =>
-                            milestone.taskName === event.title &&
-                            milestone.taskDate ===
-                              event.start.toLocaleDateString("en-CA") // Matching title & date
-                        )
-                          ? "bg-yellow-500 text-white"
-                          : "border border-white text-white bg-transparent"
-                      }`}
-              >
-                {milestones.some(
-                  (milestone) =>
-                    milestone.taskName === event.title &&
-                    milestone.taskDate ===
-                      event.start.toISOString().split("T")[0]
-                ) ? (
-                  <IoMdStar size={16} />
-                ) : (
-                  <IoMdStarOutline size={16} />
-                )}
-              </button>
-            )}
-          </div>
-        </div>
       </div>
     );
   };
 
   return (
-    <div className="p-6 lg:mx-auto h-full pt-16 md:pt-4 w-full xl:w-[960px]">
+    <div className="p-6 lg:mx-auto h-full pt-16 mt-5 lg:mt-0 md:pt-4 w-full xl:w-[960px]">
       {plan ? (
         <>
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-3xl font-semibold text-gray-200">
-              {plan.planName}
-            </h2>
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+            <div>
+              <h2 className="text-3xl font-semibold text-gray-200">
+                {plan.planName}
+              </h2>
+              <div className="mt-3 text-sm text-gray-400 flex gap-4 flex-wrap">
+                <p>
+                  <span className="font-medium text-gray-300">
+                    Plan Start Date:
+                  </span>{" "}
+                  {getPlanStartDate(plan.tasks)}
+                </p>
+                <p>
+                  <span className="font-medium text-gray-300">
+                    Plan End Date:
+                  </span>{" "}
+                  {getPlanEndDate(plan.tasks)}
+                </p>
+              </div>
+            </div>
+
             {(authUser.userType === "Custom" ||
               authUser.userType === "Manage") && (
               <div className="flex items-center gap-4">
@@ -308,34 +317,78 @@ const PlanDetail = () => {
 
           <div className="bg-white/10 p-6 rounded-lg shadow-lg border border-white/10 mb-6">
             <h3 className="text-2xl font-bold text-purple-400 mb-4">Tasks</h3>
-            <div className="grid grid-cols-2 gap-6">
-              {tasks.map((task) => (
-                <div
-                  key={task._id}
-                  className="p-4 bg-white/5 rounded-lg shadow-md flex justify-between items-start"
-                >
-                  <div>
-                    <h4 className="text-xl font-semibold text-white">
-                      {task.taskName}
-                    </h4>
-                    <p className="text-gray-300">Sr No: {task.srNo}</p>
-                    <p className="text-gray-300">
-                      Description: {task.taskDescription}
-                    </p>
-                    <p className="text-gray-300">Task Link: {task.taskLink}</p>
-                    <p className="text-gray-300">Task Days: {task.days}</p>
-                  </div>
-                  {(authUser.userType === "Custom" ||
-                    authUser.role === "Admin") && (
-                    <div>
-                      <FaEdit
-                        className="text-white text-xl cursor-pointer"
-                        onClick={() => handleEditTask(task)}
-                      />
-                    </div>
-                  )}
-                </div>
-              ))}
+
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm text-gray-300 border border-white/10">
+                <thead className="bg-white/10 text-purple-200">
+                  <tr>
+                    <th className="p-3 text-left whitespace-nowrap">Sr No</th>
+                    <th className="p-3 text-left whitespace-nowrap">
+                      Task Name
+                    </th>
+                    <th className="p-3 text-left whitespace-nowrap">
+                      Description
+                    </th>
+                    <th className="p-3 text-left whitespace-nowrap">
+                      Task Link
+                    </th>
+                    <th className="p-3 text-left whitespace-nowrap">Days</th>
+                    <th className="p-3 text-left whitespace-nowrap">
+                      Start Date
+                    </th>
+                    <th className="p-3 text-left whitespace-nowrap">
+                      End Date
+                    </th>
+                    {(authUser.userType === "Custom" ||
+                      authUser.role === "Admin") && (
+                      <th className="p-3 text-left whitespace-nowrap">
+                        Action
+                      </th>
+                    )}
+                  </tr>
+                </thead>
+                <tbody>
+                  {tasks.map((task) => {
+                    const { startDate, endDate } = getTaskStartEndDates(
+                      task.schedule
+                    );
+                    return (
+                      <tr
+                        key={task._id}
+                        className="border-t border-white/10 hover:bg-white/5 transition"
+                      >
+                        <td className="p-3">{task.srNo}</td>
+                        <td className="p-3 font-semibold text-white">
+                          {task.taskName}
+                        </td>
+                        <td className="p-3">{task.taskDescription}</td>
+                        <td className="p-3 break-all">
+                          <a
+                            href={task.taskLink}
+                            className="text-blue-400 underline"
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            {task.taskLink}
+                          </a>
+                        </td>
+                        <td className="p-3">{task.days}</td>
+                        <td className="p-3">{startDate}</td>
+                        <td className="p-3">{endDate}</td>
+                        {(authUser.userType === "Custom" ||
+                          authUser.role === "Admin") && (
+                          <td className="p-3">
+                            <FaEdit
+                              className="text-white text-xl cursor-pointer hover:text-yellow-400"
+                              onClick={() => handleEditTask(task)}
+                            />
+                          </td>
+                        )}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           </div>
 
@@ -370,9 +423,10 @@ const PlanDetail = () => {
                     Description
                   </label>
                   <textarea
-                    name="description"
+                    name="taskDescription"
                     value={selectedTask.taskDescription}
                     onChange={handleTaskChange}
+                    rows={4}
                     className="w-full p-2 bg-gray-700 text-white rounded"
                   />
                 </div>
@@ -392,13 +446,7 @@ const PlanDetail = () => {
                     type="text"
                     name="days"
                     value={selectedTask.days}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      if (/^[\d,]*$/.test(value)) {
-                        // Allows only numbers (0-infinity) and commas
-                        handleTaskChange(e);
-                      }
-                    }}
+                    onChange={handleTaskChange}
                     className="w-full p-2 bg-gray-700 text-white rounded"
                   />
                 </div>
@@ -493,7 +541,6 @@ const PlanDetail = () => {
               eventContent={(eventInfo) => (
                 <CustomEvent
                   event={eventInfo.event}
-                  handleMilestoneClick={handleMilestoneClick}
                   viewType={eventInfo.view.type}
                 />
               )}
