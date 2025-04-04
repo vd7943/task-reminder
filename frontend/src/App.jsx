@@ -20,7 +20,6 @@ import CoinSetting from "./components/CoinSetting";
 import UserNotification from "./components/UserNotification";
 import RemarkList from "./components/RemarkList";
 import PlanDetails from "./components/PlanDetails";
-import ValidityPage from "./components/ValidityPage";
 import PlanList from "./components/PlanList";
 import UserSettings from "./components/UserSettings";
 import ContactForm from "./components/ContactForm";
@@ -184,17 +183,6 @@ function App() {
           }
         />
 
-        <Route
-          path="/validation"
-          element={
-            authUser?.userType === "Manage" ||
-            authUser?.userType === "Custom" ? (
-              <ValidityPage />
-            ) : (
-              <Navigate to="/" />
-            )
-          }
-        />
         <Route path="/setting" element={<Setting />} />
         <Route
           path="/add-user"
