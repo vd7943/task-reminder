@@ -156,7 +156,9 @@ const PlanList = () => {
                     className="border-b border-gray-200 hover:bg-gray-800 transition-all duration-200"
                   >
                     <td className="p-4 cursor-pointer">
-                      <Link to={`/plan-detail/${plan._id}`}>
+                      <Link to={`/plan-detail/${plan._id}`}
+                         className="inline-block bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 shadow-sm border border-gray-600"
+                        >
                         {plan.planName}
                       </Link>
                     </td>
