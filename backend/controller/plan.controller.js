@@ -46,13 +46,13 @@ export const addNewPlan = async (req, res) => {
         .json({ success: false, message: "Plan already exists" });
     }
 
-    let baseDate = new Date(); // Today's date
+    let baseDate = new Date();
 
     const formattedTasks = tasks.map((task, index) => {
-      const schedule = getScheduleDates(baseDate, task.days, index);
+      const schedule = getScheduleDates(baseDate, task.days, task.srNo);
       return {
         ...task,
-        srNo: index,
+        srNo: task.srNo,
         schedule,
       };
     });
