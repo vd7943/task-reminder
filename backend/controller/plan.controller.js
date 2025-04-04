@@ -292,16 +292,10 @@ export const updatePlanStatus = async (req, res) => {
 };
 
 export const getAllPlans = async (req, res) => {
-  const { role, userType } = req.params;
-  const { userId } = req.query;
-
   try {
     let plans;
-    if (userType === "Custom") {
-      plans = await Plan.find({ userId });
-    } else {
-      plans = await Plan.find({ userRole: role });
-    }
+
+    plans = await Plan.find({ userRole: "Admin" });
 
     res.status(200).json({ success: true, plans });
   } catch (error) {
