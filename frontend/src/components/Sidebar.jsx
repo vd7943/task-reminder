@@ -264,29 +264,6 @@ const Sidebar = () => {
             </Link>
           )}
 
-          {(authUser?.userType === "Custom" ||
-            authUser?.userType === "Manage") && (
-            <Link
-              to="/validation"
-              className="pb-10"
-              onClick={() => setIsOpen(false)}
-            >
-              <li
-                className={`flex items-center space-x-3 p-2 rounded-lg cursor-pointer transition-all hover:bg-[#FFFFFF2B]
-                ${isActive("/validation") ? "bg-[#FFFFFF2B]" : ""}`}
-              >
-                <div className="flex items-center justify-center gap-4">
-                  <div className="rounded-full text-green-400">
-                    <GrValidate />
-                  </div>
-                  <div className="text-xl font-medium flex items-center gap-2">
-                    Validation
-                  </div>
-                </div>
-              </li>
-            </Link>
-          )}
-
           {authUser?.role === "Admin" && (
             <Link
               to="/user-setting"
