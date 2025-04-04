@@ -332,11 +332,18 @@ export const optForPlan = async (req, res) => {
       });
     }
 
+    const baseDate = new Date();
+
+    const recalculatedTasks = existingPlan.tasks.map((task) => ({
+      ...task.toObject(),
+      schedule: getScheduleDates(baseDate, task.days, task.srNo),
+    }));
+
     const newPlan = new Plan({
       userId,
       userRole: "User",
       planName: existingPlan.planName,
-      tasks: existingPlan.tasks,
+      tasks: recalculatedTasks,
       status: "Paused",
       createdAt: new Date(),
       adminPlanId: planId,
