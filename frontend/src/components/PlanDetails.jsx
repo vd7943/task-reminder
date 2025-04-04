@@ -47,19 +47,26 @@ const PlanDetail = () => {
 
   const fetchTemplates = async (planName) => {
     try {
-      const response = await axios.get(
-        `https://task-reminder-4sqz.onrender.com/email/templates/${
-          authUser.userType === "Custom" ? "Custom" : "Admin"
-        }`
-      );
+      let allTemplates = [];
 
-      let templatesForPlan = response.data.templates[planName];
+      if (authUser.userType === "Custom") {
+        const [customResponse, adminResponse] = await Promise.all([
+          axios.get(`https://task-reminder-4sqz.onrender.com/email/templates/Custom`),
+          axios.get(`https://task-reminder-4sqz.onrender.com/email/templates/Admin`),
+        ]);
 
-      if (!Array.isArray(templatesForPlan)) {
-        templatesForPlan = [];
+        const customTemplates = customResponse.data.templates[planName] || [];
+        const adminTemplates = adminResponse.data.templates[planName] || [];
+
+        allTemplates = [...customTemplates, ...adminTemplates];
+      } else {
+        const response = await axios.get(
+          `https://task-reminder-4sqz.onrender.com/email/templates/Admin`
+        );
+        allTemplates = response.data.templates[planName] || [];
       }
 
-      setTemplates(templatesForPlan);
+      setTemplates(allTemplates);
     } catch (error) {
       console.error("Error fetching templates:", error);
       toast.error("Failed to load email templates.");
@@ -217,11 +224,14 @@ const PlanDetail = () => {
   };
 
   const handleEmailEdit = (template) => {
-    setEditingTemplate(template._id);
-    setUpdatedSubject(template.subject);
-    setUpdatedBody(template.body);
+    if (template.createdBy === "Custom") {
+      setEditingTemplate(template._id);
+      setUpdatedSubject(template.subject);
+      setUpdatedBody(template.body);
+    } else {
+      toast.error("You cannot edit templates created by admin.");
+    }
   };
-
   const handleEmailUpdate = async () => {
     try {
       await axios.put(
@@ -313,6 +323,22 @@ const PlanDetail = () => {
                 </select>
               </div>
             )}
+          </div>
+
+          {/* calendar */}
+
+          <div className="bg-white/10 p-6 rounded-lg shadow-lg border border-white/10 mb-6">
+            <FullCalendar
+              plugins={[dayGridPlugin]}
+              initialView="dayGridMonth"
+              events={events}
+              eventContent={(eventInfo) => (
+                <CustomEvent
+                  event={eventInfo.event}
+                  viewType={eventInfo.view.type}
+                />
+              )}
+            />
           </div>
 
           <div className="bg-white/10 p-6 rounded-lg shadow-lg border border-white/10 mb-6">
@@ -526,25 +552,6 @@ const PlanDetail = () => {
                   ))}
               </div>
             )}
-          </div>
-
-          {/* calendar */}
-
-          <div className="bg-white/10 p-6 rounded-lg shadow-lg border border-white/10 mb-6">
-            <h3 className="text-2xl font-bold text-purple-400 mb-4">
-              Task Calendar
-            </h3>
-            <FullCalendar
-              plugins={[dayGridPlugin]}
-              initialView="dayGridMonth"
-              events={events}
-              eventContent={(eventInfo) => (
-                <CustomEvent
-                  event={eventInfo.event}
-                  viewType={eventInfo.view.type}
-                />
-              )}
-            />
           </div>
 
           <div className="bg-white/10 p-6 rounded-lg shadow-lg border border-white/10">
