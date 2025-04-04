@@ -7,10 +7,8 @@ import { useAuth } from "../context/AuthProvider";
 import axios from "axios";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { BiCommentDetail } from "react-icons/bi";
+import { LuMessageSquareDiff } from "react-icons/lu";
 import { FaStar } from "react-icons/fa";
-import { IoMdStar, IoMdStarOutline } from "react-icons/io";
-import { useNavigate } from "react-router-dom";
 
 const getRandomColor = () => {
   const colors = [
@@ -46,12 +44,9 @@ const TaskCalendar = () => {
   const [hover, setHover] = useState(0);
   const [isRemarkModalOpen, setIsRemarkModalOpen] = useState(false);
   const [selectedRemarkTask, setSelectedRemarkTask] = useState(null);
-  const [milestones, setMilestones] = useState([]);
   const [selectedTasks, setSelectedTasks] = useState([]);
   const [tasksForDay, setTasksForDay] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
-
-  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -109,61 +104,6 @@ const TaskCalendar = () => {
     setIsRemarkModalOpen(true);
   };
 
-  useEffect(() => {
-    const fetchMilestones = async () => {
-      try {
-        const milestoneRes = await axios.get(
-          `https://task-reminder-4sqz.onrender.com/plan/milestones/${authUser._id}`,
-          { withCredentials: true }
-        );
-
-        const fetchedMilestones = milestoneRes.data.milestones.map(
-          (milestone) => ({
-            taskName: milestone.taskName,
-            taskDate: milestone.taskDate
-              ? new Date(milestone.taskDate).toLocaleDateString("en-CA")
-              : "N/A",
-          })
-        );
-
-        setMilestones(fetchedMilestones);
-        localStorage.setItem("milestones", JSON.stringify(fetchedMilestones));
-      } catch (error) {
-        console.error("Error fetching milestones:", error);
-      }
-    };
-
-    fetchMilestones();
-  }, [authUser._id]);
-
-  const handleMilestoneClick = async (event) => {
-    const formattedDate = event.start.toLocaleDateString("en-CA"); // 'YYYY-MM-DD'
-
-    try {
-      const response = await axios.post(
-        `https://task-reminder-4sqz.onrender.com/plan/milestones`,
-        {
-          userId: authUser._id,
-          taskName: event.title,
-          taskDate: formattedDate,
-        },
-        { withCredentials: true }
-      );
-
-      if (response.data) {
-        toast.success(response.data.message);
-        const updatedMilestones = [...milestones, event.title];
-        setMilestones(updatedMilestones);
-        setTimeout(() => {
-          navigate("/");
-        }, 2000);
-      }
-    } catch (error) {
-      console.error("Error adding milestone:", error.response?.data?.message);
-      toast.error(error.response?.data?.message);
-    }
-  };
-
   const {
     register: remarkRegister,
     handleSubmit: handleRemarkSubmit,
@@ -202,12 +142,10 @@ const TaskCalendar = () => {
     }
 
     try {
-      // ✅ Fetch today's plans BEFORE setting remarks
       const { data: todayPlans } = await axios.get(
         `https://task-reminder-4sqz.onrender.com/plan/get-today-plan/${authUser._id}`
       );
 
-      // ✅ Calculate total tasks before filtering occurs
       const totalTasksToday = todayPlans.reduce(
         (acc, plan) => acc + plan.tasks.length,
         0
@@ -275,12 +213,7 @@ const TaskCalendar = () => {
     };
   };
 
-  const CustomEvent = ({
-    event,
-    handleRemarkClick,
-    handleMilestoneClick,
-    viewType,
-  }) => {
+  const CustomEvent = ({ event, handleRemarkClick, viewType }) => {
     const eventBgColor = getRandomColor();
 
     return (
@@ -304,37 +237,9 @@ const TaskCalendar = () => {
                   authUser.userType === "Manage") && (
                   <button
                     onClick={() => handleRemarkClick(event)}
-                    className="text-white bg-gray-500 hover:bg-gray-600 p-1 rounded-md transition duration-200 cursor-pointer shadow-sm"
+                    className="flex cursor-pointer items-center gap-1 text-sm font-medium text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 px-2 py-1 rounded-md transition-all duration-300 shadow-md hover:shadow-lg"
                   >
-                    <BiCommentDetail size={14} />
-                  </button>
-                )}
-                {(authUser.userType === "Custom" ||
-                  authUser.userType === "Manage") && (
-                  <button
-                    onClick={() => handleMilestoneClick(event)}
-                    className={`p-1 rounded-md transition duration-200 cursor-pointer shadow-sm 
-                    ${
-                      milestones.some(
-                        (milestone) =>
-                          milestone.taskName === event.title &&
-                          milestone.taskDate ===
-                            event.start.toLocaleDateString("en-CA") // Matching title & date
-                      )
-                        ? "bg-yellow-500 text-white"
-                        : "border border-white text-white bg-transparent"
-                    }`}
-                  >
-                    {milestones.some(
-                      (milestone) =>
-                        milestone.taskName === event.title &&
-                        milestone.taskDate ===
-                          event.start.toISOString().split("T")[0]
-                    ) ? (
-                      <IoMdStar size={16} />
-                    ) : (
-                      <IoMdStarOutline size={16} />
-                    )}
+                    <LuMessageSquareDiff size={16} />
                   </button>
                 )}
               </div>
@@ -353,37 +258,9 @@ const TaskCalendar = () => {
                 authUser.userType === "Manage") && (
                 <button
                   onClick={() => handleRemarkClick(event)}
-                  className="text-white bg-gray-500 hover:bg-gray-600 p-1 rounded-md transition duration-200 cursor-pointer shadow-sm"
+                  className="flex cursor-pointer items-center gap-1 text-sm font-medium text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 px-2 py-1 rounded-md transition-all duration-300 shadow-md hover:shadow-lg"
                 >
-                  <BiCommentDetail size={14} />
-                </button>
-              )}
-              {(authUser.userType === "Custom" ||
-                authUser.userType === "Manage") && (
-                <button
-                  onClick={() => handleMilestoneClick(event)}
-                  className={`p-1 rounded-md transition duration-200 cursor-pointer shadow-sm 
-                  ${
-                    milestones.some(
-                      (milestone) =>
-                        milestone.taskName === event.title &&
-                        milestone.taskDate ===
-                          event.start.toLocaleDateString("en-CA")
-                    )
-                      ? "bg-yellow-500 text-white"
-                      : "border border-white text-white bg-transparent"
-                  }`}
-                >
-                  {milestones.some(
-                    (milestone) =>
-                      milestone.taskName === event.title &&
-                      milestone.taskDate ===
-                        event.start.toISOString().split("T")[0]
-                  ) ? (
-                    <IoMdStar size={16} />
-                  ) : (
-                    <IoMdStarOutline size={16} />
-                  )}
+                  <LuMessageSquareDiff size={16} />
                 </button>
               )}
             </div>
@@ -398,7 +275,7 @@ const TaskCalendar = () => {
       <div className="w-full lg:w-[950px] max-w-6xl shadow-2xl rounded-2xl bg-[#FFFFFF2B] p-2 lg:p-6">
         <FullCalendar
           plugins={[dayGridPlugin, timeGridPlugin, listPlugin]}
-          initialView="dayGridMonth"
+          initialView="listWeek"
           headerToolbar={{
             left: "prev,next today",
             center: "title",
@@ -409,7 +286,6 @@ const TaskCalendar = () => {
             <CustomEvent
               event={eventInfo.event}
               handleRemarkClick={handleRemarkClick}
-              handleMilestoneClick={handleMilestoneClick}
               viewType={eventInfo.view.type}
             />
           )}
@@ -421,6 +297,9 @@ const TaskCalendar = () => {
           contentHeight="auto"
           dayMaxEventRows={3}
           dayMaxEvents={true}
+          visibleRange={() => ({
+            start: new Date(2000, 0, 1),
+          })}
         />
       </div>
 
@@ -521,95 +400,6 @@ const TaskCalendar = () => {
           </div>
         </div>
       )}
-
-      {/* {isModalOpen && selectedTask && (
-        <div className="fixed inset-0 flex items-center justify-center bg-[#FFFFFF2B] bg-opacity-50 backdrop-blur-lg z-50">
-          <div className="p-6 rounded-2xl shadow-xl w-96 bg-gray-800 text-white relative animate-fadeInUp border border-gray-700">
-            <h2 className="text-2xl font-bold mb-4 text-center">Edit Task</h2>
-
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              <div>
-                <label className="block mb-1 text-gray-300">Task Name</label>
-                <input
-                  type="text"
-                  className="border border-gray-600 bg-gray-700 p-2 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  {...register("taskName", { required: true })}
-                  defaultValue={selectedTask?.title}
-                />
-              </div>
-
-              <div>
-                <label className="block mb-1 text-gray-300">Category</label>
-                <select
-                  className="border border-gray-600 bg-gray-700 p-2 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  {...register("category", { required: true })}
-                  defaultValue={selectedTask?.category}
-                >
-                  <option value="Meeting">Meeting</option>
-                  <option value="Gym">Gym</option>
-                  <option value="Diet">Diet</option>
-                  <option value="Medical">Medical</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block mb-1 text-gray-300">
-                  Schedule Date & Time
-                </label>
-                <input
-                  type="datetime-local"
-                  className="border border-gray-600 bg-gray-700 p-2 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  {...register("scheduleDateTime", { required: true })}
-                  defaultValue={moment(selectedTask?.start).format(
-                    "YYYY-MM-DDTHH:mm"
-                  )}
-                />
-              </div>
-
-              <div>
-                <label className="block mb-1 text-gray-300">
-                  Reminder Date & Time
-                </label>
-                <input
-                  type="datetime-local"
-                  className="border border-gray-600 bg-gray-700 p-2 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  {...register("reminderDateTime")}
-                  defaultValue={
-                    selectedTask?.reminder
-                      ? moment(selectedTask.reminder).format("YYYY-MM-DDTHH:mm")
-                      : ""
-                  }
-                />
-              </div>
-
-              <div className="flex justify-between mt-6">
-                <button
-                  type="submit"
-                  className="px-4 py-2 w-1/2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white font-semibold cursor-pointer transition-all duration-300 shadow-lg"
-                >
-                  Save
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 w-1/2 bg-red-600 hover:bg-red-700 rounded-lg text-white font-semibold cursor-pointer transition-all duration-300 shadow-lg ml-2"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-
-            <button
-              onClick={() => setIsModalOpen(false)}
-              className="absolute top-3 right-3 text-gray-400 hover:text-white transition-all cursor-pointer duration-300 text-lg"
-            >
-              ✖
-            </button>
-          </div>
-        </div>
-      )} */}
     </div>
   );
 };
