@@ -45,7 +45,6 @@ export const addRemark = async (req, res) => {
     const task = userPlan.tasks.find((t) => t.taskName === taskName);
     const scheduledTask = task.schedule.find((s) => s.date === taskDate);
 
-    // Ensure user is adding remark on or after the scheduled date
     if (todayDate < scheduledTask.date) {
       return res.status(400).json({
         success: false,
@@ -85,6 +84,11 @@ export const addRemark = async (req, res) => {
 
     await User.findByIdAndUpdate(userId, { $inc: { coins: coinsToAdd } });
 
+    const coinNotification = `🎉 You have earned ${coinsToAdd} coins for adding a remark for the task "${taskName}".`;
+    await User.findByIdAndUpdate(userId, {
+      $push: { notifications: { message: coinNotification } },
+    });
+
     const updatedUser = await User.findById(userId);
     const freeSubsCoins = rules[0]?.freeSubsCoins;
 
@@ -120,31 +124,6 @@ export const addRemark = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: "Server Error", error });
   }
-};
-
-const checkUnremarkedTasks = async (userId) => {
-  const userPlans = await Plan.find({ userId });
-
-  for (const plan of userPlans) {
-    for (const task of plan.tasks) {
-      for (const schedule of task.schedule) {
-        const scheduledDateObj = new Date(schedule.date); // Convert string to Date object
-        const fiveDaysAgo = new Date();
-        fiveDaysAgo.setDate(new Date().getDate() - 5);
-
-        if (scheduledDateObj <= fiveDaysAgo) {
-          const remarkExists = await Remark.findOne({
-            userId,
-            taskName: task.taskName,
-            taskDate: schedule.date,
-          });
-
-          if (!remarkExists) return true;
-        }
-      }
-    }
-  }
-  return false;
 };
 
 export const getPlanRemarks = async (req, res) => {
