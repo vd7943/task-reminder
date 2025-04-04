@@ -12,18 +12,21 @@ const getScheduleDates = (startDate, days, srNo) => {
     .filter((day) => !isNaN(day));
 
   let baseDate = new Date(startDate);
-  let taskStartDate = new Date(baseDate);
-  taskStartDate.setDate(baseDate.getDate() + srNo);
+  baseDate.setHours(0, 0, 0, 0);
 
-  daysArray.forEach((dayOffset) => {
-    let scheduledDate = new Date(taskStartDate);
+  let taskStartDate = new Date(baseDate);
+  taskStartDate.setDate(taskStartDate.getDate() + Number(srNo));
+
+  for (const dayOffset of daysArray) {
+    const scheduledDate = new Date(taskStartDate);
     scheduledDate.setDate(taskStartDate.getDate() + dayOffset);
 
     schedule.push({
-      date: scheduledDate.toISOString().split("T")[0],
+      date: scheduledDate.toLocaleDateString("en-CA"),
+
       time: "00:01",
     });
-  });
+  }
 
   return schedule;
 };
@@ -103,22 +106,17 @@ export const updateTask = async (req, res) => {
         .json({ success: false, message: "Task not found" });
     }
 
-    const task = plan.tasks[taskIndex];
+    const baseDate = new Date(plan.createdAt);
+    baseDate.setHours(0, 0, 0, 0);
 
+    const task = plan.tasks[taskIndex];
     task.taskName = taskName;
     task.taskDescription = taskDescription;
     task.taskLink = taskLink;
     task.srNo = srNo;
     task.days = days;
 
-    let planStartDate = new Date();
-
-    const daysArray = days
-      .split(",")
-      .map(Number)
-      .sort((a, b) => a - b);
-
-    task.schedule = getScheduleDates(taskStartDate, daysArray);
+    task.schedule = getScheduleDates(baseDate, days, srNo);
 
     await plan.save();
     res.json({
@@ -133,108 +131,6 @@ export const updateTask = async (req, res) => {
       message: "Error updating task",
       error: error.message,
     });
-  }
-};
-
-export const addMilestone = async (req, res) => {
-  const { userId, taskName, taskDate, id } = req.body;
-
-  try {
-    const user = await User.findById(userId);
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    if (user.isDeactivated) {
-      return res.status(403).json({
-        success: false,
-        message: "Your account is deactivated. Contact admin.",
-      });
-    }
-
-    const plan = await Plan.findOne({
-      "tasks.taskName": taskName,
-      status: "Active",
-      userId: userId,
-      _id: id,
-    });
-    if (!plan)
-      return res.status(404).json({
-        message:
-          "Plan is not active or user is not authorized to add milestone in this",
-      });
-
-    const task = plan.tasks.find((task) => task.taskName === taskName);
-    if (!task) return res.status(404).json({ message: "Task not found" });
-
-    const taskScheduled = task.schedule.some(
-      (schedule) => schedule.date === taskDate
-    );
-    if (!taskScheduled) {
-      return res
-        .status(400)
-        .json({ message: "Task is not scheduled on this date" });
-    }
-
-    const milestoneExists = user.milestones.some(
-      (milestone) =>
-        milestone.taskName === taskName && milestone.taskDate === taskDate
-    );
-
-    if (milestoneExists) {
-      return res.status(400).json({
-        success: false,
-        message: "Milestone is already added for this task on the given date",
-      });
-    }
-
-    user.milestones.push({
-      taskName,
-      taskDate,
-      createdAt: new Date(),
-    });
-
-    await user.save();
-    res.json({
-      message: "Milestone added successfully",
-      milestones: user.milestones,
-    });
-  } catch (error) {
-    console.error("Error adding milestone:", error);
-    res.status(500).json({ message: "Server Error", error: error.message });
-  }
-};
-
-export const getMilestones = async (req, res) => {
-  const { userId, taskName, taskDate } = req.params;
-
-  try {
-    const user = await User.findById(userId).select("milestones");
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    if (user.isDeactivated) {
-      return res.status(403).json({
-        success: false,
-        message: "Your account is deactivated. Contact admin.",
-      });
-    }
-
-    let filteredMilestones = user.milestones;
-
-    if (taskName) {
-      filteredMilestones = filteredMilestones.filter(
-        (milestone) => milestone.taskName === taskName
-      );
-    }
-
-    if (taskDate) {
-      filteredMilestones = filteredMilestones.filter(
-        (milestone) => milestone.taskDate === taskDate
-      );
-    }
-
-    res.json({ milestones: filteredMilestones });
-  } catch (error) {
-    console.error("Error fetching milestones:", error);
-    res.status(500).json({ message: "Server Error", error: error.message });
   }
 };
 
