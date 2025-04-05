@@ -333,11 +333,16 @@ export const optForPlan = async (req, res) => {
       schedule: getScheduleDates(baseDate, task.days, task.srNo),
     }));
 
+    const copiedMilestones = existingPlan.milestones.map((milestone) => ({
+      ...milestone.toObject(),
+    }));
+
     const newPlan = new Plan({
       userId,
       userRole: "User",
       planName: existingPlan.planName,
       tasks: recalculatedTasks,
+      milestones: copiedMilestones,
       status: "Paused",
       createdAt: new Date(),
       adminPlanId: planId,
@@ -412,5 +417,60 @@ export const getTodayPlans = async (req, res) => {
     res.status(200).json(todayPlans);
   } catch (error) {
     res.status(500).json({ success: false, message: "Server Error", error });
+  }
+};
+
+export const getUserMilestones = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const plans = await Plan.find({ userId });
+
+    if (!plans || plans.length === 0) {
+      return res.status(404).json({ error: "No plans found for this user." });
+    }
+
+    const remarks = await Remark.find({ userId });
+
+    const completedMilestones = [];
+
+    for (const plan of plans) {
+      for (const milestone of plan.milestones || []) {
+        const { startTaskSrNo, endTaskSrNo } = milestone;
+
+        const relevantTasks = plan.tasks.filter(
+          (task) => task.srNo >= startTaskSrNo && task.srNo <= endTaskSrNo
+        );
+
+        let milestoneCompleted = true;
+
+        for (const task of relevantTasks) {
+          const hasRemarkOnAnyDate = task.schedule.some((sched) =>
+            remarks.find(
+              (remark) =>
+                remark.taskName === task.taskName &&
+                remark.taskDate === sched.date
+            )
+          );
+
+          if (!hasRemarkOnAnyDate) {
+            milestoneCompleted = false;
+            break;
+          }
+        }
+
+        completedMilestones.push({
+          milestoneName: milestone.milestoneName,
+          startTaskSrNo,
+          endTaskSrNo,
+          completed: milestoneCompleted,
+          planName: plan.planName,
+        });
+      }
+    }
+    res.status(200).json({ milestones: completedMilestones });
+  } catch (error) {
+    console.error("Error checking milestone completion:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
