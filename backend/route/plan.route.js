@@ -10,6 +10,7 @@ import {
   updatePlanStatus,
   getCoinsEarnedForPlan,
   deletePlan,
+  getUserMilestones,
 } from "../controller/plan.controller.js";
 
 const router = express.Router();
@@ -24,5 +25,6 @@ router.get("/coins-earned/:id", getCoinsEarnedForPlan);
 router.put("/update-task/:planId/:taskId", updateTask);
 router.put("/update-plan-status/:id/:userId", updatePlanStatus);
 router.delete("/delete/:userId/:planId", deletePlan);
+router.get("/milestones/:userId", getUserMilestones);
 
 export default router;
