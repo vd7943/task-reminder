@@ -47,6 +47,7 @@ const TaskCalendar = () => {
   const [selectedTasks, setSelectedTasks] = useState([]);
   const [tasksForDay, setTasksForDay] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedPlanId, setSelectedPlanId] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -77,6 +78,7 @@ const TaskCalendar = () => {
                 end: endTime,
                 color: getRandomColor(),
                 type: "plan",
+                planId: plan._id,
               };
             })
           )
@@ -92,8 +94,11 @@ const TaskCalendar = () => {
   }, []);
 
   const handleRemarkClick = (task) => {
+    console.log(task);
     setSelectedRemarkTask(task);
     setSelectedDate(task.start);
+    setSelectedPlanId(task.extendedProps?.planId);
+
     setTasksForDay(
       events.filter(
         (e) =>
@@ -159,6 +164,7 @@ const TaskCalendar = () => {
           taskReview: data.taskReview,
           taskSummary: data.taskSummary,
           userId: authUser._id,
+          planId: selectedPlanId,
         };
 
         return await axios.post(
