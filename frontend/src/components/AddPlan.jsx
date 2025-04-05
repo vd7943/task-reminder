@@ -217,12 +217,17 @@ const AddPlan = () => {
   };
 
   const handleAddMilestone = () => {
-    if (
-      !newMilestone.milestoneName ||
-      newMilestone.startTaskSrNo === "" ||
-      newMilestone.endTaskSrNo === ""
-    ) {
+    const { milestoneName, startTaskSrNo, endTaskSrNo } = newMilestone;
+
+    if (!milestoneName || startTaskSrNo === "" || endTaskSrNo === "") {
       toast.error("Please fill in all fields");
+      return;
+    }
+
+    if (Number(endTaskSrNo) < Number(startTaskSrNo)) {
+      toast.error(
+        "End Task Sr No. must be greater than or equal to Start Task Sr No."
+      );
       return;
     }
 
