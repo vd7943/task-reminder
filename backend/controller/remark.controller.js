@@ -16,8 +16,15 @@ const calculateCoins = async (taskDuration) => {
 };
 
 export const addRemark = async (req, res) => {
-  const { taskName, taskDate, taskDuration, taskReview, taskSummary, userId } =
-    req.body;
+  const {
+    taskName,
+    taskDate,
+    taskDuration,
+    taskReview,
+    taskSummary,
+    userId,
+    planId,
+  } = req.body;
 
   const user = await User.findById(userId);
   if (!user) {
@@ -26,7 +33,11 @@ export const addRemark = async (req, res) => {
 
   try {
     const todayDate = new Date().toISOString().split("T")[0];
-    const userPlan = await Plan.findOne({ userId, "tasks.taskName": taskName });
+    const userPlan = await Plan.findOne({
+      _id: planId,
+      userId,
+      "tasks.taskName": taskName,
+    });
 
     if (!userPlan) {
       return res.status(404).json({
