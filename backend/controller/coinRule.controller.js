@@ -2,7 +2,14 @@ import CoinRule from "../model/coinRule.model.js";
 import User from "../model/user.model.js";
 
 export const addOrUpdateCoinRule = async (req, res) => {
-  const { minDuration, coins, freeSubsCoins, planRestartCoins } = req.body;
+  const {
+    minDuration,
+    coins,
+    freeSubsCoins,
+    addPastRemarkCoins,
+    startNewPlanCoins,
+    extraCoins,
+  } = req.body;
 
   try {
     let existingRule = await CoinRule.findOne({ minDuration });
@@ -11,13 +18,17 @@ export const addOrUpdateCoinRule = async (req, res) => {
       const freeSubsCoinsChanged =
         existingRule.freeSubsCoins !== freeSubsCoins &&
         freeSubsCoins !== undefined;
-      const planRestartCoinsChanged =
-        existingRule.planRestartCoins !== planRestartCoins &&
-        planRestartCoins !== undefined;
+
+      const pastRemarkCoinsChanged =
+        existingRule.addPastRemarkCoins !== addPastRemarkCoins &&
+        addPastRemarkCoins !== undefined;
 
       existingRule.coins = coins;
       existingRule.freeSubsCoins = freeSubsCoins;
-      existingRule.planRestartCoins = planRestartCoins;
+      existingRule.planRestartCoins = addPastRemarkCoins;
+      existingRule.startNewPlanCoins = startNewPlanCoins;
+      existingRule.extraCoins = extraCoins;
+
       await existingRule.save();
 
       const allUsers = await User.find({
@@ -45,7 +56,9 @@ export const addOrUpdateCoinRule = async (req, res) => {
       minDuration,
       coins,
       freeSubsCoins,
-      planRestartCoins,
+      addPastRemarkCoins,
+      startNewPlanCoins,
+      extraCoins,
     });
     await newRule.save();
 
