@@ -3,6 +3,7 @@ import Remark from "../model/remark.model.js";
 import User from "../model/user.model.js";
 import EmailTemplate from "../model/emailTemplate.model.js";
 import PlanLimit from "../model/planLimit.model.js";
+import CoinRule from "../model/coinRule.model.js";
 
 const getScheduleDates = (startDate, days, srNo) => {
   let schedule = [];
@@ -273,6 +274,20 @@ export const updatePlanStatus = async (req, res) => {
           message: `You can only have ${maxActivePlans} active plan(s) at a time.`,
         });
       }
+
+      const coinRule = await CoinRule.findOne();
+      if (coinRule && coinRule.startNewPlanCoins) {
+        const coinsToAdd = coinRule.startNewPlanCoins;
+
+        await User.findByIdAndUpdate(userId, {
+          $inc: { coins: coinsToAdd },
+          $push: {
+            notifications: {
+              message: `🎉 You have earned ${coinsToAdd} coins for starting a new plan.`,
+            },
+          },
+        });
+      }
     }
 
     plan.status = status;
@@ -285,9 +300,11 @@ export const updatePlanStatus = async (req, res) => {
     });
   } catch (error) {
     console.error("Error updating plan status:", error);
-    res
-      .status(500)
-      .json({ success: false, message: "Server error", error: error.message });
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
   }
 };
 
