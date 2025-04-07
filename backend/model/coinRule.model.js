@@ -4,7 +4,9 @@ const coinRuleSchema = new mongoose.Schema({
   minDuration: { type: Number, required: true },
   coins: { type: Number, required: true },
   freeSubsCoins: { type: Number, required: false },
-  planRestartCoins: { type: Number, required: false },
+  addPastRemarkCoins: { type: Number, required: true },
+  startNewPlanCoins: { type: Number, required: true },
+  extraCoins: { type: Number, required: true },
 });
 
 const CoinRule = mongoose.model("CoinRule", coinRuleSchema);
