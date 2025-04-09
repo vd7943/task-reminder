@@ -268,9 +268,13 @@ export const githubCallback = (req, res) => {
   }
 
   const token = generateToken(req.user._id);
+  
+  res.cookie("userToken", token, {
+  httpOnly: true,
+  secure: true,
+  sameSite: "None", 
+});
 
-  // Set token in a secure HTTP-only cookie
-  res.cookie("userToken", token);
 
   res.redirect(`${process.env.FRONTEND_URL}/auth-success`);
 };
