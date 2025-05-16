@@ -4,6 +4,7 @@ import { useForm, useFieldArray } from "react-hook-form";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import { IoArrowUpCircleOutline } from "react-icons/io5";
 
 const AddPlan = () => {
   const [authUser, setAuthUser] = useAuth();
@@ -21,6 +22,7 @@ const AddPlan = () => {
     schedule: "",
     srNo: 0,
     days: "0,",
+    coinsEarned: 1,
   });
   const [newEmailTemplate, setNewEmailTemplate] = useState({
     subject: "",
@@ -37,6 +39,7 @@ const AddPlan = () => {
     register,
     handleSubmit,
     control,
+    setValue,
     formState: { errors },
   } = useForm();
 
@@ -106,6 +109,15 @@ const AddPlan = () => {
       return;
     }
 
+    if (newTask.taskLink) {
+      try {
+        new URL(newTask.taskLink);
+      } catch {
+        toast.error("Please enter a valid URL in Task Link.");
+        return;
+      }
+    }
+
     if (!validateDays(newTask.days)) return;
 
     let daysArray = newTask.days.split(",").map(Number);
@@ -136,7 +148,10 @@ const AddPlan = () => {
 
       setAddBelowIndex(null);
     } else {
-      appendTask(updatedTask);
+      appendTask({
+        ...updatedTask,
+        coinsEarned: updatedTask.coinsEarned ?? 1,
+      });
     }
 
     setIsTaskModalOpen(false);
@@ -146,7 +161,59 @@ const AddPlan = () => {
       taskLink: "",
       srNo: taskFields.length + 1,
       days: "0,",
+      coinsEarned: 1,
     });
+  };
+
+  const handleFileUpload = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (file.type !== "application/json" && !file.name.endsWith(".json")) {
+      toast.error("Only JSON files are allowed!");
+      event.target.value = null;
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const jsonData = JSON.parse(e.target.result);
+
+        const { planName, tasks, emailTemplates, milestones } = jsonData;
+
+        if (
+          typeof planName !== "string" ||
+          !Array.isArray(tasks) ||
+          !Array.isArray(emailTemplates) ||
+          !Array.isArray(milestones)
+        ) {
+          toast.error("JSON format is invalid or missing required fields.");
+          return;
+        }
+
+        setValue("planName", planName);
+
+        removeTask();
+        removeEmail();
+        removeMilestone();
+
+        tasks.forEach((task) => {
+          appendTask({
+            ...task,
+            coinsEarned: task.coinsEarned ?? 1,
+          });
+        });
+        emailTemplates.forEach((email) => appendEmail(email));
+        milestones.forEach((milestone) => appendMilestone(milestone));
+
+        toast.success("Data successfully loaded from JSON file!");
+      } catch (error) {
+        toast.error("Invalid JSON format");
+      }
+    };
+
+    reader.readAsText(file);
   };
 
   const handleAddTaskBelow = (index) => {
@@ -156,6 +223,7 @@ const AddPlan = () => {
       taskLink: "",
       srNo: taskFields[index].srNo + 1,
       days: "0,",
+      coinsEarned: 1,
     });
 
     setAddBelowIndex(index);
@@ -180,6 +248,14 @@ const AddPlan = () => {
 
     setEditingIndex(index);
     setIsTaskModalOpen(true);
+  };
+
+  const handleRemoveTask = (index) => {
+    removeTask(index);
+
+    for (let i = index; i < taskFields.length - 1; i++) {
+      updateTask(i, { ...taskFields[i + 1], srNo: taskFields[i + 1].srNo - 1 });
+    }
   };
 
   const handleAddEmailTemplate = () => {
@@ -301,6 +377,21 @@ const AddPlan = () => {
     <div className="flex flex-col h-full items-start pt-10 mx-auto md:pt-0 lg:ml-[10%] my-8">
       <h2 className="text-2xl lg:text-3xl">Add Plan</h2>
       <div className="flex flex-col bg-[#FFFFFF2B] items-center w-screen justify-center p-8 rounded-lg lg:w-[700px] lg:mx-auto mt-4 shadow-lg">
+        <div className="mb-4">
+          <label className="block mb-2 text-center text-lg font-semibold">
+            Upload JSON File
+          </label>
+          <div className="relative flex items-center justify-center border border-dashed border-gray-200 p-4 rounded-lg cursor-pointer hover:bg-gray-100 hover:text-gray-600 transition">
+            <IoArrowUpCircleOutline className="text-gray-400 w-6 h-6 mr-2" />
+            <input
+              type="file"
+              accept=".json"
+              onChange={handleFileUpload}
+              className="absolute inset-0 opacity-0 cursor-pointer"
+            />
+            <span className="text-gray-400">Click or drag to upload</span>
+          </div>
+        </div>
         <form
           onSubmit={handleSubmit(onSubmit)}
           className="flex flex-col gap-3 w-full"
@@ -323,7 +414,8 @@ const AddPlan = () => {
                 <strong>{task.taskName}</strong>
               </p>
               <p>
-                Sr No.: {task.srNo} | Days: {task.days}
+                Sr No.: {task.srNo} | Days: {task.days} | Coins:{" "}
+                {task.coinsEarned}
               </p>
               <div className="flex justify-between">
                 <div>
@@ -347,7 +439,7 @@ const AddPlan = () => {
                 <div>
                   <button
                     type="button"
-                    onClick={() => removeTask(index)}
+                    onClick={() => handleRemoveTask(index)}
                     className="text-red-400 cursor-pointer"
                   >
                     Remove
@@ -486,11 +578,10 @@ const AddPlan = () => {
             <input
               type="number"
               className="w-full p-2 border rounded-md my-2"
-              value={newTask.srNo === "" ? "" : newTask.srNo} // Allow empty input
+              value={newTask.srNo === "" ? "" : newTask.srNo}
               onChange={(e) => {
                 let value = e.target.value;
 
-                // Allow empty input but prevent negatives
                 if (value === "") {
                   setNewTask({ ...newTask, srNo: "" });
                   return;
@@ -506,7 +597,7 @@ const AddPlan = () => {
                 setNewTask({ ...newTask, srNo: numValue });
               }}
               onBlur={() => {
-                let finalValue = newTask.srNo === "" ? 0 : newTask.srNo; // Reset empty to 0
+                let finalValue = newTask.srNo === "" ? 0 : newTask.srNo;
 
                 let isSrNoDuplicate = taskFields.some(
                   (t, i) => t.srNo === finalValue && i !== editingIndex
@@ -516,7 +607,7 @@ const AddPlan = () => {
                   toast.error(
                     `Sr No. ${finalValue} already exists! Choose a different one.`
                   );
-                  finalValue = taskFields[editingIndex].srNo; // Reset to original if duplicate
+                  finalValue = taskFields[editingIndex].srNo;
                 }
 
                 setNewTask({ ...newTask, srNo: finalValue });
@@ -534,13 +625,14 @@ const AddPlan = () => {
             />
             <label>Task Link:</label>
             <input
-              type="text"
+              type="url"
               className="w-full p-2 border rounded-md my-2"
               value={newTask.taskLink}
               onChange={(e) =>
                 setNewTask({ ...newTask, taskLink: e.target.value })
               }
             />
+
             <label>Reminding Days (e.g., 1,3,5):</label>
             <input
               type="text"
@@ -569,6 +661,18 @@ const AddPlan = () => {
 
                 setNewTask({ ...newTask, days: value });
               }}
+            />
+            <label className="block mt-2 font-medium">
+              Coins Earned for Completing the Task of a Day
+            </label>
+            <input
+              type="number"
+              min={1}
+              value={newTask.coinsEarned}
+              onChange={(e) =>
+                setNewTask({ ...newTask, coinsEarned: Number(e.target.value) })
+              }
+              className="w-full p-2 border rounded-md"
             />
 
             <div className="mt-4 flex justify-between">
