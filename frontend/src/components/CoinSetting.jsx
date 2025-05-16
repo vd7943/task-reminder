@@ -5,8 +5,6 @@ import { PiCoinBold } from "react-icons/pi";
 
 const CoinSetting = () => {
   const [rules, setRules] = useState([]);
-  const [minDuration, setMinDuration] = useState("");
-  const [coins, setCoins] = useState("");
   const [freeSubsCoins, setFreeSubsCoins] = useState("");
   const [addPastRemarkCoins, setAddPastRemarkCoins] = useState("");
   const [startNewPlanCoins, setStartNewPlanCoins] = useState("");
@@ -23,8 +21,6 @@ const CoinSetting = () => {
       setRules(fetchedRules);
       if (fetchedRules.length > 0) {
         const rule = fetchedRules[0];
-        setMinDuration(rule.minDuration);
-        setCoins(rule.coins);
         setFreeSubsCoins(rule.freeSubsCoins || "");
         setAddPastRemarkCoins(rule.addPastRemarkCoins || "");
         setStartNewPlanCoins(rule.startNewPlanCoins || "");
@@ -36,15 +32,8 @@ const CoinSetting = () => {
   };
 
   const handleAddOrUpdate = async () => {
-    if (!minDuration || !coins) {
-      toast.error("Please fill all fields");
-      return;
-    }
-
     try {
       const res = await axios.post("https://task-reminder-4sqz.onrender.com/coins/coin-rules", {
-        minDuration: parseInt(minDuration),
-        coins: parseInt(coins),
         freeSubsCoins: parseInt(freeSubsCoins),
         addPastRemarkCoins: parseInt(addPastRemarkCoins),
         startNewPlanCoins: parseInt(startNewPlanCoins),
@@ -52,8 +41,7 @@ const CoinSetting = () => {
       });
       toast.success(res.data.message);
       fetchRules();
-      setMinDuration("");
-      setCoins("");
+
       setFreeSubsCoins("");
       setAddPastRemarkCoins("");
       setStartNewPlanCoins("");
@@ -67,26 +55,6 @@ const CoinSetting = () => {
       <h2 className="text-2xl lg:text-3xl text-center">Coin Settings</h2>
       <div className="flex flex-col bg-[#FFFFFF2B] items-center w-full justify-center p-8 rounded-lg lg:w-[700px] mx-auto mt-4 shadow-lg">
         <div className="flex flex-col gap-3 w-full">
-          <label className="block font-medium text-lg">
-            Minimum Task Duration (in minutes)
-          </label>
-          <input
-            type="number"
-            placeholder="Minimum Duration (minutes)"
-            value={minDuration}
-            onChange={(e) => setMinDuration(e.target.value)}
-            className="w-full p-2 border rounded-md outline-none"
-          />
-          <label className="block font-medium text-lg">
-            Coins Awarded for minimum duration of task:
-          </label>
-          <input
-            type="number"
-            placeholder="Coins Awarded"
-            value={coins}
-            onChange={(e) => setCoins(e.target.value)}
-            className="w-full p-2 border rounded-md outline-none"
-          />
           <label className="block font-medium text-lg">
             Coins Required for Free Subscription
           </label>
@@ -143,20 +111,6 @@ const CoinSetting = () => {
               className="border border-gray-700 p-6 rounded-lg bg-gray-800 text-white shadow-md"
             >
               <div className="space-y-3">
-                <div>
-                  <p className="text-gray-400 font-medium">
-                    Minimum Task Duration:
-                  </p>
-                  <p className="text-lg">{rule.minDuration} minutes</p>
-                </div>
-                <div>
-                  <p className="text-gray-400 font-medium">
-                    Coins Awarded for minimum duration of task:
-                  </p>
-                  <div className="flex items-center gap-2">
-                    {rule.coins} <PiCoinBold className="text-yellow-300" />
-                  </div>
-                </div>
                 <div>
                   <p className="text-gray-400 font-medium">
                     Coins Required for Free Subscription
