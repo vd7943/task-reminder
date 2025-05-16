@@ -1,8 +1,6 @@
 import mongoose from "mongoose";
 
 const coinRuleSchema = new mongoose.Schema({
-  minDuration: { type: Number, required: true },
-  coins: { type: Number, required: true },
   freeSubsCoins: { type: Number, required: false },
   addPastRemarkCoins: { type: Number, required: true },
   startNewPlanCoins: { type: Number, required: true },
