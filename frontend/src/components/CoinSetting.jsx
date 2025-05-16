@@ -60,6 +60,7 @@ const CoinSetting = () => {
           </label>
           <input
             type="number"
+            min={0}
             placeholder="Free Subscription Coins"
             value={freeSubsCoins}
             onChange={(e) => setFreeSubsCoins(e.target.value)}
@@ -70,6 +71,7 @@ const CoinSetting = () => {
           </label>
           <input
             type="number"
+            min={0}
             value={addPastRemarkCoins}
             onChange={(e) => setAddPastRemarkCoins(e.target.value)}
             className="w-full p-2 border rounded-md outline-none"
@@ -79,6 +81,7 @@ const CoinSetting = () => {
           </label>
           <input
             type="number"
+            min={0}
             value={startNewPlanCoins}
             onChange={(e) => setStartNewPlanCoins(e.target.value)}
             className="w-full p-2 border rounded-md outline-none"
@@ -88,6 +91,7 @@ const CoinSetting = () => {
           </label>
           <input
             type="number"
+            min={0}
             value={extraCoins}
             onChange={(e) => setExtraCoins(e.target.value)}
             className="w-full p-2 border rounded-md outline-none"
