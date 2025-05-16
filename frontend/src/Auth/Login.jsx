@@ -1,13 +1,13 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-
 import { FaGithub, FaGoogle } from "react-icons/fa";
 
 const Login = () => {
+  const [loading, setLoading] = useState(false);
   const {
     register,
     handleSubmit,
@@ -20,6 +20,8 @@ const Login = () => {
     const formData = new FormData();
     formData.append("email", data.email);
     formData.append("password", data.password);
+
+    setLoading(true);
 
     try {
       const res = await axios.post(
@@ -42,6 +44,8 @@ const Login = () => {
       if (error.response) {
         toast.error("Error: " + error.response.data.message);
       }
+    } finally {
+      setLoading(false);
     }
   };
   const handleGitHubLogIn = () => {
@@ -94,13 +98,13 @@ const Login = () => {
                   className="bg-[#9D60EC] text-[#151025] py-3 text-lg mb-1 w-full rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 hover:bg-[#c095f8] duration-300 cursor-pointer"
                   type="submit"
                 >
-                  Login
+                  {loading ? "Logging..." : "Login"}
                 </button>
               </div>
               <button
                 type="button"
                 onClick={handleGoogleLogIn}
-                className="bg-white mb-3 flex items-center justify-center gap-3 text-gray-600 border border-gray-300 py-3 px-8 rounded-xl shadow-md hover:shadow-lg transform hover:scale-105 duration-300 cursor-pointer"
+                className="bg-white mb-3 flex items-center justify-center gap-3 text-gray-700 border border-gray-300 py-3 px-8 rounded-xl shadow-md hover:shadow-lg transform hover:scale-105 duration-300 cursor-pointer"
               >
                 <FaGoogle size={20} className="text-[#EA4335]" />
                 Login in with Google
