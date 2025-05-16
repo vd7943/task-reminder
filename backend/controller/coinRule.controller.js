@@ -2,17 +2,11 @@ import CoinRule from "../model/coinRule.model.js";
 import User from "../model/user.model.js";
 
 export const addOrUpdateCoinRule = async (req, res) => {
-  const {
-    minDuration,
-    coins,
-    freeSubsCoins,
-    addPastRemarkCoins,
-    startNewPlanCoins,
-    extraCoins,
-  } = req.body;
+  const { freeSubsCoins, addPastRemarkCoins, startNewPlanCoins, extraCoins } =
+    req.body;
 
   try {
-    let existingRule = await CoinRule.findOne({ minDuration });
+    let existingRule = await CoinRule.findOne({ freeSubsCoins });
 
     if (existingRule) {
       const freeSubsCoinsChanged =
@@ -23,7 +17,6 @@ export const addOrUpdateCoinRule = async (req, res) => {
         existingRule.addPastRemarkCoins !== addPastRemarkCoins &&
         addPastRemarkCoins !== undefined;
 
-      existingRule.coins = coins;
       existingRule.freeSubsCoins = freeSubsCoins;
       existingRule.planRestartCoins = addPastRemarkCoins;
       existingRule.startNewPlanCoins = startNewPlanCoins;
@@ -53,8 +46,6 @@ export const addOrUpdateCoinRule = async (req, res) => {
 
     await CoinRule.deleteMany({});
     const newRule = new CoinRule({
-      minDuration,
-      coins,
       freeSubsCoins,
       addPastRemarkCoins,
       startNewPlanCoins,
