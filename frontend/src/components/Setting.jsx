@@ -17,55 +17,6 @@ const Setting = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [profileImagePreview, setProfileImagePreview] = useState("");
   const [authUser, setAuthUser] = useAuth();
-  const [timeLeft, setTimeLeft] = useState(null);
-  const [subscription, setSubscription] = useState(null);
-
-  useEffect(() => {
-    axios
-      .get(`https://task-reminder-4sqz.onrender.com/user/${authUser?._id}`, {
-        withCredentials: true,
-      })
-      .then((response) => {
-        if (response?.data?.user?.subscriptionEndDate) {
-          setSubscription(response?.data?.user?.subscriptionEndDate);
-        }
-      })
-      .catch((error) => console.error(error));
-  }, []);
-
-  const calculateTimeLeft = (subscription) => {
-    if (!subscription) {
-      setTimeLeft("Plz subscribe !");
-      return;
-    }
-    const expiryDate = new Date(subscription);
-    expiryDate.setHours(expiryDate.getHours() - 5);
-    expiryDate.setMinutes(expiryDate.getMinutes() - 30);
-
-    const now = new Date();
-    const timeLeftMs = expiryDate - now;
-
-    if (timeLeftMs <= 0) {
-      setTimeLeft("Plz subscribe !");
-      return;
-    }
-
-    const days = Math.floor(timeLeftMs / (1000 * 60 * 60 * 24));
-    setTimeLeft(`${days} Days !`);
-  };
-
-  useEffect(() => {
-    if (subscription) {
-      calculateTimeLeft(subscription);
-    }
-  }, [subscription]);
-
-  const subscriptionEndDate = subscription ? new Date(subscription) : null;
-
-  if (subscriptionEndDate) {
-    subscriptionEndDate.setHours(subscriptionEndDate.getHours() - 5);
-    subscriptionEndDate.setMinutes(subscriptionEndDate.getMinutes() - 30);
-  }
 
   useEffect(() => {
     if (authUser) {
@@ -203,58 +154,6 @@ const Setting = () => {
             </button>
           </div>
         </form>
-        {authUser.role === "User" && (
-          <div className="mt-8 lg:mt-6 w-full flex flex-col items-center">
-            <div className="bg-gradient-to-r from-[#9D60EC] to-[#BE1966] p-6 rounded-lg shadow-lg text-white w-full max-w-md text-center">
-              <h4 className="text-lg font-semibold">📅 Subscription Details</h4>
-              <div className="mt-3 flex flex-col gap-2">
-                {authUser.userType === "Custom" && (
-                  <div className="flex justify-between items-center border-b border-white pb-2">
-                    <span className="text-md font-medium">Plan Type:</span>
-                    <span className="text-lg font-bold text-blue-300">
-                      Custom Plan
-                    </span>
-                  </div>
-                )}
-                {authUser.userType === "Manage" && (
-                  <div className="flex justify-between items-center border-b border-white pb-2">
-                    <span className="text-md font-medium">Plan Type:</span>
-                    <span className="text-lg font-bold text-green-300">
-                      Manage Plan
-                    </span>
-                  </div>
-                )}
-                <div className="flex justify-between items-center border-b border-white pb-2">
-                  <span className="text-md font-medium">
-                    Subscription Ends In:
-                  </span>
-                  <span
-                    className={`text-lg font-bold ${
-                      timeLeft?.includes("Plz subscribe")
-                        ? "text-red-500"
-                        : "text-green-400"
-                    }`}
-                  >
-                    {authUser.userType === "Regular"
-                      ? "Plz Subscribe!"
-                      : timeLeft}
-                  </span>
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <span className="text-md font-medium">
-                    Subscription End Date:
-                  </span>
-                  <span className="text-lg font-bold text-yellow-300">
-                    {subscriptionEndDate
-                      ? new Date(subscriptionEndDate).toDateString()
-                      : "N/A"}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
