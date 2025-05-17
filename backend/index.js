@@ -12,7 +12,6 @@ import MongoStore from "connect-mongo";
 import paymentRoute from "./route/payment.route.js";
 import reminder from "./route/addReminder.route.js";
 import dashboardStatsRoute from "./route/adminDashboard.route.js";
-import { reminderNotificationCron } from "./automation/reminderNotificationCron.js";
 import { planNotificationCron } from "./automation/planNotificationCron.js";
 import { checkSubscriptions } from "./automation/checkSubscriptionCron.js";
 import remarkRoute from "./route/remark.route.js";
@@ -23,7 +22,6 @@ import coinRuleRoute from "./route/coinRule.route.js";
 import contactRoute from "./route/contact.route.js";
 import limitRoute from "./route/planLimit.route.js";
 import cookieParser from "cookie-parser";
-import { checkRemarkDelaysCron } from "./automation/checkRemarkDelaysCron.js";
 
 const app = express();
 config();
@@ -92,10 +90,8 @@ app.use("/coins", coinRuleRoute);
 app.use("/api", contactRoute);
 app.use("/limit", limitRoute);
 
-reminderNotificationCron();
 planNotificationCron();
 checkSubscriptions();
-checkRemarkDelaysCron();
 
 app.listen(PORT, () => {
   console.log(`server is listening on port ${PORT}`);
