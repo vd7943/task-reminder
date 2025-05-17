@@ -17,6 +17,7 @@ const TodayTasks = () => {
           { withCredentials: true }
         );
         const todayPlans = plansResponse.data
+          .filter((plan) => plan.status === "Active")
           .map((plan) => ({
             ...plan,
             tasks: plan.tasks
@@ -77,7 +78,7 @@ const TodayTasks = () => {
               className="p-6 border border-gray-500 bg-white/10 backdrop-blur-lg rounded-xl shadow-lg hover:scale-101 transition-transform"
             >
               <h3 className="text-xl font-semibold text-white mb-2">
-                📅 {task.date}
+                📅 {dayjs(task.date).format("D MMMM YYYY")}
               </h3>
               <ul>
                 <li className="p-4 bg-gray-900/50 border border-gray-400 rounded-lg mt-3 flex justify-between items-center shadow-md">
