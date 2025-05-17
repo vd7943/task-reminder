@@ -36,7 +36,7 @@ export const buySubscription = async (req, res) => {
     }
 
     const options = {
-      amount: req.body.amount * 100, // Convert to paisa
+      amount: req.body.amount * 100,
       currency: "INR",
       receipt: crypto.randomBytes(10).toString("hex"),
     };
@@ -76,23 +76,29 @@ export const verifyPayment = async (req, res) => {
         .json({ success: false, message: "User not found" });
     }
     if (user.isDeactivated) {
-      return res
-        .status(403)
-        .json({
-          success: false,
-          message: "Your account is deactivated. Contact admin.",
-        });
+      return res.status(403).json({
+        success: false,
+        message: "Your account is deactivated. Contact admin.",
+      });
     }
 
     const nowIST = new Date();
     nowIST.setHours(nowIST.getHours() + 5);
     nowIST.setMinutes(nowIST.getMinutes() + 30);
 
-    let subscriptionEndDate = new Date(nowIST);
+    let subscriptionStartDate = nowIST;
+    if (
+      user.subscriptionEndDate &&
+      new Date(user.subscriptionEndDate) > nowIST
+    ) {
+      subscriptionStartDate = new Date(user.subscriptionEndDate);
+    }
+
+    let subscriptionEndDate = new Date(subscriptionStartDate);
     if ([100, 200].includes(amount)) {
-      subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 1); // Monthly
+      subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 1);
     } else if ([700, 1400].includes(amount)) {
-      subscriptionEndDate.setFullYear(subscriptionEndDate.getFullYear() + 1); // Yearly
+      subscriptionEndDate.setFullYear(subscriptionEndDate.getFullYear() + 1);
     }
 
     let userType = "Regular";
