@@ -695,7 +695,7 @@ const AddPlan = () => {
 
       {isEmailModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-opacity-50 backdrop-blur-lg z-50">
-          <div className="p-6 rounded-2xl shadow-xl w-[200] bg-gray-800 text-white">
+          <div className="p-6 rounded-2xl shadow-xl w-fit bg-gray-800 text-white">
             <h2 className="text-2xl font-bold mb-4 text-center">
               {editingIndex !== null
                 ? "Edit Email Template"
