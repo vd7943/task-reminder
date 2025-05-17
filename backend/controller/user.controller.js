@@ -60,7 +60,7 @@ export const signup = async (req, res) => {
       userType: "Regular",
       payments: [],
       notifications: [],
-       emailTime: "00:01",
+       emailTime: "08:00",
     });
     await createdUser.save();
     res.status(201).json({
