@@ -85,6 +85,7 @@ const UserMilestone = () => {
                           {milestone.milestoneName}
                         </h3>
                       </div>
+                      <p className="mt-2 text-sm">Plan: {milestone.planName}</p>
                       <p className="mt-2 text-sm">
                         {isCompleted ? "✔️ Completed" : "❌ Not Completed"}
                       </p>
