@@ -43,6 +43,7 @@ const planSchema = new mongoose.Schema({
   milestones: [MilestoneSchema],
   status: { type: String, enum: ["Active", "Paused"], default: "Paused" },
   optedCount: { type: Number, default: 0 },
+  coinsGivenForStartingPlan: { type: Boolean, default: false },
   adminPlanId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Plan",
