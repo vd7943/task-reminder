@@ -168,7 +168,15 @@ const PlanDetail = () => {
       return;
     }
 
-    setSelectedTask((prevTask) => ({ ...prevTask, [name]: value }));
+    if (name === "coinsEarned") {
+      const numericValue = Number(value);
+      if (numericValue < 0) return;
+    }
+
+    setSelectedTask((prevTask) => ({
+      ...prevTask,
+      [name]: value,
+    }));
   };
 
   const handleSaveTask = async () => {
@@ -224,13 +232,9 @@ const PlanDetail = () => {
   };
 
   const handleEmailEdit = (template) => {
-    if (template.createdBy === "Custom") {
-      setEditingTemplate(template._id);
-      setUpdatedSubject(template.subject);
-      setUpdatedBody(template.body);
-    } else {
-      toast.error("You cannot edit templates created by admin.");
-    }
+    setEditingTemplate(template._id);
+    setUpdatedSubject(template.subject);
+    setUpdatedBody(template.body);
   };
   const handleEmailUpdate = async () => {
     try {
@@ -325,8 +329,6 @@ const PlanDetail = () => {
             )}
           </div>
 
-          {/* calendar */}
-
           <div className="bg-white/10 p-6 rounded-lg shadow-lg border border-white/10 mb-6">
             <FullCalendar
               plugins={[dayGridPlugin]}
@@ -359,6 +361,7 @@ const PlanDetail = () => {
                       Task Link
                     </th>
                     <th className="p-3 text-left whitespace-nowrap">Days</th>
+                    <th className="p-3 text-left whitespace-nowrap">Coins</th>
                     <th className="p-3 text-left whitespace-nowrap">
                       Start Date
                     </th>
@@ -366,11 +369,12 @@ const PlanDetail = () => {
                       End Date
                     </th>
                     {(authUser.userType === "Custom" ||
-                      authUser.role === "Admin") && (
-                      <th className="p-3 text-left whitespace-nowrap">
-                        Action
-                      </th>
-                    )}
+                      authUser.role === "Admin") &&
+                      plan.adminPlanId === null && (
+                        <th className="p-3 text-left whitespace-nowrap">
+                          Action
+                        </th>
+                      )}
                   </tr>
                 </thead>
                 <tbody>
@@ -399,17 +403,19 @@ const PlanDetail = () => {
                           </a>
                         </td>
                         <td className="p-3">{task.days}</td>
+                        <td className="p-3">{task.coinsEarned}</td>
                         <td className="p-3">{startDate}</td>
                         <td className="p-3">{endDate}</td>
                         {(authUser.userType === "Custom" ||
-                          authUser.role === "Admin") && (
-                          <td className="p-3">
-                            <FaEdit
-                              className="text-white text-xl cursor-pointer hover:text-yellow-400"
-                              onClick={() => handleEditTask(task)}
-                            />
-                          </td>
-                        )}
+                          authUser.role === "Admin") &&
+                          plan.adminPlanId === null && (
+                            <td className="p-3">
+                              <FaEdit
+                                className="text-white text-xl cursor-pointer hover:text-yellow-400"
+                                onClick={() => handleEditTask(task)}
+                              />
+                            </td>
+                          )}
                       </tr>
                     );
                   })}
@@ -419,8 +425,8 @@ const PlanDetail = () => {
           </div>
 
           {isModalOpen && selectedTask && (
-            <div className="fixed inset-0 flex items-center justify-center bg-[#FFFFFF2B] bg-opacity-50 backdrop-blur-lg z-50">
-              <div className="p-6 rounded-2xl shadow-xl w-96 bg-gray-800 text-white relative animate-fadeInUp border border-gray-700">
+            <div className="fixed inset-0 flex items-center overflow-y-auto justify-center bg-[#FFFFFF2B] bg-opacity-50 backdrop-blur-lg z-50">
+              <div className="p-6 rounded-2xl shadow-xl lg:mt-30 w-96 bg-gray-800 text-white relative animate-fadeInUp border border-gray-700">
                 <h3 className="text-2xl font-bold text-white mb-4">
                   Edit Task
                 </h3>
@@ -472,6 +478,19 @@ const PlanDetail = () => {
                     type="text"
                     name="days"
                     value={selectedTask.days}
+                    onChange={handleTaskChange}
+                    className="w-full p-2 bg-gray-700 text-white rounded"
+                  />
+                </div>
+                <div className="mb-3">
+                  <label className="block text-gray-400 mb-1">
+                    Coins Earned for Completing the Task of a Day
+                  </label>
+                  <input
+                    type="text"
+                    name="coinsEarned"
+                    min={0}
+                    value={selectedTask.coinsEarned}
                     onChange={handleTaskChange}
                     className="w-full p-2 bg-gray-700 text-white rounded"
                   />
@@ -538,14 +557,15 @@ const PlanDetail = () => {
                           </h4>
                           <p className="text-gray-300">{template.body}</p>
                           {(authUser.userType === "Custom" ||
-                            authUser.role === "Admin") && (
-                            <button
-                              onClick={() => handleEmailEdit(template)}
-                              className="bg-[#9D60EC] text-white py-3 px-6 rounded-lg font-semibold shadow-lg hover:bg-[#c095f8] duration-300 cursor-pointer mt-4"
-                            >
-                              <MdEdit />
-                            </button>
-                          )}
+                            authUser.role === "Admin") &&
+                            plan.adminPlanId === null && (
+                              <button
+                                onClick={() => handleEmailEdit(template)}
+                                className="bg-[#9D60EC] text-white py-3 px-6 rounded-lg font-semibold shadow-lg hover:bg-[#c095f8] duration-300 cursor-pointer mt-4"
+                              >
+                                <MdEdit />
+                              </button>
+                            )}
                         </>
                       )}
                     </div>
@@ -554,14 +574,16 @@ const PlanDetail = () => {
             )}
           </div>
 
-          <div className="bg-white/10 p-6 rounded-lg shadow-lg border border-white/10">
-            <h3 className="text-2xl font-bold text-purple-400 mb-4">
-              Coins Earned From This Plan:
-            </h3>
-            <p className="text-gray-300 text-[24px] flex items-center gap-2">
-              {coinsEarned} <PiCoinBold color="yellow" />
-            </p>
-          </div>
+          {authUser?.role === "User" && (
+            <div className="bg-white/10 p-6 rounded-lg shadow-lg border border-white/10">
+              <h3 className="text-2xl font-bold text-purple-400 mb-4">
+                Coins Earned From This Plan:
+              </h3>
+              <p className="text-gray-300 text-[24px] flex items-center gap-2">
+                {coinsEarned} <PiCoinBold color="yellow" />
+              </p>
+            </div>
+          )}
         </>
       ) : (
         <div className="flex justify-center items-center h-screen">
