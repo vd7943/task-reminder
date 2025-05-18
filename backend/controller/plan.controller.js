@@ -88,7 +88,8 @@ export const addNewPlan = async (req, res) => {
 
 export const updateTask = async (req, res) => {
   const { planId, taskId } = req.params;
-  const { taskName, taskDescription, taskLink, srNo, days } = req.body;
+  const { taskName, taskDescription, taskLink, srNo, days, coinsEarned } =
+    req.body;
 
   try {
     const plan = await Plan.findById(planId);
@@ -116,6 +117,7 @@ export const updateTask = async (req, res) => {
     task.taskLink = taskLink;
     task.srNo = srNo;
     task.days = days;
+    task.coinsEarned = coinsEarned;
 
     task.schedule = getScheduleDates(baseDate, days, srNo);
 
