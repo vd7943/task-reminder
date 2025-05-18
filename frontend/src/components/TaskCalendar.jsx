@@ -9,104 +9,177 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { LuMessageSquareDiff } from "react-icons/lu";
 import { FaStar } from "react-icons/fa";
-
-const getRandomColor = () => {
-  const colors = [
-    "#4A90E2", // Blue
-    "#B388FF", // Purple
-    "#FF8A80", // Red
-    "#66BB6A", // Green
-    "#9575CD", // Soft Violet
-    "#E57373", // Soft Red
-    "#81C784", // Light Green
-    "#F48FB1", // Pink
-    "#A1887F", // Warm Brown
-    "#FFB74D", // Orange
-    "#BA68C8", // Lavender
-    "#C2185B", // Dark Pink
-    "#7E57C2", // Deep Purple
-    "#009688", // Teal
-    "#F06292", // Bright Pink
-    "#8D6E63", // Brown
-    "#D32F2F", // Dark Red
-    "#388E3C", // Dark Green
-    "#1976D2", // Royal Blue
-    "#5C6BC0", // Indigo
-  ];
-
-  return colors[Math.floor(Math.random() * colors.length)];
-};
+import dayjs from "dayjs";
 
 const TaskCalendar = () => {
   const [events, setEvents] = useState([]);
-  const [authUser, setAuthUser] = useAuth();
-  const [rating, setRating] = useState(0);
-  const [hover, setHover] = useState(0);
+  const [authUser] = useAuth();
   const [isRemarkModalOpen, setIsRemarkModalOpen] = useState(false);
   const [selectedRemarkTask, setSelectedRemarkTask] = useState(null);
   const [selectedTasks, setSelectedTasks] = useState([]);
   const [tasksForDay, setTasksForDay] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedPlanId, setSelectedPlanId] = useState(null);
+  const [remarks, setRemarks] = useState([]);
+  const [coinRules, setCoinRules] = useState({});
+  const [isReadOnly, setIsReadOnly] = useState(false);
+  const [selectedPayTask, setSelectedPayTask] = useState(null);
+  const [calendarKey, setCalendarKey] = useState(0);
+  const [paidTasks, setPaidTasks] = useState([]);
+  const [existingRemarksForTasks, setExistingRemarksForTasks] = useState({});
+
+  const fetchData = async () => {
+    try {
+      const [planRes, remarkRes, coinRuleRes] = await Promise.all([
+        axios.get(`https://task-reminder-4sqz.onrender.com/plan/get-user-plan/${authUser._id}`, {
+          withCredentials: true,
+        }),
+        axios.get(`https://task-reminder-4sqz.onrender.com/remark/${authUser._id}`, {
+          withCredentials: true,
+        }),
+        axios.get(`https://task-reminder-4sqz.onrender.com/coins/coin-rules`),
+      ]);
+
+      const remarks = remarkRes.data?.remarks || [];
+      setRemarks(remarks);
+
+      const fetchedRules = coinRuleRes.data.rules;
+      if (fetchedRules.length > 0) {
+        const rule = fetchedRules[0];
+        setCoinRules(rule.addPastRemarkCoins || "");
+      }
+
+      const activePlans = planRes.data?.plans?.filter(
+        (plan) => plan.status === "Active"
+      );
+
+      const planEvents = activePlans.flatMap((plan) =>
+        plan.tasks.flatMap((task) =>
+          task.schedule.map((scheduleItem) => {
+            const startTime = new Date(
+              `${scheduleItem.date}T${scheduleItem.time}:00`
+            );
+            const endTime = new Date(
+              startTime.getTime() + 23.98 * 60 * 60 * 1000
+            );
+            const remarkExists = remarks.some(
+              (r) =>
+                r.taskId?.toString() === task._id?.toString() &&
+                dayjs(r.taskDate).format("YYYY-MM-DD") ===
+                  dayjs(scheduleItem.date).format("YYYY-MM-DD")
+            );
+
+            const isToday = dayjs(scheduleItem.date).isSame(dayjs(), "day");
+            const isPast = dayjs(scheduleItem.date).isBefore(dayjs(), "day");
+
+            let backgroundColor = "blue";
+
+            if (remarkExists) {
+              backgroundColor = "green";
+            } else if (isPast) {
+              backgroundColor = "red";
+            }
+
+            return {
+              id: task._id,
+              taskId: task._id,
+              title: task.taskName,
+              start: startTime,
+              end: endTime,
+              date: scheduleItem.date,
+              backgroundColor,
+              type: "plan",
+              planId: plan._id,
+            };
+          })
+        )
+      );
+
+      setEvents(planEvents);
+      setCalendarKey((prev) => prev + 1);
+    } catch (err) {
+      console.error("Error fetching data", err);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const planResponse = await axios.get(
-          `https://task-reminder-4sqz.onrender.com/plan/get-user-plan/${authUser._id}`,
-          { withCredentials: true }
-        );
-
-        const activePlans = planResponse?.data?.plans?.filter(
-          (plan) => plan.status === "Active"
-        );
-
-        const planEvents = activePlans?.flatMap((plan) =>
-          plan.tasks.flatMap((task) =>
-            task.schedule.map((scheduleItem) => {
-              const startTime = new Date(
-                `${scheduleItem.date}T${scheduleItem.time}:00`
-              );
-              const endTime = new Date(
-                startTime.getTime() + 23.98 * 60 * 60 * 1000
-              );
-
-              return {
-                id: task._id,
-                title: `${task.taskName}`,
-                start: startTime,
-                end: endTime,
-                color: getRandomColor(),
-                type: "plan",
-                planId: plan._id,
-              };
-            })
-          )
-        );
-
-        setEvents([...planEvents]);
-      } catch (error) {
-        console.error("❌ Error fetching data:", error);
-      }
-    };
-
     fetchData();
   }, []);
 
   const handleRemarkClick = (task) => {
-    console.log(task);
+    const taskDate = dayjs(task.date).startOf("day");
+    const today = dayjs().startOf("day");
+
     setSelectedRemarkTask(task);
     setSelectedDate(task.start);
-    setSelectedPlanId(task.extendedProps?.planId);
+    setSelectedPlanId(task.extendedProps.planId);
 
-    setTasksForDay(
-      events.filter(
-        (e) =>
-          new Date(e.start).toDateString() ===
-          new Date(task.start).toDateString()
-      )
+    const dayTasks = events.filter(
+      (e) =>
+        dayjs(e.start).format("YYYY-MM-DD") ===
+        dayjs(task.start).format("YYYY-MM-DD")
     );
-    setIsRemarkModalOpen(true);
+
+    const sameNameTasks = dayTasks.filter((e) => e.title === task.title);
+
+    setTasksForDay(dayTasks);
+
+    const dayRemarks = remarks.filter(
+      (r) =>
+        dayjs(r.taskDate).format("YYYY-MM-DD") ===
+        dayjs(task.date).format("YYYY-MM-DD")
+    );
+
+    const isPast = taskDate.isBefore(today);
+    const remarkedTaskIds = dayRemarks.map((r) => r.taskId?.toString());
+    const unremarkedTasks = sameNameTasks.filter(
+      (t) => !remarkedTaskIds.includes(t.id?.toString())
+    );
+
+    if (isPast) {
+      if (unremarkedTasks.length === 0) {
+        setIsReadOnly(true);
+
+        const mappedTasks = sameNameTasks.map((e) => {
+          const existingRemark = dayRemarks.find(
+            (r) => String(r.taskId) === String(e.id)
+          );
+          return {
+            id: e.id,
+            title: e.title,
+            rating: existingRemark?.taskReview || 0,
+            planId: e.extendedProps.planId,
+          };
+        });
+        setSelectedTasks(mappedTasks);
+
+        const remarksMap = {};
+        dayRemarks.forEach((r) => {
+          remarksMap[r.taskId] = r;
+        });
+        setExistingRemarksForTasks(remarksMap);
+
+        const summary =
+          dayRemarks.find((r) => r.taskName === task.title)?.taskSummary || "";
+        setValue("taskSummary", summary);
+        setIsRemarkModalOpen(true);
+      } else {
+        setSelectedPayTask(task);
+        setShowPayPopup(true);
+      }
+    } else {
+      setIsReadOnly(false);
+      const mappedTasks = sameNameTasks.map((e) => ({
+        id: e.id,
+        title: e.title,
+        rating: 0,
+        planId: e.planId,
+      }));
+      setSelectedTasks(mappedTasks);
+      setExistingRemarksForTasks({});
+      setValue("taskSummary", "");
+      setIsRemarkModalOpen(true);
+    }
   };
 
   const {
@@ -116,89 +189,80 @@ const TaskCalendar = () => {
     reset: resetRemarkForm,
   } = useForm();
 
-  useEffect(() => {
-    if (tasksForDay.length === 1) {
-      setSelectedTasks([tasksForDay[0].title]);
+  const handleTaskSelection = (task) => {
+    const exists = selectedTasks.find((t) => t.id === task.id);
+    if (exists) {
+      setSelectedTasks(selectedTasks.filter((t) => t.id !== task.id));
+    } else {
+      setSelectedTasks([
+        ...selectedTasks,
+        {
+          id: task.id,
+          title: task.title,
+          rating: 0,
+          planId: task.planId,
+        },
+      ]);
     }
-  }, [tasksForDay]);
+  };
 
-  const handleTaskSelection = (taskTitle) => {
-    setSelectedTasks((prevTasks) =>
-      prevTasks.includes(taskTitle)
-        ? prevTasks.filter((task) => task !== taskTitle)
-        : [...prevTasks, taskTitle]
+  const handleStarClick = (id, rating) => {
+    setSelectedTasks((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, rating } : t))
     );
   };
 
-  const handleStarClick = (star) => {
-    setRating(star);
-    setValue("taskReview", star);
-  };
-
   const onRemarkSubmit = async (data) => {
-    if (selectedTasks.length === 0) {
-      toast.error("Please select at least one task to give a remark.");
+    if (!selectedRemarkTask || selectedTasks.length === 0) {
+      toast.error("Please select task(s) and fill the summary.");
       return;
     }
 
-    if (!selectedRemarkTask) {
-      toast.error("Invalid task selection.");
-      return;
-    }
+    const taskDate = new Date(selectedRemarkTask.start);
+    taskDate.setHours(0, 0, 0, 0);
 
-    try {
-      const { data: todayPlans } = await axios.get(
-        `https://task-reminder-4sqz.onrender.com/plan/get-today-plan/${authUser._id}`
-      );
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-      const totalTasksToday = todayPlans.reduce(
-        (acc, plan) => acc + plan.tasks.length,
-        0
-      );
+    const isPast = taskDate < today;
 
-      const remarkPromises = selectedTasks.map(async (taskTitle) => {
+    for (const task of selectedTasks) {
+      try {
         const remarkData = {
-          taskName: taskTitle,
+          taskId: task.id,
+          taskName: task.title,
           taskDate: selectedRemarkTask.start.toLocaleDateString("en-CA"),
-          taskDuration: data.taskDuration,
-          taskReview: data.taskReview,
+          taskReview: task.rating,
           taskSummary: data.taskSummary,
           userId: authUser._id,
-          planId: selectedPlanId,
+          planId: task.planId,
+          isPaidForPastRemark: isPast,
         };
 
-        return await axios.post(
+        const res = await axios.post(
           "https://task-reminder-4sqz.onrender.com/remark/set-remark",
           remarkData,
           { headers: { "Content-Type": "application/json" } }
         );
-      });
 
-      const responses = await Promise.all(remarkPromises);
-
-      if (selectedTasks.length === totalTasksToday) {
-        const totalCoinsEarned = responses.reduce((acc, res) => {
-          return acc + (res.data.coinsEarned || 0);
-        }, 0);
-        toast.success(
-          `🎉 Congratulations! You've completed all tasks for today and earned ${totalCoinsEarned} coins!`
-        );
-      } else {
-        toast.success("Remark added successfully");
+        toast.success(res?.data?.message);
+        fetchData();
+      } catch (error) {
+        toast.error(error?.response?.data?.message);
       }
-
-      setIsRemarkModalOpen(false);
-      resetRemarkForm();
-    } catch (error) {
-      console.error("Error:", error);
-      toast.error(error.response?.data?.message);
     }
+
+    setIsRemarkModalOpen(false);
+    resetRemarkForm();
+    setSelectedTasks([]);
+    setSelectedRemarkTask(null);
+    setSelectedDate(null);
+    setSelectedPlanId(null);
   };
 
   const eventStyleGetter = (event, viewType) => {
     return {
       style: {
-        backgroundColor: event.color || "#3B82F6",
         borderRadius: "6px",
         padding: viewType === "dayGridMonth" ? "2px 6px" : "4px",
         border: "none",
@@ -206,6 +270,9 @@ const TaskCalendar = () => {
         fontWeight: "600",
         minHeight: "18px",
         whiteSpace: "nowrap",
+        backgroundColor,
+        eventBackgroundColor: backgroundColor,
+        eventBorderColor: backgroundColor,
         textOverflow: "ellipsis",
         overflow: "hidden",
         display: "flex",
@@ -220,7 +287,7 @@ const TaskCalendar = () => {
   };
 
   const CustomEvent = ({ event, handleRemarkClick, viewType }) => {
-    const eventBgColor = getRandomColor();
+    const bgColor = event.backgroundColor;
 
     return (
       <div
@@ -229,7 +296,10 @@ const TaskCalendar = () => {
             ? "shadow-md overflow-hidden truncate px-2 flex flex-col justify-between" // Month view styling
             : "shadow-lg p-2 flex items-center justify-between" // List view styling
         }`}
-        style={{ backgroundColor: eventBgColor }}
+        style={{
+          backgroundColor: bgColor,
+          color: "white",
+        }}
       >
         {viewType === "dayGridMonth" ? (
           <>
@@ -280,6 +350,7 @@ const TaskCalendar = () => {
     <div className="flex flex-col m-auto items-center justify-center w-full min-h-screen h-full lg:w-[960px] p-1 lg:p-4">
       <div className="w-full lg:w-[950px] max-w-6xl shadow-2xl rounded-2xl bg-[#FFFFFF2B] p-2 lg:p-6">
         <FullCalendar
+          key={calendarKey}
           plugins={[dayGridPlugin, timeGridPlugin, listPlugin]}
           initialView="listWeek"
           headerToolbar={{
@@ -295,6 +366,7 @@ const TaskCalendar = () => {
               viewType={eventInfo.view.type}
             />
           )}
+          eventClick={(info) => handleRemarkClick(info.event)}
           eventStyleGetter={eventStyleGetter}
           displayEventEnd={true}
           editable={true}
@@ -310,96 +382,119 @@ const TaskCalendar = () => {
       </div>
 
       {isRemarkModalOpen && selectedRemarkTask && (
-        <div className="fixed inset-0 flex items-center justify-center bg-[#FFFFFF2B] bg-opacity-50 backdrop-blur-lg z-50">
-          <div className="p-6 rounded-2xl shadow-xl w-96 bg-gray-800 text-white relative animate-fadeInUp border border-gray-700">
-            <h2 className="text-2xl font-bold mb-4 text-center">Add Remark</h2>
+        <div className="fixed inset-0 z-50 bg-[#FFFFFF2B] bg-opacity-50 backdrop-blur-lg flex items-center justify-center overflow-y-auto">
+          <div className="bg-gray-800 p-6 my-auto rounded-xl w-full max-w-2xl relative text-white">
+            <h2 className="text-2xl mb-4 text-center">Add Remark</h2>
+            <form onSubmit={handleRemarkSubmit(onRemarkSubmit)}>
+              <div className="flex flex-wrap gap-4">
+                {tasksForDay.map((task) => {
+                  const selected =
+                    selectedTasks.find((t) => t.id === task.id) || {};
+                  const isChecked = !!selectedTasks.find(
+                    (t) => t.id === task.id
+                  );
+                  const existingRemark = remarks.find(
+                    (r) =>
+                      r.taskId === task.id &&
+                      r.taskDate === dayjs(task.start).format("YYYY-MM-DD")
+                  );
 
-            <form
-              onSubmit={handleRemarkSubmit(onRemarkSubmit)}
-              className="space-y-4"
-            >
-              <div>
-                <label className="block text-lg mb-1 text-gray-300">
-                  Select Tasks
-                </label>
-                {tasksForDay.map((task) => (
-                  <div key={task.title} className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={selectedTasks.includes(task.title)}
-                      onChange={() => handleTaskSelection(task.title)}
-                      className="cursor-pointer"
-                    />
-                    <span>{task.title}</span>
-                  </div>
-                ))}
+                  return (
+                    <div
+                      key={task.id}
+                      className="w-full md:w-[48%] bg-gray-900 p-3 rounded-lg border border-gray-700 relative"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          {!isReadOnly &&
+                            (dayjs(task.start).isSame(dayjs(), "day") ||
+                              paidTasks.includes(task.id)) && (
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={() => handleTaskSelection(task)}
+                              />
+                            )}
+                          <span>{task.title}</span>
+                        </div>
+                      </div>
+
+                      {(isChecked || existingRemark) && (
+                        <>
+                          <div className="mt-2">
+                            <label className="text-sm font-semibold">
+                              Rating
+                            </label>
+                            <div className="flex gap-1 mt-1">
+                              {[1, 2, 3, 4, 5].map((star) => {
+                                const ratingToShow = isReadOnly
+                                  ? existingRemark?.rating
+                                  : selected.rating;
+                                return (
+                                  <FaStar
+                                    key={star}
+                                    size={20}
+                                    className={`${
+                                      ratingToShow >= star
+                                        ? "text-yellow-400"
+                                        : "text-gray-600"
+                                    } ${!isReadOnly ? "cursor-pointer" : ""}`}
+                                    onClick={() =>
+                                      !isReadOnly &&
+                                      handleStarClick(task.id, star)
+                                    }
+                                  />
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
 
-              <div>
-                <label className="block mb-1 text-gray-300">
-                  Task Duration (in minutes)
-                </label>
-                <input
-                  type="number"
-                  className="border border-gray-600 bg-gray-700 p-2 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  {...remarkRegister("taskDuration", { required: true })}
-                />
-              </div>
-
-              <div>
-                <label className="block mb-1 text-gray-300">Task Review</label>
-                <div className="flex gap-2">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <FaStar
-                      key={star}
-                      size={26}
-                      className={`cursor-pointer ${
-                        (hover || rating) >= star
-                          ? "text-yellow-500"
-                          : "text-gray-300"
-                      }`}
-                      onMouseEnter={() => setHover(star)}
-                      onMouseLeave={() => setHover(0)}
-                      onClick={() => handleStarClick(star)}
-                    />
-                  ))}
-                </div>
-                <input
-                  type="hidden"
-                  value={rating}
-                  {...remarkRegister("taskReview", { required: true })}
-                />
-              </div>
-
-              <div>
-                <label className="block mb-1 text-gray-300">Task Summary</label>
+              <div className="mt-4">
+                <label className="text-sm font-semibold">Day Summary</label>
                 <textarea
-                  className="border border-gray-600 bg-gray-700 p-2 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  rows={4}
                   {...remarkRegister("taskSummary", { required: true })}
-                ></textarea>
+                  readOnly={isReadOnly}
+                  defaultValue={
+                    isReadOnly
+                      ? remarks.find(
+                          (r) =>
+                            new Date(r.taskDate).toDateString() ===
+                            new Date(selectedRemarkTask.start).toDateString()
+                        )?.taskSummary || ""
+                      : ""
+                  }
+                  className="w-full p-2 mt-2 bg-gray-700 border border-gray-600 rounded"
+                />
               </div>
 
-              <div className="flex justify-between mt-6">
-                <button
-                  type="submit"
-                  className="px-4 py-2 w-1/2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white font-semibold cursor-pointer transition-all duration-300 shadow-lg"
-                >
-                  Submit
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setIsRemarkModalOpen(false)}
-                  className="px-4 py-2 w-1/2 bg-red-600 hover:bg-red-700 rounded-lg text-white font-semibold cursor-pointer transition-all duration-300 shadow-lg ml-2"
-                >
-                  Cancel
-                </button>
-              </div>
+              {!isReadOnly && (
+                <div className="flex justify-end mt-6 gap-4">
+                  <button
+                    type="submit"
+                    className="bg-blue-600 hover:bg-blue-500 cursor-pointer px-6 py-2 rounded text-white"
+                  >
+                    Submit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsRemarkModalOpen(false)}
+                    className="bg-red-600 hover:bg-red-500 cursor-pointer px-6 py-2 rounded text-white"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
             </form>
-
             <button
+              className="absolute top-3 right-3 text-gray-400 hover:text-white"
               onClick={() => setIsRemarkModalOpen(false)}
-              className="absolute top-3 right-3 text-gray-400 hover:text-white transition-all cursor-pointer duration-300 text-lg"
             >
               ✖
             </button>
