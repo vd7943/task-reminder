@@ -54,10 +54,7 @@ const RemarkList = () => {
                   Task Name
                 </th>
                 <th className="p-4 text-left text-lg font-semibold w-1/6">
-                  Review
-                </th>
-                <th className="p-4 text-left text-lg font-semibold w-1/6">
-                  Duration
+                  Rating
                 </th>
                 <th className="p-4 text-left text-lg font-semibold w-1/6">
                   Summary
@@ -71,13 +68,13 @@ const RemarkList = () => {
             <tbody className="text-start">
               {loading ? (
                 <tr>
-                  <td colSpan="6" className="p-4 text-center">
+                  <td colSpan="5" className="p-4 text-center">
                     Loading...
                   </td>
                 </tr>
               ) : Object.keys(groupedRemarks).length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="p-4 text-center">
+                  <td colSpan="5" className="p-4 text-center">
                     No remarks found.
                   </td>
                 </tr>
@@ -103,7 +100,6 @@ const RemarkList = () => {
                           <FaStar color="yellow" size={14} />
                         </div>
                       </td>
-                      <td className="p-4">{remark.taskDuration}</td>
                       <td className="p-4">{remark.taskSummary}</td>
                       <td className="p-4">
                         {new Date(remark.taskDate)
