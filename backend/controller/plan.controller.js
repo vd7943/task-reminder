@@ -277,18 +277,22 @@ export const updatePlanStatus = async (req, res) => {
         });
       }
 
-      const coinRule = await CoinRule.findOne();
-      if (coinRule && coinRule.startNewPlanCoins) {
-        const coinsToAdd = coinRule.startNewPlanCoins;
+      if (!plan.coinsGivenForStartingPlan) {
+        const coinRule = await CoinRule.findOne();
+        if (coinRule && coinRule.startNewPlanCoins) {
+          const coinsToAdd = coinRule.startNewPlanCoins;
 
-        await User.findByIdAndUpdate(userId, {
-          $inc: { coins: coinsToAdd },
-          $push: {
-            notifications: {
-              message: `🎉 You have earned ${coinsToAdd} coins for starting a new plan.`,
+          await User.findByIdAndUpdate(userId, {
+            $inc: { coins: coinsToAdd },
+            $push: {
+              notifications: {
+                message: `🎉 You have earned ${coinsToAdd} coins for starting a new plan.`,
+              },
             },
-          },
-        });
+          });
+
+          plan.coinsGivenForStartingPlan = true;
+        }
       }
     }
 
