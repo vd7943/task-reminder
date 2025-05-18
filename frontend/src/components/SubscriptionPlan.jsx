@@ -184,12 +184,65 @@ const SubscriptionPlan = () => {
 
   return (
     <div className="flex flex-col">
+      <div className="my-8 lg:my-2 w-full flex flex-col items-center">
+        <div className="bg-gradient-to-r from-[#9D60EC] to-[#BE1966] ml-2 lg:ml-[20%] p-6 rounded-lg shadow-lg text-white w-full max-w-xl text-center">
+          <h4 className="text-lg font-semibold">📅 Subscription Details</h4>
+          <div className="mt-3 flex flex-col gap-2">
+            {authUser.userType === "Custom" && (
+              <div className="flex justify-between items-center border-b border-white pb-2">
+                <span className="text-md font-medium">Plan Type:</span>
+                <span className="text-lg font-bold text-blue-300">
+                  Custom Plan
+                </span>
+              </div>
+            )}
+            {authUser.userType === "Manage" && (
+              <div className="flex justify-between items-center border-b border-white pb-2">
+                <span className="text-md font-medium">Plan Type:</span>
+                <span className="text-lg font-bold text-green-300">
+                  Manage Plan
+                </span>
+              </div>
+            )}
+            <div className="flex justify-between items-center border-b border-white pb-2">
+              <span className="text-md font-medium">Subscription Ends In:</span>
+              <span
+                className={`text-lg font-bold ${
+                  timeLeft?.includes("Plz subscribe")
+                    ? "text-red-500"
+                    : "text-green-400"
+                }`}
+              >
+                {authUser.userType === "Regular" ? "Plz Subscribe!" : timeLeft}
+              </span>
+            </div>
+
+            <div className="flex justify-between items-center">
+              <span className="text-md font-medium">
+                Subscription End Date:
+              </span>
+              <span className="text-lg font-bold text-yellow-300">
+                {subscriptionEndDate
+                  ? new Date(subscriptionEndDate).toDateString()
+                  : "N/A"}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
       <div className="flex flex-col h-full items-center ml-2 xl:ml-[170px] my-5 mt-20 xl:mt-5 bg-[#FFFFFF2B] rounded-xl p-4">
         <h2 className="text-4xl">Subscription Plan</h2>
-        <p className="text-xl mt-4">
-          We offer great <span className="text-[#9D60EC]">price</span> plans for
-          the Website
-        </p>
+        {authUser?.subscriptionEndDate ? (
+          <p className="text-xl mt-4 text-center text-[#9D60EC]">
+            If you buy the yearly plan now,&nbsp; it will automatically <br />{" "}
+            start after your current subscription ends.
+          </p>
+        ) : (
+          <p className="text-xl mt-4">
+            We offer great <span className="text-[#9D60EC]">price</span> plans
+            for the Website
+          </p>
+        )}
 
         <div className="mt-4 flex items-center gap-3 rounded-full px-2 py-1 shadow-md">
           <button
@@ -209,9 +262,7 @@ const SubscriptionPlan = () => {
             Yearly
           </button>
         </div>
-
         <p className="mt-2 text-[#9D60EC] font-semibold">SAVE UP TO 30%</p>
-
         <div className="mt-6 flex flex-col md:flex-row gap-6">
           <div className="p-6 bg-[#151025] border border-gray-300 rounded-xl shadow-lg w-72 text-center relative">
             <span className="absolute top-[-12px] left-1/2 transform -translate-x-1/2 bg-[#9D60EC] text-white text-sm px-4 py-1 rounded-full">
@@ -293,53 +344,6 @@ const SubscriptionPlan = () => {
             </div>
           </div>
         )}
-      </div>
-
-      <div className="my-8 lg:mt-6 w-full flex flex-col items-center">
-        <div className="bg-gradient-to-r from-[#9D60EC] to-[#BE1966] ml-2 lg:ml-[20%] p-6 rounded-lg shadow-lg text-white w-full max-w-xl text-center">
-          <h4 className="text-lg font-semibold">📅 Subscription Details</h4>
-          <div className="mt-3 flex flex-col gap-2">
-            {authUser.userType === "Custom" && (
-              <div className="flex justify-between items-center border-b border-white pb-2">
-                <span className="text-md font-medium">Plan Type:</span>
-                <span className="text-lg font-bold text-blue-300">
-                  Custom Plan
-                </span>
-              </div>
-            )}
-            {authUser.userType === "Manage" && (
-              <div className="flex justify-between items-center border-b border-white pb-2">
-                <span className="text-md font-medium">Plan Type:</span>
-                <span className="text-lg font-bold text-green-300">
-                  Manage Plan
-                </span>
-              </div>
-            )}
-            <div className="flex justify-between items-center border-b border-white pb-2">
-              <span className="text-md font-medium">Subscription Ends In:</span>
-              <span
-                className={`text-lg font-bold ${
-                  timeLeft?.includes("Plz subscribe")
-                    ? "text-red-500"
-                    : "text-green-400"
-                }`}
-              >
-                {authUser.userType === "Regular" ? "Plz Subscribe!" : timeLeft}
-              </span>
-            </div>
-
-            <div className="flex justify-between items-center">
-              <span className="text-md font-medium">
-                Subscription End Date:
-              </span>
-              <span className="text-lg font-bold text-yellow-300">
-                {subscriptionEndDate
-                  ? new Date(subscriptionEndDate).toDateString()
-                  : "N/A"}
-              </span>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
