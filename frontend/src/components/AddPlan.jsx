@@ -561,8 +561,8 @@ const AddPlan = () => {
       </div>
 
       {isTaskModalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-[#FFFFFF2B] bg-opacity-50 backdrop-blur-lg z-50">
-          <div className="p-6 rounded-2xl shadow-xl w-96 bg-gray-800 text-white relative animate-fadeInUp border border-gray-700">
+        <div className="fixed inset-0 overflow-y-auto flex items-center justify-center bg-[#FFFFFF2B] bg-opacity-50 backdrop-blur-lg z-50">
+          <div className="p-6 rounded-2xl mt-10 shadow-xl w-96 bg-gray-800 text-white relative animate-fadeInUp border border-gray-700">
             <h2 className="text-2xl font-bold mb-4 text-center">Add Task</h2>
             <label>Task Name:</label>
             <input
