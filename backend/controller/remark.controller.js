@@ -3,27 +3,16 @@ import Remark from "../model/remark.model.js";
 import CoinRule from "../model/coinRule.model.js";
 import Plan from "../model/plan.model.js";
 
-const calculateCoins = async (taskDuration) => {
-  const rules = await CoinRule.find({});
-  rules.sort((a, b) => b.minDuration - a.minDuration);
-
-  for (const rule of rules) {
-    if (taskDuration >= rule.minDuration) {
-      return Math.floor(taskDuration / rule.minDuration) * rule.coins;
-    }
-  }
-  return 0;
-};
-
 export const addRemark = async (req, res) => {
   const {
+    taskId,
     taskName,
     taskDate,
-    taskDuration,
     taskReview,
     taskSummary,
     userId,
     planId,
+    isPaidForPastRemark,
   } = req.body;
 
   const user = await User.findById(userId);
@@ -32,11 +21,11 @@ export const addRemark = async (req, res) => {
   }
 
   try {
-    const todayDate = new Date().toISOString().split("T")[0];
+    const todayDate = new Date().toLocaleDateString("en-CA");
     const userPlan = await Plan.findOne({
       _id: planId,
       userId,
-      "tasks.taskName": taskName,
+      "tasks._id": taskId,
     });
 
     if (!userPlan) {
@@ -53,8 +42,21 @@ export const addRemark = async (req, res) => {
       });
     }
 
-    const task = userPlan.tasks.find((t) => t.taskName === taskName);
+    const task = userPlan.tasks.find((t) => t._id.toString() === taskId);
+    if (!task) {
+      return res.status(404).json({
+        success: false,
+        message: "Task not found in the plan.",
+      });
+    }
+
     const scheduledTask = task.schedule.find((s) => s.date === taskDate);
+    if (!scheduledTask) {
+      return res.status(400).json({
+        success: false,
+        message: `No scheduled task found for date: ${taskDate}`,
+      });
+    }
 
     if (todayDate < scheduledTask.date) {
       return res.status(400).json({
@@ -70,38 +72,69 @@ export const addRemark = async (req, res) => {
         message: "Remark already added for this task and date",
       });
     }
-    const rules = await CoinRule.find({});
-    const minDuration = rules[0]?.minDuration || 0;
 
-    if (taskDuration < minDuration) {
-      return res.status(400).json({
-        success: false,
-        message: `Please add a minimum duration of ${minDuration} minutes.`,
-      });
-    }
+    const coinRule = await CoinRule.findOne({});
 
-    const coinsToAdd = await calculateCoins(taskDuration);
+    const coinsToAdd = task.coinsEarned;
 
     const remark = new Remark({
       userId: user._id,
+      taskId,
       taskName,
       taskDate,
-      taskDuration,
       taskReview,
       taskSummary,
       coinsEarned: coinsToAdd,
+      planId,
     });
     await remark.save();
 
-    await User.findByIdAndUpdate(userId, { $inc: { coins: coinsToAdd } });
+    let notifications = [];
 
-    const coinNotification = `🎉 You have earned ${coinsToAdd} coins for adding a remark for the task "${taskName}".`;
+    await User.findByIdAndUpdate(userId, { $inc: { coins: coinsToAdd } });
+    notifications.push({
+      message: `🎉 You have earned ${coinsToAdd} coins for adding a remark for the task "${taskName}".`,
+    });
+
+    const allTasksOnDate = userPlan.tasks
+      .map((t) => ({
+        taskId: t._id.toString(),
+        schedule: t.schedule.find((s) => s.date === taskDate),
+        taskName: t.taskName,
+      }))
+      .filter((s) => s.schedule);
+
+    const addedRemarks = await Remark.find({ userId, taskDate, planId });
+    const allRemarked = allTasksOnDate.every((t) =>
+      addedRemarks.some((r) => r.taskId === t.taskId)
+    );
+
+    const summaryIncluded = addedRemarks.some((r) => r.taskSummary?.trim());
+
+    if (allRemarked && summaryIncluded) {
+      const extraCoins = coinRule?.extraCoins || 0;
+      await User.findByIdAndUpdate(userId, { $inc: { coins: extraCoins } });
+      notifications.push({
+        message: `🔥 Bonus! You earned ${extraCoins} extra coins for completing all task remarks and summary for ${taskDate}.`,
+      });
+    }
+
+    if (isPaidForPastRemark) {
+      const deductionCoins = coinRule?.addPastRemarkCoins || 0;
+      await User.findByIdAndUpdate(userId, {
+        $inc: { coins: -deductionCoins },
+      });
+      notifications.push({
+        message: `⚠️ You used ${deductionCoins} coins to add a remark for the task ${taskName} on ${taskDate}.`,
+      });
+    }
+
     await User.findByIdAndUpdate(userId, {
-      $push: { notifications: { message: coinNotification } },
+      $push: { notifications: { $each: notifications } },
     });
 
     const updatedUser = await User.findById(userId);
-    const freeSubsCoins = rules[0]?.freeSubsCoins;
+    const freeSubsCoins = coinRule?.freeSubsCoins;
 
     let subscriptionMessage = null;
     if (updatedUser.coins >= freeSubsCoins && freeSubsCoins > 0) {
