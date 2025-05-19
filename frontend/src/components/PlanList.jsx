@@ -13,6 +13,26 @@ const PlanList = () => {
   const [deletePlanId, setDeletePlanId] = useState(null);
   const [deletePlanName, setDeletePlanName] = useState("");
   const [confirmPlanName, setConfirmPlanName] = useState("");
+  const [userTypes, setUserTypes] = useState([]);
+
+  const fetchUserTypes = async () => {
+    try {
+      const response = await axios.get(
+        "https://task-reminder-4sqz.onrender.com/config/get-user-type"
+      );
+      setUserTypes(response.data.userTypes || []);
+    } catch (error) {
+      console.error("Failed to fetch user types.");
+    }
+  };
+
+  useEffect(() => {
+    fetchUserTypes();
+  }, []);
+
+  const RegularType = userTypes[0];
+  const CustomType = userTypes[1];
+  const ManageType = userTypes[2];
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -129,8 +149,8 @@ const PlanList = () => {
                   </th>
                 )}
 
-                {(authUser.userType === "Custom" ||
-                  authUser.userType === "Manage") && (
+                {(authUser.userType === CustomType ||
+                  authUser.userType === ManageType) && (
                   <>
                     <th className="p-4 text-left text-lg font-semibold">
                       Status
@@ -140,7 +160,7 @@ const PlanList = () => {
                     </th>
                   </>
                 )}
-                {(authUser.userType === "Custom" ||
+                {(authUser.userType === CustomType ||
                   authUser.role === "Admin") && (
                   <th className="p-4 text-center text-lg font-semibold">
                     Delete Plan
@@ -156,9 +176,10 @@ const PlanList = () => {
                     className="border-b border-gray-200 hover:bg-gray-800 transition-all duration-200"
                   >
                     <td className="p-4 cursor-pointer">
-                      <Link to={`/plan-detail/${plan._id}`}
-                         className="inline-block bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 shadow-sm border border-gray-600"
-                        >
+                      <Link
+                        to={`/plan-detail/${plan._id}`}
+                        className="inline-block bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 shadow-sm border border-gray-600"
+                      >
                         {plan.planName}
                       </Link>
                     </td>
@@ -166,8 +187,8 @@ const PlanList = () => {
                     {authUser.role === "Admin" && (
                       <td className="p-4">{plan.optedCount}</td>
                     )}
-                    {(authUser.userType === "Custom" ||
-                      authUser.userType === "Manage") && (
+                    {(authUser.userType === CustomType ||
+                      authUser.userType === ManageType) && (
                       <>
                         <td className="p-4">{plan.status}</td>
                         <td className="p-4 text-center">
@@ -186,7 +207,7 @@ const PlanList = () => {
                         </td>
                       </>
                     )}
-                    {(authUser.userType === "Custom" ||
+                    {(authUser.userType === CustomType ||
                       authUser.role === "Admin") && (
                       <td className="p-4 text-center">
                         <button
