@@ -3,35 +3,81 @@ import Plan from "../model/plan.model.js";
 import User from "../model/user.model.js";
 import EmailTemplate from "../model/emailTemplate.model.js";
 import { sendEmail } from "../utils/sendEmail.js";
+import { config } from "dotenv";
+
+config();
+
+function isSentToday(date) {
+  if (!date) return false;
+  const now = new Date();
+  return (
+    date.getDate() === now.getDate() &&
+    date.getMonth() === now.getMonth() &&
+    date.getFullYear() === now.getFullYear()
+  );
+}
 
 export const planNotificationCron = () => {
   cron.schedule("* * * * *", async () => {
     try {
       const users = await User.find({ isDeactivated: false });
+      const now = new Date();
 
       for (const user of users) {
-        const now = new Date();
-        const currentHourMinute = `${now
-          .getHours()
-          .toString()
-          .padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
+        if (!user.emailTime) continue;
 
-        if (currentHourMinute !== user.emailTime) continue;
+        if (isSentToday(user.lastEmailSentAt)) continue;
 
-        const plan = await Plan.findOne({ userId: user._id, status: "Active" });
-        if (!plan) continue;
-
-        const todayDate = new Date().toISOString().split("T")[0];
-
-        const todayTasks = plan.tasks.filter((task) =>
-          task.schedule.some((s) => s.date === todayDate)
+        const [emailHour, emailMinute] = user.emailTime.split(":").map(Number);
+        const emailDate = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate(),
+          emailHour,
+          emailMinute,
+          0
         );
 
-        if (!todayTasks.length) continue;
+        const timeDiffMin = (emailDate - now) / 60000;
+
+        if (timeDiffMin < 5 || timeDiffMin > 10) continue;
+
+        const plans = await Plan.find({ userId: user._id, status: "Active" });
+        if (!plans.length) continue;
+
+        const todayDate = now.toISOString().split("T")[0];
+
+        let allTodayTasks = [];
+        let applicablePlanNames = new Set();
+
+        for (const plan of plans) {
+          const todayTasks = plan.tasks
+            .map((task) => {
+              const scheduleIndex = task.schedule.findIndex(
+                (s) => s.date === todayDate
+              );
+              if (scheduleIndex !== -1) {
+                return { ...task.toObject(), todayDayIndex: scheduleIndex };
+              }
+              return null;
+            })
+            .filter(Boolean);
+
+          if (todayTasks.length) {
+            allTodayTasks.push(...todayTasks);
+            applicablePlanNames.add(plan.planName);
+          }
+        }
+
+        if (!allTodayTasks.length) continue;
+
+        const createdByTypes = [];
+        if (user.userType === "Custom") createdByTypes.push("Custom");
+        if (plans.some((p) => p.adminPlanId)) createdByTypes.push("Admin");
 
         const templates = await EmailTemplate.find({
-          planName: plan.planName,
-          createdBy: user.userType === "Custom" ? "Custom" : "Admin",
+          planName: { $in: Array.from(applicablePlanNames) },
+          createdBy: { $in: createdByTypes },
         });
 
         if (!templates.length) continue;
@@ -40,7 +86,7 @@ export const planNotificationCron = () => {
           templates[Math.floor(Math.random() * templates.length)];
 
         let taskTable = `
-         <br/><br/>
+          <br/><br/>
           <table border="1" cellspacing="0" cellpadding="5" style="border-collapse: collapse; width: 100%;">
             <tr style="background-color: #f2f2f2;">
               <th style="padding: 10px; border: 1px solid #ddd;">Task Name</th>
@@ -49,18 +95,18 @@ export const planNotificationCron = () => {
               <th style="padding: 10px; border: 1px solid #ddd;">Action</th>
             </tr>`;
 
-        todayTasks.forEach((task) => {
+        allTodayTasks.forEach((task) => {
           taskTable += `
-            <tr>
-              <td style="padding: 10px; border: 1px solid #ddd;">${task.taskName}</td>
-              <td style="padding: 10px; border: 1px solid #ddd;">
-                <a href="${task.taskLink}" style="color: #007bff; text-decoration: none;">View Task</a>
-              </td>
-              <td style="padding: 10px; border: 1px solid #ddd;">${task.days}</td>
-              <td style="padding: 10px; border: 1px solid #ddd;">
-                <a href="${task.completeLink}" style="color: green; text-decoration: none;">Mark as Completed</a>
-              </td>
-            </tr>`;
+    <tr>
+      <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${task.taskName}</td>
+      <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">
+        <a href="${task.taskLink}" style="color: #007bff; text-decoration: none;">View Task</a>
+      </td>
+      <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${task.todayDayIndex}</td>
+      <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">
+        <a href="${process.env.FRONTEND_URL}/task-calendar" style="color: green; text-decoration: none;">Mark as Completed</a>
+      </td>
+    </tr>`;
         });
 
         taskTable += `</table>`;
@@ -77,6 +123,9 @@ export const planNotificationCron = () => {
           subject: finalSubject,
           body: finalBody,
         });
+
+        user.lastEmailSentAt = new Date();
+        await user.save();
       }
     } catch (error) {
       console.error("Email notification error:", error);
