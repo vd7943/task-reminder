@@ -10,6 +10,26 @@ const Dashboard = () => {
     totalManageUsers: 0,
   });
   const [appreciation, setAppreciation] = useState([]);
+  const [userTypes, setUserTypes] = useState([]);
+
+  const fetchUserTypes = async () => {
+    try {
+      const response = await axios.get(
+        "https://task-reminder-4sqz.onrender.com/config/get-user-type"
+      );
+      setUserTypes(response.data.userTypes || []);
+    } catch (error) {
+      console.error("Failed to fetch user types.");
+    }
+  };
+
+  useEffect(() => {
+    fetchUserTypes();
+  }, []);
+
+  const RegularType = userTypes[0];
+  const CustomType = userTypes[1];
+  const ManageType = userTypes[2];
 
   useEffect(() => {
     axios
@@ -34,7 +54,7 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
         <div className="bg-[#FFFFFF2B] p-4 rounded-md text-center shadow-lg cursor-pointer">
           <Link to="/custom-user-list">
-            <h4 className="font-medium">TOTAL CUSTOM USER</h4>
+            <h4 className="font-medium uppercase">TOTAL {CustomType} USER</h4>
             <p className="text-2xl font-bold mt-4">
               {usersData.totalCustomUsers}
             </p>
@@ -42,7 +62,7 @@ const Dashboard = () => {
         </div>
         <div className="bg-[#FFFFFF2B] p-4 rounded-md text-center shadow-lg cursor-pointer">
           <Link to="/manage-user-list">
-            <h4 className="font-medium">TOTAL MANAGE USER</h4>
+            <h4 className="font-medium uppercase">TOTAL {ManageType} USER</h4>
             <p className="text-2xl font-bold mt-2">
               {usersData.totalManageUsers}
             </p>
