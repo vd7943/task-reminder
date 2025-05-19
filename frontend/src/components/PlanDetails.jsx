@@ -23,6 +23,26 @@ const PlanDetail = () => {
   const [editingTemplate, setEditingTemplate] = useState(null);
   const [updatedSubject, setUpdatedSubject] = useState("");
   const [updatedBody, setUpdatedBody] = useState("");
+  const [userTypes, setUserTypes] = useState([]);
+
+  const fetchUserTypes = async () => {
+    try {
+      const response = await axios.get(
+        "https://task-reminder-4sqz.onrender.com/config/get-user-type"
+      );
+      setUserTypes(response.data.userTypes || []);
+    } catch (error) {
+      console.error("Failed to fetch user types.");
+    }
+  };
+
+  useEffect(() => {
+    fetchUserTypes();
+  }, []);
+
+  const RegularType = userTypes[0];
+  const CustomType = userTypes[1];
+  const ManageType = userTypes[2];
 
   useEffect(() => {
     fetchPlanDetails();
@@ -49,9 +69,9 @@ const PlanDetail = () => {
     try {
       let allTemplates = [];
 
-      if (authUser.userType === "Custom") {
+      if (authUser.userType === CustomType) {
         const [customResponse, adminResponse] = await Promise.all([
-          axios.get(`https://task-reminder-4sqz.onrender.com/email/templates/Custom`),
+          axios.get(`https://task-reminder-4sqz.onrender.com/email/templates/${CustomType}`),
           axios.get(`https://task-reminder-4sqz.onrender.com/email/templates/Admin`),
         ]);
 
@@ -314,8 +334,8 @@ const PlanDetail = () => {
               </div>
             </div>
 
-            {(authUser.userType === "Custom" ||
-              authUser.userType === "Manage") && (
+            {(authUser.userType === CustomType ||
+              authUser.userType === ManageType) && (
               <div className="flex items-center gap-4">
                 <select
                   value={status}
@@ -368,7 +388,7 @@ const PlanDetail = () => {
                     <th className="p-3 text-left whitespace-nowrap">
                       End Date
                     </th>
-                    {(authUser.userType === "Custom" ||
+                    {(authUser.userType === CustomType ||
                       authUser.role === "Admin") &&
                       plan.adminPlanId === null && (
                         <th className="p-3 text-left whitespace-nowrap">
@@ -406,7 +426,7 @@ const PlanDetail = () => {
                         <td className="p-3">{task.coinsEarned}</td>
                         <td className="p-3">{startDate}</td>
                         <td className="p-3">{endDate}</td>
-                        {(authUser.userType === "Custom" ||
+                        {(authUser.userType === CustomType ||
                           authUser.role === "Admin") &&
                           plan.adminPlanId === null && (
                             <td className="p-3">
@@ -556,7 +576,7 @@ const PlanDetail = () => {
                             {template.subject}
                           </h4>
                           <p className="text-gray-300">{template.body}</p>
-                          {(authUser.userType === "Custom" ||
+                          {(authUser.userType === CustomType ||
                             authUser.role === "Admin") &&
                             plan.adminPlanId === null && (
                               <button
