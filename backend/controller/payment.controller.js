@@ -3,8 +3,31 @@ import User from "../model/user.model.js";
 import Razorpay from "razorpay";
 import crypto from "crypto";
 import { config } from "dotenv";
+import path from "path";
+import fs from "fs";
 
 config();
+
+const mappingPath = path.resolve("config/userTypeMappings.json");
+
+let userTypes = [];
+
+try {
+  const data = JSON.parse(fs.readFileSync(mappingPath));
+  userTypes = data.userTypes || [];
+} catch {
+  userTypes = [];
+}
+
+const getUserTypeFromAmount = (amount) => {
+  if (userTypes.length < 3) {
+    return "Regular";
+  }
+
+  if ([100, 700].includes(amount)) return userTypes[2];
+  if ([200, 1400].includes(amount)) return userTypes[1];
+  return userTypes[0];
+};
 
 const razorpayInstance = new Razorpay({
   key_id: process.env.RAZORPAY_ID_KEY,
@@ -101,12 +124,7 @@ export const verifyPayment = async (req, res) => {
       subscriptionEndDate.setFullYear(subscriptionEndDate.getFullYear() + 1);
     }
 
-    let userType = "Regular";
-    if ([200, 1400].includes(amount)) {
-      userType = "Custom";
-    } else if ([100, 700].includes(amount)) {
-      userType = "Manage";
-    }
+    const userType = getUserTypeFromAmount(amount);
 
     const paymentData = {
       razorpay_order_id,
