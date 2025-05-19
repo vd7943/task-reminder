@@ -1,5 +1,18 @@
 import CoinRule from "../model/coinRule.model.js";
 import User from "../model/user.model.js";
+import path from "path";
+import fs from "fs";
+
+const mappingPath = path.resolve("config/userTypeMappings.json");
+
+let userTypes = [];
+
+try {
+  const data = JSON.parse(fs.readFileSync(mappingPath));
+  userTypes = data.userTypes || [];
+} catch {
+  userTypes = [];
+}
 
 export const addOrUpdateCoinRule = async (req, res) => {
   const { freeSubsCoins, addPastRemarkCoins, startNewPlanCoins, extraCoins } =
@@ -25,14 +38,14 @@ export const addOrUpdateCoinRule = async (req, res) => {
       await existingRule.save();
 
       const allUsers = await User.find({
-        userType: { $in: ["Custom", "Manage"] },
+        userType: { $in: [userTypes[1], userTypes[2]] },
       });
 
       if (freeSubsCoinsChanged) {
         await Promise.all(
           allUsers.map(async (user) => {
             user.notifications.push({
-              message: `🔔 New Update: Collect ${freeSubsCoins} coins to earn 1 month of free custom subscription!`,
+              message: `🔔 New Update: Collect ${freeSubsCoins} coins to earn 1 month of free ${userTypes[1]} subscription!`,
             });
             await user.save();
           })
@@ -54,13 +67,13 @@ export const addOrUpdateCoinRule = async (req, res) => {
     await newRule.save();
 
     const allUsers = await User.find({
-      userType: { $in: ["Custom", "Manage"] },
+      userType: { $in: [userTypes[1], userTypes[2]] },
     });
 
     await Promise.all(
       allUsers.map(async (user) => {
         user.notifications.push({
-          message: `🔔 New Update: Collect ${freeSubsCoins} coins to earn 1 month of free subscription!`,
+          message: `🔔 New Update: Collect ${freeSubsCoins} coins to earn 1 month of free ${userTypes[1]} subscription!`,
         });
         await user.save();
       })
