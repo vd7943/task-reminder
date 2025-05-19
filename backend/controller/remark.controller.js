@@ -2,6 +2,19 @@ import User from "../model/user.model.js";
 import Remark from "../model/remark.model.js";
 import CoinRule from "../model/coinRule.model.js";
 import Plan from "../model/plan.model.js";
+import path from "path";
+import fs from "fs";
+
+const mappingPath = path.resolve("config/userTypeMappings.json");
+
+let userTypes = [];
+
+try {
+  const data = JSON.parse(fs.readFileSync(mappingPath));
+  userTypes = data.userTypes || [];
+} catch {
+  userTypes = [];
+}
 
 export const addRemark = async (req, res) => {
   const {
@@ -142,7 +155,7 @@ export const addRemark = async (req, res) => {
       const remainingCoins = updatedUser.coins % freeSubsCoins;
 
       updatedUser.coins = remainingCoins;
-      updatedUser.userType = "Custom";
+      updatedUser.userType = userTypes[1];
 
       const currentEndDate = updatedUser.subscriptionEndDate
         ? new Date(updatedUser.subscriptionEndDate)
