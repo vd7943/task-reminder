@@ -4,8 +4,21 @@ import User from "../model/user.model.js";
 import EmailTemplate from "../model/emailTemplate.model.js";
 import { sendEmail } from "../utils/sendEmail.js";
 import { config } from "dotenv";
+import path from "path";
+import fs from "fs";
 
 config();
+
+const mappingPath = path.resolve("config/userTypeMappings.json");
+
+let userTypes = [];
+
+try {
+  const data = JSON.parse(fs.readFileSync(mappingPath));
+  userTypes = data.userTypes || [];
+} catch {
+  userTypes = [];
+}
 
 function isSentToday(date) {
   if (!date) return false;
@@ -72,7 +85,7 @@ export const planNotificationCron = () => {
         if (!allTodayTasks.length) continue;
 
         const createdByTypes = [];
-        if (user.userType === "Custom") createdByTypes.push("Custom");
+        if (user.userType === userTypes[1]) createdByTypes.push(userTypes[1]);
         if (plans.some((p) => p.adminPlanId)) createdByTypes.push("Admin");
 
         const templates = await EmailTemplate.find({
