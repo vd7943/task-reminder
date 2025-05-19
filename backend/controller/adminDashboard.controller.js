@@ -1,13 +1,25 @@
 import User from "../model/user.model.js";
-import AddReminder from "../model/addReminder.model.js";
+import path from "path";
+import fs from "fs";
+
+const mappingPath = path.resolve("config/userTypeMappings.json");
+
+let userTypes = [];
+
+try {
+  const data = JSON.parse(fs.readFileSync(mappingPath));
+  userTypes = data.userTypes || [];
+} catch {
+  userTypes = [];
+}
 
 export const getDashboardStats = async (req, res) => {
   try {
     const totalUsers = await User.find({ role: "User" });
 
-    const totalCustomUsers = await User.find({ userType: "Custom" });
+    const totalCustomUsers = await User.find({ userType: userTypes[1] });
 
-    const totalManageUsers = await User.find({ userType: "Manage" });
+    const totalManageUsers = await User.find({ userType: userTypes[2] });
 
     res.status(200).json({
       totalUsers,
@@ -38,13 +50,11 @@ export const toggleUserActivation = async (req, res) => {
     }
 
     await user.save();
-    res
-      .status(200)
-      .json({
-        message: `User ${
-          user.isDeactivated ? "deactivated" : "activated"
-        } successfully`,
-      });
+    res.status(200).json({
+      message: `User ${
+        user.isDeactivated ? "deactivated" : "activated"
+      } successfully`,
+    });
   } catch (error) {
     res.status(500).json({ message: "Server Error", error });
   }
