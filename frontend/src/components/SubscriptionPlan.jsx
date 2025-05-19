@@ -21,15 +21,13 @@ const SubscriptionPlan = () => {
       );
       setUserTypes(response.data.userTypes || []);
     } catch (error) {
-      toast.error("Failed to fetch user types.");
+      console.error("Failed to fetch user types.");
     }
   };
 
   useEffect(() => {
     fetchUserTypes();
   }, []);
-
-  console.log(userTypes);
 
   const navigate = useNavigate();
   const userId = authUser._id;
