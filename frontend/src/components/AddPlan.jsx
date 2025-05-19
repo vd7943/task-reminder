@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthProvider";
 import { useForm, useFieldArray } from "react-hook-form";
 import axios from "axios";
@@ -8,8 +8,8 @@ import { IoArrowUpCircleOutline } from "react-icons/io5";
 
 const AddPlan = () => {
   const [authUser, setAuthUser] = useAuth();
+  const [userTypes, setUserTypes] = useState([]);
   const navigate = useNavigate();
-
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [isMilestoneModalOpen, setIsMilestoneModalOpen] = useState(false);
@@ -74,7 +74,26 @@ const AddPlan = () => {
     name: "milestones",
   });
 
-  const createdBy = authUser.userType === "Custom" ? "Custom" : "Admin";
+  const fetchUserTypes = async () => {
+    try {
+      const response = await axios.get(
+        "https://task-reminder-4sqz.onrender.com/config/get-user-type"
+      );
+      setUserTypes(response.data.userTypes || []);
+    } catch (error) {
+      console.error("Failed to fetch user types.");
+    }
+  };
+
+  useEffect(() => {
+    fetchUserTypes();
+  }, []);
+
+  const RegularType = userTypes[0];
+  const CustomType = userTypes[1];
+  const ManageType = userTypes[2];
+
+  const createdBy = authUser.userType === CustomType ? CustomType : "Admin";
 
   const validateDays = (days) => {
     const trimmedDays = days.trim();
