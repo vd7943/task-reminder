@@ -1,4 +1,17 @@
 import mongoose from "mongoose";
+import fs from "fs";
+import path from "path";
+
+const filePath = path.resolve("config/userTypes.json");
+
+const getUserTypeEnum = () => {
+  try {
+    const data = JSON.parse(fs.readFileSync(filePath));
+    return data.userTypes || ["Regular"];
+  } catch {
+    return ["Regular"];
+  }
+};
 
 const userSchema = mongoose.Schema({
   profileImage: {
@@ -17,7 +30,17 @@ const userSchema = mongoose.Schema({
     enum: ["Admin", "User"],
     default: "User",
   },
-  userType: { type: String, required: true, default: "Regular" },
+  userType: {
+    type: String,
+    default: "Regular",
+    validate: {
+      validator: function (value) {
+        const allowedTypes = getUserTypeEnum();
+        return allowedTypes.includes(value);
+      },
+      message: (props) => `${props.value} is not a valid user type.`,
+    },
+  },
   payments: [
     {
       razorpay_order_id: String,
