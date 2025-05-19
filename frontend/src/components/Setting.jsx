@@ -17,6 +17,26 @@ const Setting = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [profileImagePreview, setProfileImagePreview] = useState("");
   const [authUser, setAuthUser] = useAuth();
+  const [userTypes, setUserTypes] = useState([]);
+
+  const fetchUserTypes = async () => {
+    try {
+      const response = await axios.get(
+        "https://task-reminder-4sqz.onrender.com/config/get-user-type"
+      );
+      setUserTypes(response.data.userTypes || []);
+    } catch (error) {
+      console.error("Failed to fetch user types.");
+    }
+  };
+
+  useEffect(() => {
+    fetchUserTypes();
+  }, []);
+
+  const RegularType = userTypes[0];
+  const CustomType = userTypes[1];
+  const ManageType = userTypes[2];
 
   useEffect(() => {
     if (authUser) {
@@ -132,8 +152,8 @@ const Setting = () => {
               className="w-full p-3 rounded-lg border-2 border-[#D0D0D0] focus:border-[#9D60EC] outline-none transition duration-300"
               {...register("password")}
             />
-            {(authUser.userType === "Custom" ||
-              authUser.userType === "Manage") && (
+            {(authUser.userType === CustomType ||
+              authUser.userType === ManageType) && (
               <>
                 <label className="text-lg">Preferred Email Time</label>
                 <input
