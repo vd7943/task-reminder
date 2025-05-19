@@ -1,51 +1,27 @@
-import Config from "../model/config.model.js";
+import fs from "fs";
+import path from "path";
 
-export const getUserTypes = async (req, res) => {
+const filePath = path.resolve("config/userTypes.json");
+
+export const getUserTypes = (req, res) => {
   try {
-    const config = await Config.findOne();
-
-    if (!config) {
-      config = new Config({
-        userTypes: { Custom: "Custom", Manage: "Manage" },
-      });
-      await config.save();
-    }
-
-    res.status(200).json({ userTypes: config.userTypes });
-  } catch (error) {
-    console.error("Error:", error.message);
-    res.status(500).json({ message: "Internal server error" });
+    const data = JSON.parse(fs.readFileSync(filePath));
+    res.json({ userTypes: data.userTypes });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to read user types." });
   }
 };
 
-export const renameUserTypes = async (req, res) => {
+export const updateUserTypes = (req, res) => {
   try {
-    const { Custom, Manage } = req.body;
-    const { role } = req.query;
-
-    if (role !== "Admin") {
-      return res.status(403).json({ message: "Access denied" });
+    const { userTypes } = req.body;
+    if (!Array.isArray(userTypes)) {
+      return res.status(400).json({ message: "Invalid userTypes format." });
     }
 
-    let config = await Config.findOne();
-
-    if (!config) {
-      config = new Config({
-        userTypes: { Custom, Manage },
-      });
-    } else {
-      config.userTypes.Custom = Custom;
-      config.userTypes.Manage = Manage;
-    }
-
-    await config.save();
-
-    res.status(200).json({
-      message: "User types renamed successfully",
-      userTypes: config.userTypes,
-    });
-  } catch (error) {
-    console.error("Error:", error.message);
-    res.status(500).json({ message: "Internal server error" });
+    fs.writeFileSync(filePath, JSON.stringify({ userTypes }, null, 2));
+    res.json({ message: "User types updated successfully." });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to update user types." });
   }
 };
