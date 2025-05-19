@@ -5,7 +5,6 @@ import "../config/passport.js";
 import passport from "passport";
 import jwt from "jsonwebtoken";
 import { config } from "dotenv";
-import Config from "../model/config.model.js";
 
 config();
 
@@ -99,15 +98,6 @@ export const login = async (req, res) => {
       return res.status(400).json({ message: "Invalid email or password" });
     }
 
-    const configData = await Config.findOne();
-    if (!configData) {
-      return res.status(500).json({ message: "Config not found" });
-    }
-
-    const currentUserTypes = configData.userTypes;
-
-    const userType = currentUserTypes[user.userType] || user.userType;
-
     res.status(200).json({
       message: "Login successful",
       user: {
@@ -116,7 +106,7 @@ export const login = async (req, res) => {
         email: user.email,
         role: user.role,
         profileImage: user.profileImage,
-        userType,
+        userType: user.userType,
         subscriptionEndDate: user.subscriptionEndDate,
         createdAt: user.createdAt,
         coins: user.coins,
