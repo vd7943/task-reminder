@@ -4,6 +4,19 @@ import User from "../model/user.model.js";
 import EmailTemplate from "../model/emailTemplate.model.js";
 import PlanLimit from "../model/planLimit.model.js";
 import CoinRule from "../model/coinRule.model.js";
+import path from "path";
+import fs from "fs";
+
+const mappingPath = path.resolve("config/userTypeMappings.json");
+
+let userTypes = [];
+
+try {
+  const data = JSON.parse(fs.readFileSync(mappingPath));
+  userTypes = data.userTypes || [];
+} catch {
+  userTypes = [];
+}
 
 const getScheduleDates = (startDate, days, srNo) => {
   let schedule = [];
@@ -160,10 +173,10 @@ export const deletePlan = async (req, res) => {
         planName: plan.planName,
         createdBy: "Admin",
       });
-    } else if (user.role === "User" && user.userType === "Custom") {
+    } else if (user.role === "User" && user.userType === userTypes[1]) {
       await EmailTemplate.deleteMany({
         planName: plan.planName,
-        createdBy: "Custom",
+        createdBy: userTypes[1],
       });
     }
 
