@@ -24,9 +24,31 @@ import PlanList from "./components/PlanList";
 import UserSettings from "./components/UserSettings";
 import ContactForm from "./components/ContactForm";
 import PlanSetting from "./components/PlanSetting";
+import { useEffect, useState } from "react";
+import axios from "axios";
 
 function App() {
   const [authUser, setAuthUser] = useAuth();
+  const [userTypes, setUserTypes] = useState([]);
+
+  const fetchUserTypes = async () => {
+    try {
+      const response = await axios.get(
+        "https://task-reminder-4sqz.onrender.com/config/get-user-type"
+      );
+      setUserTypes(response.data.userTypes || []);
+    } catch (error) {
+      console.error("Failed to fetch user types.");
+    }
+  };
+
+  useEffect(() => {
+    fetchUserTypes();
+  }, []);
+
+  const RegularType = userTypes[0];
+  const CustomType = userTypes[1];
+  const ManageType = userTypes[2];
 
   return (
     <div className="flex h-fit">
@@ -125,8 +147,8 @@ function App() {
         <Route
           path="/user-notifications"
           element={
-            authUser?.userType === "Manage" ||
-            authUser?.userType === "Custom" ? (
+            authUser?.userType === ManageType ||
+            authUser?.userType === CustomType ? (
               <UserNotification />
             ) : (
               <Navigate to="/" />
@@ -138,8 +160,8 @@ function App() {
         <Route
           path="/remark-list"
           element={
-            authUser?.userType === "Manage" ||
-            authUser?.userType === "Custom" ? (
+            authUser?.userType === ManageType ||
+            authUser?.userType === CustomType ? (
               <RemarkList />
             ) : (
               <Navigate to="/" />
@@ -150,8 +172,8 @@ function App() {
         <Route
           path="/task-calendar"
           element={
-            authUser?.userType === "Manage" ||
-            authUser?.userType === "Custom" ||
+            authUser?.userType === ManageType ||
+            authUser?.userType === CustomType ||
             authUser?.role === "Admin" ? (
               <TaskCalendar />
             ) : (
@@ -162,7 +184,7 @@ function App() {
         <Route
           path="/add-plan"
           element={
-            authUser?.userType === "Custom" || authUser?.role === "Admin" ? (
+            authUser?.userType === CustomType || authUser?.role === "Admin" ? (
               <AddPlan />
             ) : (
               <Navigate to="/" />
@@ -173,8 +195,8 @@ function App() {
         <Route
           path="/plan-list"
           element={
-            authUser?.userType === "Manage" ||
-            authUser?.userType === "Custom" ||
+            authUser?.userType === ManageType ||
+            authUser?.userType === CustomType ||
             authUser?.role === "Admin" ? (
               <PlanList />
             ) : (
@@ -192,8 +214,8 @@ function App() {
         <Route
           path="/pre-built-plans"
           element={
-            authUser?.userType === "Custom" ||
-            authUser?.userType === "Manage" ? (
+            authUser?.userType === CustomType ||
+            authUser?.userType === ManageType ? (
               <PreBuiltPlanList />
             ) : (
               <Navigate to="/subscription-plan" />
@@ -203,8 +225,8 @@ function App() {
         <Route
           path="/plan-detail/:id"
           element={
-            authUser?.userType === "Manage" ||
-            authUser?.userType === "Custom" ||
+            authUser?.userType === ManageType ||
+            authUser?.userType === CustomType ||
             authUser?.role === "Admin" ? (
               <PlanDetails />
             ) : (
