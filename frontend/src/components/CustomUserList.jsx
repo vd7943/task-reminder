@@ -5,6 +5,26 @@ import toast from "react-hot-toast";
 
 const CustomUserList = () => {
   const [users, setUsers] = useState([]);
+  const [userTypes, setUserTypes] = useState([]);
+
+  const fetchUserTypes = async () => {
+    try {
+      const response = await axios.get(
+        "https://task-reminder-4sqz.onrender.com/config/get-user-type"
+      );
+      setUserTypes(response.data.userTypes || []);
+    } catch (error) {
+      console.error("Failed to fetch user types.");
+    }
+  };
+
+  useEffect(() => {
+    fetchUserTypes();
+  }, []);
+
+  const RegularType = userTypes[0];
+  const CustomType = userTypes[1];
+  const ManageType = userTypes[2];
 
   useEffect(() => {
     axios
@@ -43,7 +63,7 @@ const CustomUserList = () => {
   return (
     <div className="p-6 w-screen lg:w-[960px] pt-16 lg:pt-6 lg:pl-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl">Custom User List</h2>
+        <h2 className="text-3xl">{CustomType} User List</h2>
         <Link to="/add-user">
           <button
             className="bg-[#9D60EC] text-white py-3 text-lg px-8 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 hover:bg-[#c095f8] duration-300 cursor-pointer"
