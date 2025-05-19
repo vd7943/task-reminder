@@ -1,11 +1,11 @@
 import express from "express";
 import {
   getUserTypes,
-  renameUserTypes,
+  updateUserTypes,
 } from "../controller/config.controller.js";
 const router = express.Router();
 
-router.post("/update-user-type", getUserTypes);
-router.get("/get-user-type", renameUserTypes);
+router.get("/get-user-type", getUserTypes);
+router.post("/update-user-type", updateUserTypes);
 
 export default router;
