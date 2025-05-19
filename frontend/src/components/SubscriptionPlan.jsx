@@ -12,6 +12,24 @@ const SubscriptionPlan = () => {
   const [timeLeft, setTimeLeft] = useState(null);
   const [showYearlyModal, setShowYearlyModal] = useState(false);
   const [pendingYearlyAmount, setPendingYearlyAmount] = useState(null);
+  const [userTypes, setUserTypes] = useState([]);
+
+  const fetchUserTypes = async () => {
+    try {
+      const response = await axios.get(
+        "https://task-reminder-4sqz.onrender.com/config/get-user-type"
+      );
+      setUserTypes(response.data.userTypes || []);
+    } catch (error) {
+      toast.error("Failed to fetch user types.");
+    }
+  };
+
+  useEffect(() => {
+    fetchUserTypes();
+  }, []);
+
+  console.log(userTypes);
 
   const navigate = useNavigate();
   const userId = authUser._id;
@@ -20,16 +38,23 @@ const SubscriptionPlan = () => {
     ? new Date(authUser.subscriptionEndDate)
     : null;
 
+  const RegularType = userTypes[0];
+  const CustomType = userTypes[1];
+  const ManageType = userTypes[2];
+
   useEffect(() => {
-    if (userType === "Regular") {
+    if (userType === RegularType) {
       setIsCustomEligible(true);
       setIsManageEligible(true);
-    } else if (userType === "Custom") {
+    } else if (userType === CustomType) {
       setIsCustomEligible(true);
-    } else if (userType === "Manage") {
+    } else if (userType === ManageType) {
       setIsManageEligible(true);
+    } else {
+      setIsCustomEligible(false);
+      setIsManageEligible(false);
     }
-  }, [userType]);
+  }, [userType, RegularType, CustomType, ManageType]);
 
   const calculateTimeLeft = (subscription) => {
     if (!subscription) {
@@ -86,15 +111,19 @@ const SubscriptionPlan = () => {
       subscriptionEndDate && new Date(subscriptionEndDate) > new Date();
 
     if (isYearlyPlan) {
-      if (currentType === "Custom" && planType !== "Custom") {
-        return toast.error("You can only upgrade to Custom Yearly Plan.");
+      if (currentType === CustomType && planType !== CustomType) {
+        return toast.error(
+          `You can only upgrade to ${CustomType} Yearly Plan.`
+        );
       }
-      if (currentType === "Manage" && planType !== "Manage") {
-        return toast.error("You can only upgrade to Manage Yearly Plan.");
+      if (currentType === ManageType && planType !== ManageType) {
+        return toast.error(
+          `You can only upgrade to ${ManageType} Yearly Plan.`
+        );
       }
 
       if (
-        (currentType === "Custom" || currentType === "Manage") &&
+        (currentType === CustomType || currentType === ManageType) &&
         isSubscribed
       ) {
         setPendingYearlyAmount(amount);
@@ -188,19 +217,19 @@ const SubscriptionPlan = () => {
         <div className="bg-gradient-to-r from-[#9D60EC] to-[#BE1966] ml-2 lg:ml-[20%] p-6 rounded-lg shadow-lg text-white w-full max-w-xl text-center">
           <h4 className="text-lg font-semibold">📅 Subscription Details</h4>
           <div className="mt-3 flex flex-col gap-2">
-            {authUser.userType === "Custom" && (
+            {authUser.userType === CustomType && (
               <div className="flex justify-between items-center border-b border-white pb-2">
                 <span className="text-md font-medium">Plan Type:</span>
                 <span className="text-lg font-bold text-blue-300">
-                  Custom Plan
+                  {CustomType} Plan
                 </span>
               </div>
             )}
-            {authUser.userType === "Manage" && (
+            {authUser.userType === ManageType && (
               <div className="flex justify-between items-center border-b border-white pb-2">
                 <span className="text-md font-medium">Plan Type:</span>
                 <span className="text-lg font-bold text-green-300">
-                  Manage Plan
+                  {ManageType} Plan
                 </span>
               </div>
             )}
@@ -213,7 +242,9 @@ const SubscriptionPlan = () => {
                     : "text-green-400"
                 }`}
               >
-                {authUser.userType === "Regular" ? "Plz Subscribe!" : timeLeft}
+                {authUser.userType === RegularType
+                  ? "Plz Subscribe!"
+                  : timeLeft}
               </span>
             </div>
 
@@ -265,10 +296,7 @@ const SubscriptionPlan = () => {
         <p className="mt-2 text-[#9D60EC] font-semibold">SAVE UP TO 30%</p>
         <div className="mt-6 flex flex-col md:flex-row gap-6">
           <div className="p-6 bg-[#151025] border border-gray-300 rounded-xl shadow-lg w-72 text-center relative">
-            <span className="absolute top-[-12px] left-1/2 transform -translate-x-1/2 bg-[#9D60EC] text-white text-sm px-4 py-1 rounded-full">
-              Recommended
-            </span>
-            <h3 className="text-xl mt-2">Manage Plan</h3>
+            <h3 className="text-xl mt-2">{ManageType} Plan</h3>
             <p className="text-gray-400 mt-2">
               More power for small teams to create project plans with
               confidence.
@@ -281,7 +309,7 @@ const SubscriptionPlan = () => {
             </p>
             <button
               onClick={() =>
-                handlePayment(isYearly ? 700 : 100, isYearly, "Manage")
+                handlePayment(isYearly ? 700 : 100, isYearly, ManageType)
               }
               className="mt-4 bg-[#9D60EC] text-[#151025] px-5 py-2 rounded-lg hover:shadow-xl transform hover:scale-105 hover:bg-[#c095f8] duration-300 cursor-pointer"
               disabled={!isManageEligible}
@@ -290,9 +318,12 @@ const SubscriptionPlan = () => {
             </button>
           </div>
 
-          <div className="p-6 bg-[#151025] border border-gray-300 rounded-xl shadow-lg w-72 text-center">
-            <h3 className="text-xl">Custom</h3>
-            <p className="text-gray-400 mt-2">
+          <div className="p-6 bg-[#151025] border border-gray-300 rounded-xl shadow-lg w-72 text-center relative">
+            <span className="absolute top-[-12px] left-1/2 transform -translate-x-1/2 bg-[#9D60EC] text-white text-sm px-4 py-1 rounded-full">
+              Recommended
+            </span>
+            <h3 className="text-xl mt-2">{CustomType} Plan</h3>
+            <p className="text-gray-400 mt-3">
               For enterprises that need additional security, control, and
               support.
             </p>
@@ -304,9 +335,9 @@ const SubscriptionPlan = () => {
             </p>
             <button
               onClick={() =>
-                handlePayment(isYearly ? 1400 : 200, isYearly, "Custom")
+                handlePayment(isYearly ? 1400 : 200, isYearly, CustomType)
               }
-              className="mt-4 border border-gray-700 px-5 py-2 rounded-lg hover:shadow-xl transform hover:scale-105 hover:bg-[#9D60EC] hover:text-[#151025] duration-300 cursor-pointer"
+              className="mt-3 border border-gray-700 px-5 py-2 rounded-lg hover:shadow-xl transform hover:scale-105 hover:bg-[#9D60EC] hover:text-[#151025] duration-300 cursor-pointer"
               disabled={!isCustomEligible}
             >
               {isCustomEligible ? "Buy Now" : "Not Eligible"}
