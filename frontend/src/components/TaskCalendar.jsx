@@ -27,6 +27,26 @@ const TaskCalendar = () => {
   const [calendarKey, setCalendarKey] = useState(0);
   const [paidTasks, setPaidTasks] = useState([]);
   const [existingRemarksForTasks, setExistingRemarksForTasks] = useState({});
+  const [userTypes, setUserTypes] = useState([]);
+
+  const fetchUserTypes = async () => {
+    try {
+      const response = await axios.get(
+        "https://task-reminder-4sqz.onrender.com/config/get-user-type"
+      );
+      setUserTypes(response.data.userTypes || []);
+    } catch (error) {
+      console.error("Failed to fetch user types.");
+    }
+  };
+
+  useEffect(() => {
+    fetchUserTypes();
+  }, []);
+
+  const RegularType = userTypes[0];
+  const CustomType = userTypes[1];
+  const ManageType = userTypes[2];
 
   const fetchData = async () => {
     try {
@@ -309,8 +329,8 @@ const TaskCalendar = () => {
 
             <div className="flex justify-between items-center w-full">
               <div className="flex gap-2">
-                {(authUser.userType === "Custom" ||
-                  authUser.userType === "Manage") && (
+                {(authUser.userType === CustomType ||
+                  authUser.userType === ManageType) && (
                   <button
                     onClick={() => handleRemarkClick(event)}
                     className="flex cursor-pointer items-center gap-1 text-sm font-medium text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 px-2 py-1 rounded-md transition-all duration-300 shadow-md hover:shadow-lg"
@@ -330,8 +350,8 @@ const TaskCalendar = () => {
             </div>
 
             <div className="flex gap-2">
-              {(authUser.userType === "Custom" ||
-                authUser.userType === "Manage") && (
+              {(authUser.userType === CustomType ||
+                authUser.userType === ManageType) && (
                 <button
                   onClick={() => handleRemarkClick(event)}
                   className="flex cursor-pointer items-center gap-1 text-sm font-medium text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 px-2 py-1 rounded-md transition-all duration-300 shadow-md hover:shadow-lg"
