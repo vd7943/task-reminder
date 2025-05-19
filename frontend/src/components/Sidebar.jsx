@@ -3,7 +3,6 @@ import { Calendar } from "react-calendar";
 import { useAuth } from "../context/AuthProvider";
 import { FaBars, FaCalendarAlt, FaTimes } from "react-icons/fa";
 import { MdHome } from "react-icons/md";
-import { GrValidate } from "react-icons/gr";
 import { FaListUl } from "react-icons/fa";
 import {
   FaUserCog,
@@ -22,6 +21,7 @@ import { LuHandCoins } from "react-icons/lu";
 import { RiUserSettingsFill } from "react-icons/ri";
 import { MdOutlineSupportAgent } from "react-icons/md";
 import { RiListSettingsLine } from "react-icons/ri";
+import axios from "axios";
 
 const Sidebar = () => {
   const [date, setDate] = useState(new Date());
@@ -29,6 +29,26 @@ const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const sidebarRef = useRef(null);
   const location = useLocation();
+  const [userTypes, setUserTypes] = useState([]);
+
+  const fetchUserTypes = async () => {
+    try {
+      const response = await axios.get(
+        "https://task-reminder-4sqz.onrender.com/config/get-user-type"
+      );
+      setUserTypes(response.data.userTypes || []);
+    } catch (error) {
+      console.error("Failed to fetch user types.");
+    }
+  };
+
+  useEffect(() => {
+    fetchUserTypes();
+  }, []);
+
+  const RegularType = userTypes[0];
+  const CustomType = userTypes[1];
+  const ManageType = userTypes[2];
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -150,7 +170,8 @@ const Sidebar = () => {
             </Link>
           )}
 
-          {(authUser?.userType === "Custom" || authUser?.role === "Admin") && (
+          {(authUser?.userType === CustomType ||
+            authUser?.role === "Admin") && (
             <Link
               to="/add-plan"
               className="pb-10"
@@ -171,8 +192,8 @@ const Sidebar = () => {
               </li>
             </Link>
           )}
-          {(authUser?.userType === "Custom" ||
-            authUser?.userType === "Manage") && (
+          {(authUser?.userType === CustomType ||
+            authUser?.userType === ManageType) && (
             <Link
               to="/pre-built-plans"
               className="pb-10"
@@ -193,8 +214,8 @@ const Sidebar = () => {
               </li>
             </Link>
           )}
-          {(authUser?.userType === "Custom" ||
-            authUser?.userType === "Manage" ||
+          {(authUser?.userType === CustomType ||
+            authUser?.userType === ManageType ||
             authUser?.role === "Admin") && (
             <Link
               to="/plan-list"
@@ -217,8 +238,8 @@ const Sidebar = () => {
             </Link>
           )}
 
-          {(authUser?.userType === "Custom" ||
-            authUser?.userType === "Manage") && (
+          {(authUser?.userType === CustomType ||
+            authUser?.userType === ManageType) && (
             <Link
               to="/remark-list"
               className="pb-10"
@@ -240,8 +261,8 @@ const Sidebar = () => {
             </Link>
           )}
 
-          {(authUser?.userType === "Custom" ||
-            authUser?.userType === "Manage" ||
+          {(authUser?.userType === CustomType ||
+            authUser?.userType === ManageType ||
             authUser?.role === "Admin") && (
             <Link
               to="/task-calendar"
