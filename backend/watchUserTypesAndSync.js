@@ -2,10 +2,11 @@ import mongoose from "mongoose";
 import fs from "fs";
 import path from "path";
 import cron from "node-cron";
-import dotenv from "dotenv";
+import { config } from "dotenv";
 import User from "./model/user.model.js";
+import EmailTemplate from "./model/emailTemplate.model.js";
 
-dotenv.config();
+config();
 
 const userTypesPath = path.resolve("config/userTypes.json");
 const prevUserTypesPath = path.resolve("config/previousUserTypes.json");
@@ -16,7 +17,7 @@ let newUserTypes = [];
 const connectDB = async () => {
   if (mongoose.connection.readyState === 0) {
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log("✅ Connected to MongoDB");
+    console.log("Connected to MongoDB");
   }
 };
 
@@ -84,9 +85,18 @@ const syncUserTypes = async () => {
       user.previousUserType = user.userType;
       user.userType = newType;
       await user.save();
-
       updatedCount++;
     }
+  }
+
+  const oldCreatedBy = oldUserTypes[1];
+  const newCreatedBy = newUserTypes[1];
+
+  if (oldCreatedBy && newCreatedBy && oldCreatedBy !== newCreatedBy) {
+    const updatedTemplates = await EmailTemplate.updateMany(
+      { createdBy: oldCreatedBy },
+      { $set: { createdBy: newCreatedBy } }
+    );
   }
 
   saveOldUserTypes(newUserTypes);
