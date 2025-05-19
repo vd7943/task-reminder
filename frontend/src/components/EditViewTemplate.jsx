@@ -9,12 +9,32 @@ const EditViewTemplate = () => {
   const [updatedSubject, setUpdatedSubject] = useState("");
   const [updatedBody, setUpdatedBody] = useState("");
   const [authUser] = useAuth();
+  const [userTypes, setUserTypes] = useState([]);
+
+  const fetchUserTypes = async () => {
+    try {
+      const response = await axios.get(
+        "http://localhost:3000/config/get-user-type"
+      );
+      setUserTypes(response.data.userTypes || []);
+    } catch (error) {
+      console.error("Failed to fetch user types.");
+    }
+  };
+
+  useEffect(() => {
+    fetchUserTypes();
+  }, []);
+
+  const RegularType = userTypes[0];
+  const CustomType = userTypes[1];
+  const ManageType = userTypes[2];
 
   useEffect(() => {
     axios
       .get(
-        `https://task-reminder-4sqz.onrender.com/email/templates/${
-          authUser.userType === "Custom" ? "Custom" : "Admin"
+        `http://localhost:3000/email/templates/${
+          authUser.userType === CustomType ? CustomType : "Admin"
         }`
       )
       .then((res) => setTemplates(res.data.templates))
@@ -30,7 +50,7 @@ const EditViewTemplate = () => {
   const handleUpdate = async () => {
     try {
       await axios.put(
-        `https://task-reminder-4sqz.onrender.com/email/update-template/${editingTemplate}`,
+        `http://localhost:3000/email/update-template/${editingTemplate}`,
         {
           subject: updatedSubject,
           body: updatedBody,
