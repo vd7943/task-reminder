@@ -50,64 +50,63 @@ const UserMilestone = () => {
 
       <div className="relative w-full mx-auto overflow-hidden">
         <div className="absolute left-1/2 transform -translate-x-1/2 w-[2px] sm:w-1 bg-gradient-to-b from-[#a56cef] to-[#6a1b9a] rounded-full h-full"></div>
-        {Object.entries(groupedMilestones).map(
-          ([planName, milestones], groupIndex) => (
-            <div key={planName} className="mb-16">
-              {milestones.map((milestone, index) => {
-                const isCompleted = milestone.completed;
-                const isLeft = index % 2 === 0;
-
-                return (
-                  <div
-                    key={index}
-                    className={`relative flex w-full my-6 sm:my-8 items-center ${
-                      isLeft
-                        ? "justify-start md:justify-end"
-                        : "justify-end md:justify-start"
-                    } flex-col md:flex-row`}
-                  >
-                    <div className="absolute left-1/2 transform -translate-x-1/2 bg-[#a56cef] w-4 h-4 sm:w-5 sm:h-5 rounded-full border-4 border-white"></div>
-
-                    <div
-                      className={`relative w-[80%] sm:w-[70%] md:w-[45%] p-5 sm:p-6 rounded-lg shadow-md transition-transform transform hover:scale-105 ${
-                        isCompleted
-                          ? "bg-gradient-to-r from-green-500 to-green-700 text-white border-2 border-green-400 shadow-green-500/50"
-                          : "bg-gradient-to-r from-gray-800 to-gray-900 text-gray-200 border-2 border-gray-700"
-                      } ${isLeft ? "md:ml-8" : "md:mr-8"}`}
-                    >
-                      <div className="flex items-center gap-3">
-                        {isCompleted ? (
-                          <FaCheckCircle size={22} className="text-white" />
-                        ) : (
-                          <MdOutlineCancel size={22} className="text-red-500" />
-                        )}
-                        <h3 className="text-lg sm:text-xl font-bold">
-                          {milestone.milestoneName}
-                        </h3>
-                      </div>
-                      <p className="mt-2 text-sm">Plan: {milestone.planName}</p>
-                      <p className="mt-2 text-sm">
-                        {isCompleted ? "✔️ Completed" : "❌ Not Completed"}
-                      </p>
-                      <div className="mt-2 text-xs sm:text-sm">
-                        <p>
-                          <span className="font-semibold">
-                            Start Task Sr No:
-                          </span>{" "}
-                          {milestone.startTaskSrNo}
-                        </p>
-                        <p>
-                          <span className="font-semibold">End Task Sr No:</span>{" "}
-                          {milestone.endTaskSrNo}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+        {Object.entries(groupedMilestones)
+          .flatMap(([planName, milestones]) =>
+            milestones.map((milestone) => ({
+              ...milestone,
+              planName,
+            }))
           )
-        )}
+          .map((milestone, index) => {
+            const isCompleted = milestone.completed;
+            const isLeft = index % 2 === 0;
+
+            return (
+              <div
+                key={index}
+                className={`relative flex w-full my-6 sm:my-8 items-center ${
+                  isLeft
+                    ? "justify-start md:justify-end"
+                    : "justify-end md:justify-start"
+                } flex-col md:flex-row`}
+              >
+                <div className="absolute left-1/2 transform -translate-x-1/2 bg-[#a56cef] w-4 h-4 sm:w-5 sm:h-5 rounded-full border-4 border-white"></div>
+
+                <div
+                  className={`relative w-[80%] sm:w-[70%] md:w-[45%] p-5 sm:p-6 rounded-lg shadow-md transition-transform transform hover:scale-101 ${
+                    isCompleted
+                      ? "bg-gradient-to-r from-green-500 to-green-700 text-white border-2 border-green-400 shadow-green-500/50"
+                      : "bg-gradient-to-r from-gray-800 to-gray-900 text-gray-200 border-2 border-gray-700"
+                  } ${isLeft ? "md:ml-8" : "md:mr-8"}`}
+                >
+                  <div className="flex items-center gap-3">
+                    {isCompleted ? (
+                      <FaCheckCircle size={22} className="text-white" />
+                    ) : (
+                      <MdOutlineCancel size={22} className="text-red-500" />
+                    )}
+                    <h3 className="text-lg sm:text-xl font-bold">
+                      {milestone.milestoneName}
+                    </h3>
+                  </div>
+                  <p className="mt-2 text-sm">Plan: {milestone.planName}</p>
+                  <p className="mt-2 text-sm">
+                    {isCompleted ? "✔️ Completed" : "❌ Not Completed"}
+                  </p>
+                  <div className="mt-2 text-xs sm:text-sm">
+                    <p>
+                      <span className="font-semibold">Start Task Sr No:</span>{" "}
+                      {milestone.startTaskSrNo}
+                    </p>
+                    <p>
+                      <span className="font-semibold">End Task Sr No:</span>{" "}
+                      {milestone.endTaskSrNo}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
       </div>
 
       <p className="text-md sm:text-lg text-[#ab7beb] font-medium text-center mt-6 sm:mt-10">
